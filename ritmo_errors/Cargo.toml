@@ -1,0 +1,11 @@
+[package]
+name = "ritmo_errors"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+serde_json.workspace = true
+sqlx.workspace = true
+thiserror = "2.0.12"

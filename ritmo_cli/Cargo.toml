@@ -1,0 +1,14 @@
+[package]
+name = "ritmo_cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.0", features = ["derive"] }
+anyhow = "1.0"
+ritmo_db = { path = "../ritmo_db" }
+ritmo_db_core = { path = "../ritmo_db_core" }
+ritmo_core = { path = "../ritmo_core" }
+ritmo_errors = { path = "../ritmo_errors" }
+tokio = { workspace = true, features = ["full"] }
+chrono = { workspace = true }
