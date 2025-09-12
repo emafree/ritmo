@@ -5,6 +5,7 @@ use ritmo_errors::RitmoErr;
 use std::fs;
 use std::path::Path;
 
+/// Tutta questa parte è da rivedere e ripensare.
 /// Crea tutta la struttura di una nuova libreria/database atomica.
 /// Usa LibraryConfig per ottenere tutti i path canonici!
 pub async fn create_full_database_library<P: AsRef<Path>>(root: P) -> Result<Database, RitmoErr> {
@@ -20,6 +21,10 @@ pub async fn create_full_database_library<P: AsRef<Path>>(root: P) -> Result<Dat
     let db_path = config.db_file_path();
 
     dbg!(&db_path);
+
+    // Scrivi il contenuto della costante (i byte del template) sul nuovo file
+    fs::write(db_path, DB_TEMPLATE).unwrap();
+
     let pool = create_connection_pool(&db_path, true).await?;
 
     println!("created pool");

@@ -1,0 +1,16 @@
+# Cartella di build e artefatti di Rust
+/target/
+
+# Dipendenze e cache
+/Cargo.lock
+
+# Eseguibili e file temporanei
+/bin/
+/tmp/
+
+# File di configurazione dell'IDE
+/.idea/
+/.vscode/
+
+# File di output del testing
+/test-reports/
