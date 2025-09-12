@@ -2,10 +2,8 @@ pub mod config;
 pub mod connection;
 pub mod database;
 pub mod maintenance;
-pub mod library;
 
 pub use database::Database;
-pub use library::create_full_database_library;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};

@@ -122,7 +122,7 @@ async fn test_initialize_database_and_pool() {
     );
 
     let pool = pool_result.unwrap();
-    let version_row: (i64,) = sqlx::query_as!("PRAGMA user_version")
+    let version_row: (i64,) = sqlx::query_as("PRAGMA user_version")
         .fetch_one(&pool)
         .await
         .expect("Query fallita");

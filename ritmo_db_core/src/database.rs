@@ -102,7 +102,7 @@ impl Database {
             ("publishers", "table"),
             ("series", "table"),
             ("tags", "table"),
-            ("languages", "table"),
+            ("running_languages", "table"),
             ("formats", "table"),
             ("contents", "table"),
             ("aliases", "table"),
