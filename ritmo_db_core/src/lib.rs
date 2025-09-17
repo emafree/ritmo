@@ -8,6 +8,9 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+pub const DB_TEMPLATE: &[u8] =
+    include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/template.db"));
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LibraryConfig {
     pub root_path: PathBuf,
@@ -33,7 +36,7 @@ fn default_max_connections() -> u32 {
 
 impl Default for LibraryConfig {
     fn default() -> Self {
-        Self::new("./ritmo_library")
+        Self::new("/ritmo_library")
     }
 }
 
@@ -182,15 +185,6 @@ impl LibraryConfig {
             issues.push(format!("Database non trovato: {}", db_path.display()));
         }
 
-        // Verifica template
-        let template_path = self.template_db_path();
-        if !template_path.exists() {
-            issues.push(format!(
-                "Template database non trovato: {}",
-                template_path.display()
-            ));
-        }
-
         // Verifica permissions (solo su sistemi Unix)
         #[cfg(unix)]
         {
@@ -206,32 +200,26 @@ impl LibraryConfig {
         issues
     }
 
-    /// Inizializza il database copiando dal template
     pub async fn initialize_database(&self) -> Result<(), ritmo_errors::RitmoErr> {
+        use tokio::fs;
+
         let db_path = self.db_file_path();
-        let template_path = self.template_db_path();
 
         // Assicurati che la directory del database esista
         if let Some(parent) = db_path.parent() {
             fs::create_dir_all(parent)
+                .await
                 .map_err(|e| ritmo_errors::RitmoErr::DatabaseConnectionFailed(e.to_string()))?;
         }
 
-        // Se il database non esiste, copialo dal template
+        // Se il database non esiste, scrivilo dai bytes dell'include
         if !db_path.exists() {
-            if template_path.exists() {
-                fs::copy(&template_path, &db_path).map_err(|e| {
-                    ritmo_errors::RitmoErr::DatabaseConnectionFailed(format!(
-                        "Impossibile copiare template database: {}",
-                        e
-                    ))
-                })?;
-            } else {
-                return Err(ritmo_errors::RitmoErr::DatabaseConnectionFailed(format!(
-                    "Template database non trovato: {}",
-                    template_path.display()
-                )));
-            }
+            fs::write(&db_path, DB_TEMPLATE).await.map_err(|e| {
+                ritmo_errors::RitmoErr::DatabaseConnectionFailed(format!(
+                    "Impossibile scrivere template database: {}",
+                    e
+                ))
+            })?;
         }
 
         Ok(())
