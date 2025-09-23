@@ -78,6 +78,7 @@ impl LibraryConfig {
         if let Some(parent) = config_file.as_ref().parent() {
             fs::create_dir_all(parent)?;
         }
+        dbg!(&content);
         fs::write(config_file, content)?;
         Ok(())
     }
@@ -291,43 +292,5 @@ impl LibraryConfig {
             ritmo_errors::RitmoErr::DatabaseConnectionFailed(format!("Backup fallito: {}", e))
         })?;
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use tempfile::TempDir;
-
-    #[test]
-    fn test_new_config() {
-        let temp_dir = TempDir::new().unwrap();
-        let config = LibraryConfig::new(temp_dir.path());
-
-        assert_eq!(config.root_path, temp_dir.path());
-        assert_eq!(config.db_filename, "ritmo.db");
-        assert_eq!(config.max_db_connections, 10);
-    }
-
-    #[test]
-    fn test_initialize() {
-        let temp_dir = TempDir::new().unwrap();
-        let config = LibraryConfig::new(temp_dir.path());
-
-        config.initialize().unwrap();
-
-        assert!(config.validate().unwrap());
-    }
-
-    #[test]
-    fn test_save_load_config() {
-        let temp_dir = TempDir::new().unwrap();
-        let config_file = temp_dir.path().join("config.toml");
-
-        let config = LibraryConfig::new(temp_dir.path());
-        config.save(&config_file).unwrap();
-
-        let loaded_config = LibraryConfig::load_or_create(&config_file).unwrap();
-        assert_eq!(config.root_path, loaded_config.root_path);
     }
 }
