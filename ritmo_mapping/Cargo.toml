@@ -1,0 +1,8 @@
+[package]
+name = "ritmo_mapping"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ritmo_core = { path = "../ritmo_core" }
+ritmo_db = { path = "../ritmo_db" }

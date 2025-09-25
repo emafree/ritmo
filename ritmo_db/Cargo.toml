@@ -10,9 +10,6 @@ chrono = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 anyhow = "1.0.98"
 ritmo_errors = { path = "../ritmo_errors" }
-ritmo_core = { path = "../ritmo_core" }
-ritmo_db_core = { path = "../ritmo_db_core" }
-ritmo_db = { path = "../ritmo_db" }
 sha2 = "0.10.9"
 hex = "0.4.3"
 toml = { workspace = true }

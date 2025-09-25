@@ -43,8 +43,6 @@ pub use self::x_contents_languages::*;
 pub use self::x_contents_people_roles::*;
 pub use self::x_contents_tags::*;
 
-use ritmo_core::FullDto;
-
 #[derive(Debug, Clone)]
 pub struct FullBook {
     pub alias: Alias,
@@ -64,8 +62,4 @@ pub struct FullBook {
     pub series: Series,
     pub tags: Tag,
     pub types: Type,
-}
-
-impl FullBook {
-    pub fn from_dto(_dto: &FullDto) {}
 }

@@ -1,4 +1,3 @@
-use ritmo_core::dto::AliasDto;
 use sqlx::FromRow;
 
 #[derive(Debug, Clone, FromRow, Default)]
@@ -12,11 +11,6 @@ pub struct Alias {
 }
 
 impl Alias {
-    /// placeholder
-    pub fn from_dto(_dto: &mut AliasDto) -> Self {
-        Alias::default()
-    }
-
     pub async fn save(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
         let now = chrono::Utc::now().timestamp();
         let result = sqlx::query!(
@@ -32,14 +26,10 @@ impl Alias {
         Ok(result.last_insert_rowid())
     }
     pub async fn get(pool: &sqlx::SqlitePool, id: i64) -> Result<Option<Alias>, sqlx::Error> {
-        let alias = sqlx::query_as!(
-            Alias,
-            "SELECT * FROM aliases WHERE id = ?",
-            id
-        )
-        .fetch_optional(pool)
-        .await?;        
-    Ok(alias)
+        let alias = sqlx::query_as!(Alias, "SELECT * FROM aliases WHERE id = ?", id)
+            .fetch_optional(pool)
+            .await?;
+        Ok(alias)
     }
 
     pub async fn get_by_person_and_name(
@@ -52,15 +42,15 @@ impl Alias {
             "SELECT * FROM aliases WHERE person_id = ? AND name = ?",
             person_id,
             name,
-            )
-            .fetch_optional(pool)
-            .await?;
+        )
+        .fetch_optional(pool)
+        .await?;
         Ok(alias)
     }
 
     pub async fn update(&self, pool: &sqlx::SqlitePool) -> Result<u64, sqlx::Error> {
         let result = sqlx::query!(
-            "UPDATE aliases SET name = ?, person_id = ?, alias_normalized = ?, confidence = ? WHERE id = ?", 
+            "UPDATE aliases SET name = ?, person_id = ?, alias_normalized = ?, confidence = ? WHERE id = ?",
             self.name,
             self.person_id,
             self.alias_normalized,
@@ -73,10 +63,7 @@ impl Alias {
     }
 
     pub async fn delete(pool: &sqlx::SqlitePool, id: i64) -> Result<u64, sqlx::Error> {
-        let result = sqlx::query!(
-            "DELETE FROM aliases WHERE id = ?",
-            id,
-            )
+        let result = sqlx::query!("DELETE FROM aliases WHERE id = ?", id,)
             .execute(pool)
             .await?;
         Ok(result.rows_affected())
@@ -90,9 +77,9 @@ impl Alias {
             Alias,
             "SELECT * FROM aliases WHERE person_id = ? ORDER BY name",
             person_id,
-            )
-            .fetch_all(pool)
-            .await?;
+        )
+        .fetch_all(pool)
+        .await?;
         Ok(aliases)
     }
 
@@ -103,7 +90,7 @@ impl Alias {
             "SELECT * FROM aliases WHERE name LIKE ? OR alias_normalized LIKE ? ORDER BY name",
             search_pattern,
             search_pattern
-            )
+        )
         .fetch_all(pool)
         .await?;
         Ok(aliases)

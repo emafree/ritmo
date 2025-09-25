@@ -5,8 +5,9 @@ members = [
     "ritmo_cli",       # Interfaccia command-line
     "ritmo_db",
     "ritmo_db_core", # Gestione database e metadata
+    "ritmo_mapping" ,
     #    "ritmo_search",    # Sistema di ricerca e indicizzazione
-    "ritmo_errors",
+    "ritmo_errors" ,
     #    "ritmo_ml",
     #    "ebook_parser",
 ]

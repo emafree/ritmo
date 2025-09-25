@@ -1,4 +1,3 @@
-use ritmo_core::PublisherDto;
 use sqlx::FromRow;
 
 #[derive(Debug, Clone, FromRow, Default)]
@@ -13,10 +12,6 @@ pub struct Publisher {
 }
 
 impl Publisher {
-    pub fn from_dto(_dto: &PublisherDto) -> Self {
-        Publisher::default()
-    }
-
     pub async fn save(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
         let now = chrono::Utc::now().timestamp();
         let result = sqlx::query!(
@@ -34,11 +29,7 @@ impl Publisher {
     }
 
     pub async fn get(pool: &sqlx::SqlitePool, id: i64) -> Result<Option<Publisher>, sqlx::Error> {
-        let publisher = sqlx::query_as!(
-            Publisher,
-            "SELECT * FROM publishers WHERE id = ?",
-            id
-            )
+        let publisher = sqlx::query_as!(Publisher, "SELECT * FROM publishers WHERE id = ?", id)
             .fetch_optional(pool)
             .await?;
         Ok(publisher)
@@ -48,11 +39,7 @@ impl Publisher {
         pool: &sqlx::SqlitePool,
         name: &str,
     ) -> Result<Option<Publisher>, sqlx::Error> {
-        let publisher = sqlx::query_as!(
-            Publisher,
-            "SELECT * FROM publishers WHERE name = ?",
-            name
-            )
+        let publisher = sqlx::query_as!(Publisher, "SELECT * FROM publishers WHERE name = ?", name)
             .fetch_optional(pool)
             .await?;
         Ok(publisher)
@@ -75,20 +62,14 @@ impl Publisher {
     }
 
     pub async fn delete(pool: &sqlx::SqlitePool, id: i64) -> Result<u64, sqlx::Error> {
-        let result = sqlx::query!(
-            "DELETE FROM publishers WHERE id = ?",
-            id
-            )
+        let result = sqlx::query!("DELETE FROM publishers WHERE id = ?", id)
             .execute(pool)
             .await?;
         Ok(result.rows_affected())
     }
 
     pub async fn list_all(pool: &sqlx::SqlitePool) -> Result<Vec<Publisher>, sqlx::Error> {
-        let publishers = sqlx::query_as!(
-            Publisher,
-            "SELECT * FROM publishers ORDER BY name"
-            )
+        let publishers = sqlx::query_as!(Publisher, "SELECT * FROM publishers ORDER BY name")
             .fetch_all(pool)
             .await?;
         Ok(publishers)

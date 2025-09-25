@@ -1257,6 +1257,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "dirs",
+ "ritmo_db",
  "ritmo_db_core",
  "ritmo_errors",
  "serde",
@@ -1275,8 +1276,6 @@ dependencies = [
  "anyhow",
  "chrono",
  "hex",
- "ritmo_core",
- "ritmo_db_core",
  "ritmo_errors",
  "serde",
  "sha2",
@@ -1310,6 +1309,15 @@ dependencies = [
  "serde_json",
  "sqlx",
  "thiserror",
+]
+
+[[package]]
+name = "ritmo_mapping"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "ritmo_core",
+ "ritmo_db",
 ]
 
 [[package]]

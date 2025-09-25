@@ -1,5 +1,3 @@
-use chrono::Utc;
-use ritmo_core::ContentDto;
 use sqlx::FromRow;
 
 #[derive(Debug, Clone, FromRow, Default)]
@@ -17,20 +15,6 @@ pub struct Content {
 }
 
 impl Content {
-    pub fn from_dto(dto: &ContentDto) -> Self {
-        let now = Utc::now().timestamp();
-
-        Self {
-            name: dto.name.clone(),
-            original_title: dto.original_title.clone(),
-            type_id: dto.type_id,
-            publication_date: dto.publication_date,
-            notes: dto.notes.clone(),
-            created_at: now,
-            ..Default::default()
-        }
-    }
-
     pub async fn save(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
         let now = chrono::Utc::now().timestamp();
         let result = sqlx::query!(
@@ -44,18 +28,14 @@ impl Content {
             self.notes,
             now,
             now
-            )
+        )
         .execute(pool)
         .await?;
         Ok(result.last_insert_rowid())
     }
 
     pub async fn get(pool: &sqlx::SqlitePool, id: i64) -> Result<Option<Content>, sqlx::Error> {
-        let content = sqlx::query_as!(
-            Content,
-            "SELECT * FROM contents WHERE id = ?",
-            id
-            )
+        let content = sqlx::query_as!(Content, "SELECT * FROM contents WHERE id = ?", id)
             .fetch_optional(pool)
             .await?;
         Ok(content)
@@ -82,20 +62,14 @@ impl Content {
     }
 
     pub async fn delete(pool: &sqlx::SqlitePool, id: i64) -> Result<u64, sqlx::Error> {
-        let result = sqlx::query!(
-            "DELETE FROM contents WHERE id = ?",
-            id
-            )
+        let result = sqlx::query!("DELETE FROM contents WHERE id = ?", id)
             .execute(pool)
             .await?;
         Ok(result.rows_affected())
     }
 
     pub async fn list_all(pool: &sqlx::SqlitePool) -> Result<Vec<Content>, sqlx::Error> {
-        let all = sqlx::query_as!(
-            Content,
-            "SELECT * FROM contents ORDER BY name"
-            )
+        let all = sqlx::query_as!(Content, "SELECT * FROM contents ORDER BY name")
             .fetch_all(pool)
             .await?;
         Ok(all)

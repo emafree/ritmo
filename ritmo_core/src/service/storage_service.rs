@@ -1,3 +1,4 @@
+use ritmo_db::Book;
 use ritmo_db_core::LibraryConfig;
 use ritmo_errors::{RitmoErr, RitmoResult};
 use std::fs::{self, File};
@@ -29,7 +30,7 @@ pub fn save_epub_file(book: &mut Book, bytes: &[u8], config: &LibraryConfig) -> 
 
     // Aggiorna la dimensione file
     let metadata = file.metadata().map_err(RitmoErr::FileAccessError)?;
-    book.file_size = Some(metadata.len() as usize);
+    book.file_size = Some(metadata.len() as i64);
 
     Ok(())
 }

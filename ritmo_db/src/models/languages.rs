@@ -1,5 +1,4 @@
 use ritmo_errors::RitmoResult;
-use ritmo_core::LanguageDto;
 use sqlx::FromRow;
 
 #[derive(Debug, Clone, FromRow)]
@@ -44,18 +43,7 @@ impl RunningLanguages {
     }
 
     /// questi sono placeholder
-    pub fn from_dto(dto: &LanguageDto) -> Self {
-        Self::set_language_data(dto)
-    }
-
-    pub fn set_language_data(_dto: &LanguageDto) -> RunningLanguages {
-        RunningLanguages::new()
-    }
-
-    pub async fn get(
-        _pool: &sqlx::SqlitePool,
-        _id: i64,
-    ) -> RitmoResult<Option<RunningLanguages>> {
+    pub async fn get(_pool: &sqlx::SqlitePool, _id: i64) -> RitmoResult<Option<RunningLanguages>> {
         Ok(Some(RunningLanguages::new()))
     }
 

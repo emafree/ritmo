@@ -1,9 +1,6 @@
 use sha2::Digest;
-use chrono::Utc;
-use ritmo_core::dto::BookDto;
-use sqlx::FromRow;
 
-#[derive(Debug, Clone, FromRow, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Book {
     /// Il campo 'id' è Option perchè quando il libro viene creato il suo valore è None, e viene creato alla memorizzazione.
     pub id: Option<i64>,
@@ -27,30 +24,6 @@ pub struct Book {
 }
 
 impl Book {
-    // Metodo per la conversione da DTO al modello
-    pub fn from_dto(dto: &mut BookDto) -> Self {
-        let now = Utc::now().timestamp();
-
-        let mut book = Self {
-            name: dto.name.clone(),
-            original_title: dto.original_title.clone(),
-            publisher_id: dto.publisher_id,
-            format_id: dto.format_id,
-            series_id: dto.series_id,
-            series_index: dto.series_index,
-            publication_date: dto.publication_date,
-            last_modified_date: now,
-            isbn: dto.isbn.clone(),
-            notes: dto.notes.clone(),
-            has_paper: if dto.has_paper { 1 } else { 0 },
-            has_cover: if dto.has_cover { 1 } else { 0 },
-            created_at: now,
-            ..Default::default()
-        };
-        book.set_book_persistence();
-        book
-    }
-
     pub async fn save(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
         let now = chrono::Utc::now().timestamp();
         let result = sqlx::query!(
@@ -75,38 +48,28 @@ impl Book {
             self.file_size,
             self.file_hash,
             now
-            )
+        )
         .execute(pool)
         .await?;
         Ok(result.last_insert_rowid())
     }
 
     pub async fn get(pool: &sqlx::SqlitePool, id: i64) -> Result<Option<Book>, sqlx::Error> {
-        let book = sqlx::query_as!(
-            Book,
-            "SELECT * FROM books WHERE id = ?",
-            id
-            )
+        let book = sqlx::query_as!(Book, "SELECT * FROM books WHERE id = ?", id)
             .fetch_optional(pool)
             .await?;
         Ok(book)
     }
 
     pub async fn delete(pool: &sqlx::SqlitePool, id: i64) -> Result<u64, sqlx::Error> {
-        let result = sqlx::query!(
-            "DELETE FROM books WHERE id = ?",
-            id
-            )
+        let result = sqlx::query!("DELETE FROM books WHERE id = ?", id)
             .execute(pool)
             .await?;
         Ok(result.rows_affected())
     }
 
     pub async fn list_all(pool: &sqlx::SqlitePool) -> Result<Vec<Book>, sqlx::Error> {
-        let all = sqlx::query_as!(
-            Book,
-            "SELECT * FROM books ORDER BY name"
-            )
+        let all = sqlx::query_as!(Book, "SELECT * FROM books ORDER BY name")
             .fetch_all(pool)
             .await?;
         Ok(all)
@@ -130,50 +93,52 @@ impl Book {
     pub fn set_book_persistence(&mut self) {
         // Generiamo un hash basato sui metadati del libro
         let mut hasher = sha2::Sha256::new();
-        
+
         // Aggiungiamo i metadati essenziali per generare un hash unico
         hasher.update(self.name.as_bytes());
-        
+
         if let Some(ref title) = self.original_title {
             hasher.update(title.as_bytes());
         }
-        
+
         if let Some(ref isbn) = self.isbn {
             hasher.update(isbn.as_bytes());
         }
-        
+
         // Aggiungiamo la data di creazione per ulteriore unicità
         hasher.update(self.created_at.to_be_bytes());
-        
+
         // Per libri di una serie, aggiungiamo anche queste informazioni
         if let Some(series_id) = self.series_id {
             hasher.update(series_id.to_be_bytes());
-            
+
             if let Some(index) = self.series_index {
                 hasher.update(index.to_be_bytes());
             }
         }
-        
+
         // Generiamo il hash completo
         let hash_result = hasher.finalize();
-        
+
         // Prendiamo i primi 16 byte dell'hash (128 bit) per un identificativo conciso ma unico
         let hash_bytes = &hash_result[..16];
         let hash_hex = hex::encode(hash_bytes);
-        
+
         // Memorizziamo l'hash generato
         self.file_hash = Some(hash_hex.clone());
-        
+
         // Generiamo un percorso file standardizzato basato sull'hash
         // Assumiamo come formato default "epub" per i nuovi libri
-        let file_path = format!("books/{}/{}/{}.epub", 
-                               &hash_hex[0..2],     // Primi 2 caratteri per la prima directory
-                               &hash_hex[2..4],     // Successivi 2 caratteri per la sottodirectory
-                               hash_hex);           // Nome file basato sull'hash completo
-        
+        let file_path = format!(
+            "books/{}/{}/{}.epub",
+            &hash_hex[0..2], // Primi 2 caratteri per la prima directory
+            &hash_hex[2..4], // Successivi 2 caratteri per la sottodirectory
+            hash_hex
+        ); // Nome file basato sull'hash completo
+
         // Impostiamo il link al file
         self.file_link = Some(file_path);
-        
+
         // Per ora il file size è 0 perché il file non è stato ancora effettivamente creato
         self.file_size = Some(0);
     }
