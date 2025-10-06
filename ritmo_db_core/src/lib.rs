@@ -55,6 +55,20 @@ impl LibraryConfig {
         }
     }
 
+    /// Controlla se la directory principale della libreria esiste su disco
+    pub fn exists(&self) -> bool {
+        self.root_path.exists() && self.root_path.is_dir()
+    }
+
+    /// Controlla se tutte le directory essenziali della libreria esistono
+    pub fn all_dirs_exist(&self) -> bool {
+        self.root_path.exists()
+            && self.database_path.exists()
+            && self.storage_path.exists()
+            && self.config_path.exists()
+            && self.bootstrap_path.exists()
+    }
+
     /// Carica configurazione da file, crea default se non esiste
     pub fn load_or_create<P: AsRef<Path>>(
         config_file: P,
