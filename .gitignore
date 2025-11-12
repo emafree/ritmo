@@ -1,16 +1,32 @@
-# Cartella di build e artefatti di Rust
+# Rust / Cargo
 /target/
+**/target/
+**/*.rs.bk
+**/*.rmeta
 
-# Dipendenze e cache
-/Cargo.lock
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
 
-# Eseguibili e file temporanei
-/bin/
-/tmp/
+# System
+.DS_Store
+Thumbs.db
 
-# File di configurazione dell'IDE
-/.idea/
-/.vscode/
+# Env and local secrets
+.env
+.env.local
 
-# File di output del testing
-/test-reports/
+# Logs
+*.log
+
+# Build artifacts
+**/*.exe
+**/*.dll
+**/*.dylib
+**/*.so
+
+# Node / frontend artifacts (if GUI uses web frontend)
+node_modules/
+dist/
