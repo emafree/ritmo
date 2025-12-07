@@ -1,0 +1,58 @@
+// Strutture dati condivise per l'applicazione Ritmo
+
+// Struttura per Person con Role
+export struct PersonWithRole {
+    person_id: int,
+    person_name: string,
+    role_name: string,
+}
+
+// Struttura per Content (opera/contenuto)
+export struct ContentInfo {
+    id: int,
+    name: string,
+    original_title: string,
+    type_name: string,
+    publication_date: string,
+    people: [PersonWithRole],
+}
+
+// Struttura per Book in lista breve (usato nella vista contenuti)
+export struct BookInfo {
+    id: int,
+    name: string,
+    publisher: string,
+    format: string,
+    publication_date: string,
+}
+
+// Vista LIBRI: Libro con i suoi contenuti
+export struct BookWithContents {
+    id: int,
+    name: string,
+    original_title: string,
+    publisher: string,
+    format: string,
+    series: string,
+    publication_date: string,
+    isbn: string,
+    file_link: string,
+    contents: [ContentInfo],
+}
+
+// Vista CONTENUTI: Contenuto con i libri che lo contengono
+export struct ContentWithBooks {
+    id: int,
+    name: string,
+    original_title: string,
+    type_name: string,
+    publication_date: string,
+    people: [PersonWithRole],
+    books: [BookInfo],
+}
+
+// Struttura per messaggi di stato
+export struct StatusMessage {
+    text: string,
+    is_error: bool,
+}

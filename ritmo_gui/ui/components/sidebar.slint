@@ -1,0 +1,221 @@
+import { VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { Theme } from "../theme.slint";
+
+export component Sidebar {
+    // Proprietà
+    in-out property <int> view-mode: 0;
+    in property <int> books-count: 0;
+    in property <int> contents-count: 0;
+
+    // Callbacks
+    callback view-changed(int);
+
+    width: 280px;
+
+    Rectangle {
+        background: Theme.sidebar-bg;
+        drop-shadow-blur: 4px;
+        drop-shadow-color: #00000010;
+
+        VerticalBox {
+        padding: 24px;
+        spacing: 16px;
+
+        // Logo
+        Rectangle {
+            height: 70px;
+
+            VerticalBox {
+                alignment: start;
+                spacing: 4px;
+
+                Text {
+                    text: "📚 Ritmo";
+                    font-size: 28px;
+                    font-weight: 700;
+                    color: Theme.text-primary;
+                    horizontal-alignment: left;
+                }
+
+                Text {
+                    text: "Library Manager";
+                    font-size: 13px;
+                    color: Theme.text-secondary;
+                    horizontal-alignment: left;
+                }
+            }
+        }
+
+        Rectangle { height: 12px; }
+
+        // View Mode Selector
+        VerticalBox {
+            spacing: 10px;
+
+            Text {
+                text: "VISUALIZZAZIONE";
+                font-size: 11px;
+                font-weight: 700;
+                color: Theme.text-muted;
+                horizontal-alignment: left;
+                letter-spacing: 0.5px;
+            }
+
+            // Vista Libri
+            view-books := Rectangle {
+                height: 52px;
+                border-radius: 12px;
+                background: view-mode == 0 ? Theme.primary-color : (view-books-touch.has-hover ? Theme.hover-bg : transparent);
+
+                view-books-touch := TouchArea {
+                    clicked => {
+                        view-mode = 0;
+                        view-changed(0);
+                    }
+                }
+
+                HorizontalBox {
+                    padding: 16px;
+                    spacing: 12px;
+
+                    Text {
+                        text: "📖";
+                        font-size: 24px;
+                        vertical-alignment: center;
+                    }
+
+                    VerticalBox {
+                        alignment: center;
+                        spacing: 2px;
+
+                        Text {
+                            text: "Libri";
+                            font-size: 16px;
+                            font-weight: 600;
+                            color: view-mode == 0 ? #ffffff : Theme.text-primary;
+                            horizontal-alignment: left;
+                        }
+
+                        Text {
+                            text: "con contenuti";
+                            font-size: 11px;
+                            color: view-mode == 0 ? #e0e7ff : Theme.text-muted;
+                            horizontal-alignment: left;
+                        }
+                    }
+                }
+            }
+
+            // Vista Contenuti
+            view-contents := Rectangle {
+                height: 52px;
+                border-radius: 12px;
+                background: view-mode == 1 ? Theme.primary-color : (view-contents-touch.has-hover ? Theme.hover-bg : transparent);
+
+                view-contents-touch := TouchArea {
+                    clicked => {
+                        view-mode = 1;
+                        view-changed(1);
+                    }
+                }
+
+                HorizontalBox {
+                    padding: 16px;
+                    spacing: 12px;
+
+                    Text {
+                        text: "📝";
+                        font-size: 24px;
+                        vertical-alignment: center;
+                    }
+
+                    VerticalBox {
+                        alignment: center;
+                        spacing: 2px;
+
+                        Text {
+                            text: "Contenuti";
+                            font-size: 16px;
+                            font-weight: 600;
+                            color: view-mode == 1 ? #ffffff : Theme.text-primary;
+                            horizontal-alignment: left;
+                        }
+
+                        Text {
+                            text: "con libri";
+                            font-size: 11px;
+                            color: view-mode == 1 ? #e0e7ff : Theme.text-muted;
+                            horizontal-alignment: left;
+                        }
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            height: 1px;
+            background: Theme.border-color;
+        }
+
+        // Stats
+        Rectangle {
+            height: 80px;
+            background: Theme.hover-bg;
+            border-radius: 12px;
+
+            VerticalBox {
+                padding: 16px;
+                spacing: 8px;
+
+                HorizontalBox {
+                    spacing: 12px;
+
+                    Rectangle {
+                        width: 40px;
+                        height: 40px;
+                        background: Theme.primary-color;
+                        border-radius: 8px;
+
+                        Text {
+                            text: "📊";
+                            font-size: 20px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    VerticalBox {
+                        alignment: center;
+                        spacing: 2px;
+
+                        Text {
+                            text: books-count + " libri";
+                            font-size: 18px;
+                            font-weight: 700;
+                            color: Theme.text-primary;
+                            horizontal-alignment: left;
+                        }
+
+                        Text {
+                            text: contents-count + " contenuti";
+                            font-size: 13px;
+                            color: Theme.text-secondary;
+                            horizontal-alignment: left;
+                        }
+                    }
+                }
+            }
+        }
+
+        Rectangle { vertical-stretch: 1; }
+
+        // Info
+        Text {
+            text: "v0.1.0";
+            font-size: 11px;
+            color: Theme.text-muted;
+            horizontal-alignment: center;
+        }
+        }
+    }
+}

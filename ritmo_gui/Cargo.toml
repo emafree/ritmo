@@ -3,4 +3,19 @@ name = "ritmo_gui"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "ritmo_gui"
+path = "src/main.rs"
+
 [dependencies]
+slint = "1.14"
+tokio = { workspace = true, features = ["full"] }
+ritmo_core = { path = "../ritmo_core" }
+ritmo_db = { path = "../ritmo_db" }
+ritmo_db_core = { path = "../ritmo_db_core" }
+ritmo_errors = { path = "../ritmo_errors" }
+anyhow = "1.0"
+dirs = "6.0"
+
+[build-dependencies]
+slint-build = "1.14"

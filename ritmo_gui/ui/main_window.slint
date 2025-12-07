@@ -1,0 +1,97 @@
+import { HorizontalBox, VerticalBox } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { BookWithContents, ContentWithBooks, StatusMessage } from "types.slint";
+import { Sidebar } from "components/sidebar.slint";
+import { SearchBar } from "components/search_bar.slint";
+import { StatusMessageBar } from "components/status_message.slint";
+import { BooksView } from "components/books_view.slint";
+import { ContentsView } from "components/contents_view.slint";
+
+export component MainWindow inherits Window {
+    title: "Ritmo - Library Manager";
+    preferred-width: 1400px;
+    preferred-height: 900px;
+    min-width: 1000px;
+    min-height: 700px;
+
+    // Proprietà
+    in-out property <[BookWithContents]> books: [];
+    in-out property <[ContentWithBooks]> contents: [];
+    in-out property <string> search-text: "";
+    in-out property <StatusMessage> status-message: { text: "", is_error: false };
+    in-out property <int> view-mode: 0; // 0=Libri, 1=Contenuti
+
+    // Callbacks
+    callback refresh-books();
+    callback refresh-contents();
+    callback search(string);
+    callback add-new-book();
+    callback show-book-detail(int);
+    callback show-content-detail(int);
+
+    HorizontalBox {
+        // Sidebar
+        Sidebar {
+            view-mode <=> view-mode;
+            books-count: books.length;
+            contents-count: contents.length;
+            view-changed(mode) => {
+                view-mode = mode;
+                if mode == 0 {
+                    refresh-books();
+                } else {
+                    refresh-contents();
+                }
+            }
+        }
+
+        // Contenuto principale
+        Rectangle {
+            background: Theme.bg-color;
+            horizontal-stretch: 1;
+
+            VerticalBox {
+                padding: 32px;
+                spacing: 24px;
+
+                // Status Message
+                StatusMessageBar {
+                    message: status-message;
+                }
+
+                // Search Bar
+                SearchBar {
+                    search-text <=> search-text;
+                    placeholder: view-mode == 0 ? "Cerca libri..." : "Cerca contenuti...";
+                    search-changed(text) => {
+                        search(text);
+                    }
+                    add-clicked => {
+                        add-new-book();
+                    }
+                }
+
+                // Viste
+                if view-mode == 0 : BooksView {
+                    books: books;
+                    book-clicked(id) => {
+                        show-book-detail(id);
+                    }
+                    content-clicked(id) => {
+                        show-content-detail(id);
+                    }
+                }
+
+                if view-mode == 1 : ContentsView {
+                    contents: contents;
+                    content-clicked(id) => {
+                        show-content-detail(id);
+                    }
+                    book-clicked(id) => {
+                        show-book-detail(id);
+                    }
+                }
+            }
+        }
+    }
+}

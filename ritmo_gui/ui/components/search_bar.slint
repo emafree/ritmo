@@ -1,0 +1,80 @@
+import { HorizontalBox, LineEdit } from "std-widgets.slint";
+import { Theme } from "../theme.slint";
+
+export component SearchBar {
+    in-out property <string> search-text: "";
+    in property <string> placeholder: "Cerca...";
+
+    callback search-changed(string);
+    callback add-clicked();
+
+    HorizontalBox {
+        spacing: 16px;
+
+        // Search Box
+        Rectangle {
+            horizontal-stretch: 1;
+            height: 52px;
+            background: #ffffff;
+            border-radius: 12px;
+            drop-shadow-blur: 4px;
+            drop-shadow-color: #00000008;
+
+            HorizontalBox {
+                padding-left: 20px;
+                padding-right: 20px;
+                spacing: 12px;
+
+                Text {
+                    text: "🔍";
+                    font-size: 20px;
+                    vertical-alignment: center;
+                }
+
+                search-input := LineEdit {
+                    horizontal-stretch: 1;
+                    placeholder-text: placeholder;
+                    text <=> search-text;
+                    edited => {
+                        search-changed(search-text);
+                    }
+                }
+            }
+        }
+
+        // Add Button
+        Rectangle {
+            width: 150px;
+            height: 52px;
+            background: add-touch.has-hover ? Theme.primary-hover : Theme.primary-color;
+            border-radius: 12px;
+            drop-shadow-blur: 6px;
+            drop-shadow-color: #2563eb40;
+
+            add-touch := TouchArea {
+                clicked => {
+                    add-clicked();
+                }
+            }
+
+            HorizontalBox {
+                alignment: center;
+                spacing: 8px;
+
+                Text {
+                    text: "+";
+                    font-size: 24px;
+                    font-weight: 700;
+                    color: #ffffff;
+                }
+
+                Text {
+                    text: "Aggiungi";
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #ffffff;
+                }
+            }
+        }
+    }
+}

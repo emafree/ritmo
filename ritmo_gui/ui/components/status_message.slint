@@ -1,0 +1,23 @@
+import { HorizontalBox } from "std-widgets.slint";
+import { StatusMessage } from "../types.slint";
+
+export component StatusMessageBar {
+    in property <StatusMessage> message: { text: "", is_error: false };
+
+    if message.text != "" : Rectangle {
+        height: 48px;
+        background: message.is_error ? #fee2e2 : #dcfce7;
+        border-radius: 10px;
+
+        HorizontalBox {
+            padding: 20px;
+
+            Text {
+                text: message.text;
+                font-size: 14px;
+                color: message.is_error ? #991b1b : #166534;
+                vertical-alignment: center;
+            }
+        }
+    }
+}

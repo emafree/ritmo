@@ -1,0 +1,33 @@
+import { VerticalBox } from "std-widgets.slint";
+import { Theme } from "../theme.slint";
+
+export component EmptyState {
+    in property <string> icon: "📚";
+    in property <string> title: "Nessun elemento";
+    in property <string> subtitle: "";
+
+    height: 400px;
+
+    VerticalBox {
+        alignment: center;
+        spacing: 20px;
+
+        Text {
+            text: icon;
+            font-size: 80px;
+        }
+
+        Text {
+            text: title;
+            font-size: 20px;
+            font-weight: 600;
+            color: Theme.text-primary;
+        }
+
+        if subtitle != "" : Text {
+            text: subtitle;
+            font-size: 14px;
+            color: Theme.text-secondary;
+        }
+    }
+}

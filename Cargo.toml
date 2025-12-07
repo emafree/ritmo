@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "ritmo_core", # Logica principale e gestione ebook
-    #    "ritmo_gui",       # Interfaccia grafica
+    "ritmo_gui",       # Interfaccia grafica
     "ritmo_cli",       # Interfaccia command-line
     "ritmo_db",
     "ritmo_db_core", # Gestione database e metadata
@@ -15,17 +15,17 @@ resolver = "2"
 
 # Dipendenze condivise per tutto il workspace
 [workspace.dependencies]
-serde_json = "1.0.141"
-serde = "1.0.219"
-sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "sqlite"] }
-tokio = { version = "1.46.1", features = ["full"] }
-chrono = "0.4.41"
-toml = "0.9.5"
+serde_json = "1.0"
+serde = "1.0"
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "sqlite"] }
+tokio = { version = "1.48", features = ["full"] }
+chrono = "0.4"
+toml = "0.9"
 
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.75"
+rust-version = "1.91"
 authors = ["laverdure <pierrot.bru@gmail.com>"]
 repository = "https://github.com/pierrotbru/full-ritmo"

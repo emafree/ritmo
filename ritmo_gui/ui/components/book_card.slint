@@ -1,0 +1,239 @@
+import { VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { Theme } from "../theme.slint";
+import { BookWithContents, ContentInfo } from "../types.slint";
+
+export component BookCard {
+    in property <BookWithContents> book;
+
+    callback book-clicked(int);
+    callback content-clicked(int);
+
+    Rectangle {
+        background: #ffffff;
+        border-radius: 16px;
+        drop-shadow-blur: 8px;
+        drop-shadow-color: #00000012;
+
+        VerticalBox {
+            padding: 28px;
+            spacing: 20px;
+
+            // Book Header
+            HorizontalBox {
+                spacing: 20px;
+
+                Rectangle {
+                    width: 70px;
+                    height: 70px;
+                    background: Theme.primary-color;
+                    border-radius: 12px;
+
+                    Text {
+                        text: "📖";
+                        font-size: 36px;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                VerticalBox {
+                    alignment: start;
+                    spacing: 8px;
+                    horizontal-stretch: 1;
+
+                    book-title-touch := TouchArea {
+                        clicked => {
+                            book-clicked(book.id);
+                        }
+
+                        Text {
+                            text: book.name;
+                            font-size: 22px;
+                            font-weight: 700;
+                            color: book-title-touch.has-hover ? Theme.primary-color : Theme.text-primary;
+                            horizontal-alignment: left;
+                        }
+                    }
+
+                    if book.original_title != "" && book.original_title != book.name : Text {
+                        text: book.original_title;
+                        font-size: 14px;
+                        color: Theme.text-muted;
+                        horizontal-alignment: left;
+                    }
+
+                    HorizontalBox {
+                        spacing: 16px;
+
+                        if book.publisher != "" : Text {
+                            text: "🏢 " + book.publisher;
+                            font-size: 14px;
+                            color: Theme.text-secondary;
+                        }
+
+                        if book.format != "" : Text {
+                            text: "📄 " + book.format;
+                            font-size: 14px;
+                            color: Theme.text-secondary;
+                        }
+
+                        if book.publication_date != "" : Text {
+                            text: "📅 " + book.publication_date;
+                            font-size: 14px;
+                            color: Theme.text-secondary;
+                        }
+                    }
+                }
+            }
+
+            // Separator
+            if book.contents.length > 0 : Rectangle {
+                height: 2px;
+                background: Theme.border-color;
+            }
+
+            // Contents
+            if book.contents.length > 0 : VerticalBox {
+                spacing: 16px;
+
+                Text {
+                    text: "Contenuti (" + book.contents.length + ")";
+                    font-size: 15px;
+                    font-weight: 700;
+                    color: Theme.text-secondary;
+                    horizontal-alignment: left;
+                }
+
+                for content in book.contents : Rectangle {
+                    background: Theme.content-bg;
+                    border-radius: 12px;
+                    border-width: 2px;
+                    border-color: Theme.content-border;
+
+                    VerticalBox {
+                        padding: 20px;
+                        spacing: 12px;
+
+                        HorizontalBox {
+                            spacing: 16px;
+
+                            Rectangle {
+                                width: 48px;
+                                height: 48px;
+                                background: Theme.primary-color;
+                                border-radius: 10px;
+
+                                Text {
+                                    text: "📝";
+                                    font-size: 24px;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                            }
+
+                            VerticalBox {
+                                alignment: start;
+                                spacing: 8px;
+                                horizontal-stretch: 1;
+
+                                content-title-touch := TouchArea {
+                                    clicked => {
+                                        content-clicked(content.id);
+                                    }
+
+                                    Text {
+                                        text: content.name;
+                                        font-size: 18px;
+                                        font-weight: 600;
+                                        color: content-title-touch.has-hover ? Theme.primary-color : Theme.text-primary;
+                                        horizontal-alignment: left;
+                                    }
+                                }
+
+                                if content.original_title != "" && content.original_title != content.name : Text {
+                                    text: content.original_title;
+                                    font-size: 13px;
+                                    color: Theme.text-muted;
+                                    horizontal-alignment: left;
+                                }
+
+                                HorizontalBox {
+                                    spacing: 12px;
+
+                                    if content.type_name != "" : Rectangle {
+                                        height: 24px;
+                                        background: Theme.primary-color;
+                                        border-radius: 6px;
+
+                                        HorizontalBox {
+                                            padding-left: 10px;
+                                            padding-right: 10px;
+
+                                            Text {
+                                                text: content.type_name;
+                                                font-size: 12px;
+                                                font-weight: 600;
+                                                color: #ffffff;
+                                                vertical-alignment: center;
+                                            }
+                                        }
+                                    }
+
+                                    if content.publication_date != "" : Text {
+                                        text: content.publication_date;
+                                        font-size: 13px;
+                                        color: Theme.text-secondary;
+                                        vertical-alignment: center;
+                                    }
+                                }
+
+                                if content.people.length > 0 : VerticalBox {
+                                    spacing: 6px;
+
+                                    for person in content.people : HorizontalBox {
+                                        spacing: 8px;
+
+                                        Text {
+                                            text: "✍️";
+                                            font-size: 16px;
+                                            vertical-alignment: center;
+                                        }
+
+                                        Text {
+                                            text: person.person_name;
+                                            font-size: 14px;
+                                            font-weight: 500;
+                                            color: Theme.text-primary;
+                                            vertical-alignment: center;
+                                        }
+
+                                        Text {
+                                            text: "(" + person.role_name + ")";
+                                            font-size: 13px;
+                                            color: Theme.text-muted;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if book.contents.length == 0 : Rectangle {
+                height: 50px;
+                background: Theme.hover-bg;
+                border-radius: 10px;
+
+                Text {
+                    text: "Nessun contenuto associato";
+                    font-size: 14px;
+                    color: Theme.text-muted;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+}

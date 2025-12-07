@@ -1,0 +1,35 @@
+import { ScrollView, VerticalBox } from "std-widgets.slint";
+import { BookWithContents } from "../types.slint";
+import { BookCard } from "./book_card.slint";
+import { EmptyState } from "./empty_state.slint";
+
+export component BooksView {
+    in property <[BookWithContents]> books;
+
+    callback book-clicked(int);
+    callback content-clicked(int);
+
+    ScrollView {
+        vertical-stretch: 1;
+
+        VerticalBox {
+            spacing: 20px;
+
+            if books.length == 0 : EmptyState {
+                icon: "📚";
+                title: "Nessun libro nella libreria";
+                subtitle: "Aggiungi un libro per iniziare";
+            }
+
+            for book in books : BookCard {
+                book: book;
+                book-clicked(id) => {
+                    book-clicked(id);
+                }
+                content-clicked(id) => {
+                    content-clicked(id);
+                }
+            }
+        }
+    }
+}
