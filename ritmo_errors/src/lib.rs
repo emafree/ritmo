@@ -3,32 +3,29 @@
 // ritmo_errors/src/lib.rs
 pub type RitmoResult<T> = Result<T, RitmoErr>;
 
-use std::fmt;
 use sqlx::Error as SqlxError;
+use std::fmt;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum RitmoErr {
-
     #[error("Errore durante la creazione del database: {0}")]
     DatabaseCreation(String),
-    
+
     #[error("Errore di connessione al database: {0}")]
     DatabaseConnection(String),
-    
+
     #[error("Database non trovato: {0}")]
     DatabaseNotFound(String),
-    
+
     #[error("Errore nella query al database: {0}")]
     DatabaseQuery(String),
-    
+
     #[error("Errore nella migrazione del database: {0}")]
     DatabaseMigration(String),
-    
+
     #[error("Errore generico: {0}")]
     Generic(String),
-    
-
 
     #[error("Migration failed: {0}")]
     DatabaseMigrationFailed(String),
@@ -86,6 +83,10 @@ pub enum RitmoErr {
     MLError(String),
     #[error("File not found: {0}")]
     FileNotFound(String),
+    #[error("Configuration directory not found")]
+    ConfigDirNotFound,
+    #[error("Configuration parsing error: {0}")]
+    ConfigParseError(String),
 }
 
 impl From<sqlx::Error> for RitmoErr {
@@ -97,5 +98,17 @@ impl From<sqlx::Error> for RitmoErr {
 impl From<serde_json::Error> for RitmoErr {
     fn from(err: serde_json::Error) -> Self {
         RitmoErr::MLError(format!("Serialization/Deserialization error: {}", err))
+    }
+}
+
+impl From<toml::de::Error> for RitmoErr {
+    fn from(err: toml::de::Error) -> Self {
+        RitmoErr::ConfigParseError(format!("TOML parse error: {}", err))
+    }
+}
+
+impl From<toml::ser::Error> for RitmoErr {
+    fn from(err: toml::ser::Error) -> Self {
+        RitmoErr::ConfigParseError(format!("TOML serialization error: {}", err))
     }
 }

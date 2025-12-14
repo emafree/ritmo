@@ -1,0 +1,16 @@
+[package]
+name = "ritmo_config"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+toml = { workspace = true }
+dirs = "5.0"
+ritmo_errors = { path = "../ritmo_errors" }
+
+[dev-dependencies]
+tempfile = "3.8"

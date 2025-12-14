@@ -6,9 +6,11 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 anyhow = "1.0"
+dirs = "5.0"
 ritmo_db = { path = "../ritmo_db" }
 ritmo_db_core = { path = "../ritmo_db_core" }
 ritmo_core = { path = "../ritmo_core" }
+ritmo_config = { path = "../ritmo_config" }
 ritmo_errors = { path = "../ritmo_errors" }
 tokio = { workspace = true, features = ["full"] }
 chrono = { workspace = true }

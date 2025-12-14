@@ -52,10 +52,31 @@ cargo check --workspace
 ```
 
 ### Running
-```bash
-# Run CLI (currently demonstrates LibraryConfig initialization)
-cargo run -p ritmo_cli
 
+#### CLI Commands
+```bash
+# Initialize a new library (default: ~/RitmoLibrary)
+cargo run -p ritmo_cli -- init
+cargo run -p ritmo_cli -- init /path/to/library
+
+# Show current library info
+cargo run -p ritmo_cli -- info
+
+# List all recent libraries
+cargo run -p ritmo_cli -- list-libraries
+
+# Set current library
+cargo run -p ritmo_cli -- set-library /path/to/library
+
+# Use specific library temporarily (doesn't change default)
+cargo run -p ritmo_cli -- --library /path/to/library info
+
+# Show help
+cargo run -p ritmo_cli -- --help
+```
+
+#### GUI Application
+```bash
 # Run GUI application
 cargo run -p ritmo_gui
 
@@ -91,12 +112,30 @@ The project is organized as a Rust workspace with the following crates:
 - Uses SHA2 for content hashing
 
 **ritmo_cli**
-- Command-line interface
-- Currently demonstrates LibraryConfig initialization workflow (see `src/main.rs`)
-- Uses clap for CLI argument parsing
+- Command-line interface with full library management
+- Uses clap for CLI argument parsing with subcommands
+- Commands:
+  - `ritmo init [PATH]`: Initialize/create new library
+  - `ritmo list-libraries`: Show recent libraries (max 10)
+  - `ritmo info`: Display current library information
+  - `ritmo set-library PATH`: Set current library
+  - Global option: `--library PATH` to use specific library temporarily
+- Integrates with `ritmo_config` for global settings management
+- Auto-detects portable mode when run from bootstrap/portable_app/
+
+**ritmo_config** (NEW - 2025-12-14)
+- Global application configuration management
+- `AppSettings`: manages last_library_path, recent_libraries (max 10), UI preferences
+- Portable detection: auto-detects if running from bootstrap/portable_app/
+- Config location: `~/.config/ritmo/settings.toml` (Linux/Mac) or `%APPDATA%/ritmo/settings.toml` (Windows)
+- Functions: `config_dir()`, `settings_file()`, `detect_portable_library()`, `is_running_portable()`
+- Shared between GUI and CLI for consistent user experience
+- Uses `ritmo_errors` for error handling (no custom error types)
 
 **ritmo_errors**
 - Shared error types across the project (RitmoErr)
+- Includes error variants for: database, I/O, config parsing, paths, ML, etc.
+- Conversions from common error types: sqlx::Error, std::io::Error, toml::de::Error, toml::ser::Error, serde_json::Error
 
 **ritmo_mapping**
 - Metadata mapping utilities
@@ -123,18 +162,32 @@ The project is organized as a Rust workspace with the following crates:
 
 ### Directory Structure
 
-When initialized, ritmo creates this structure:
+**Global Configuration** (created automatically):
+```
+~/.config/ritmo/           # Linux/Mac
+  └── settings.toml        # Global app settings (last library, recent libraries, preferences)
+
+%APPDATA%/ritmo/           # Windows
+  └── settings.toml
+```
+
+**Library Structure** (when initialized):
 ```
 library_root/
-├── database/          # SQLite database (ritmo.db)
+├── database/              # SQLite database (ritmo.db)
 ├── storage/
-│   ├── books/        # Actual book files
-│   ├── covers/       # Cover images
-│   └── temp/         # Temporary files
-├── config/           # Configuration files (ritmo.toml)
+│   ├── books/            # Actual book files
+│   ├── covers/           # Cover images
+│   └── temp/             # Temporary files
+├── config/               # Configuration files (ritmo.toml)
 └── bootstrap/
-    └── portable_app/ # Portable application files
+    └── portable_app/     # Portable application binaries (multi-platform)
+        ├── ritmo_gui     # GUI executable
+        ├── ritmo_cli     # CLI executable
+        └── README.md     # Usage instructions
 ```
+
+**Portable Mode**: When running from `library_root/bootstrap/portable_app/`, ritmo automatically detects and uses the parent library without needing global configuration.
 
 ### Database Architecture
 
@@ -149,13 +202,24 @@ library_root/
 
 ### Key Patterns
 
+**Application Configuration Pattern** (NEW):
+1. Load global settings: `AppSettings::load_or_create(settings_file()?)?`
+2. Detect portable mode: `detect_portable_library()` returns Some(path) if portable
+3. Get library to use: `app_settings.get_library_to_use()` (portable > last_library > None)
+4. Update recent libraries: `app_settings.update_last_library(path)`
+5. Save settings: `app_settings.save(settings_path)?`
+
 **LibraryConfig workflow**:
 1. Create config with root path: `LibraryConfig::new(path)`
 2. Initialize directories: `config.initialize()`
 3. Initialize database: `config.initialize_database().await`
 4. Validate setup: `config.validate()` and `config.health_check()`
-5. Save config: `config.save(path)`
+5. Save config: `config.save(config.main_config_file())?`
 6. Create connection pool: `config.create_pool().await`
+
+**Configuration Files**:
+- Global app config: `~/.config/ritmo/settings.toml` (managed by `ritmo_config`)
+- Per-library config: `{library}/config/ritmo.toml` (managed by `ritmo_db_core::LibraryConfig`)
 
 **Async/await**: All database operations use async/await with Tokio runtime
 
@@ -187,3 +251,37 @@ Required Rust version: **stable** (currently 1.91+) (specified in `rust-toolchai
 - Many crates use `serial_test` for tests that access shared resources (database)
 - Dev dependencies include `tempfile` for temporary test directories
 - Use `tokio-test` for async test utilities
+
+## Recent Changes (2025-12-14)
+
+### New Crate: ritmo_config
+- Created `ritmo_config` crate for global application configuration
+- Manages `~/.config/ritmo/settings.toml` with last_library_path and recent_libraries
+- Implements portable mode detection (auto-detects if running from bootstrap/portable_app/)
+- Shared between GUI and CLI for consistent behavior
+- Integrated with `ritmo_errors` (no custom error types)
+
+### CLI Improvements
+- Refactored `ritmo_cli` from simple demo to full-featured command-line tool
+- Added subcommands: init, info, list-libraries, set-library
+- Global `--library PATH` option to temporarily override library
+- Auto-saves to recent libraries when initializing or using libraries
+- Fully integrated with `ritmo_config` for global settings
+
+### GUI Status
+- GUI (`ritmo_gui`) not yet updated to use `ritmo_config`
+- Currently uses hardcoded library path (~/RitmoLibrary or ./ritmo_library)
+- TODO: Integrate library selection dialog and `ritmo_config` support
+
+### Error Handling
+- Extended `ritmo_errors::RitmoErr` with config-related variants
+- Added conversions from toml::de::Error and toml::ser::Error
+- All crates now use shared error types consistently
+
+## TODO/Next Steps
+
+1. **GUI Integration**: Update `ritmo_gui` to use `ritmo_config` and add library selection dialog
+2. **Portable Bootstrap**: Implement automatic copying of binaries to bootstrap/portable_app/ during library initialization
+3. **Multi-platform Binaries**: Handle cross-compilation for Linux/Windows/Mac binaries in bootstrap
+4. **CLI Book Management**: Add commands for adding/listing/searching books
+5. **Documentation**: Create user documentation for portable library usage
