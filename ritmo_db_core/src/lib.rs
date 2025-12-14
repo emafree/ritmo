@@ -4,10 +4,14 @@ pub mod database;
 pub mod filters;
 pub mod maintenance;
 pub mod query_builder;
+pub mod results;
 
 pub use database::Database;
 pub use filters::{BookFilters, BookSortField, ContentFilters, ContentSortField};
-pub use query_builder::{build_books_query, build_contents_query};
+pub use query_builder::{
+    build_books_query, build_contents_query, execute_books_query, execute_contents_query,
+};
+pub use results::{BookResult, ContentResult};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};

@@ -273,11 +273,92 @@ Required Rust version: **stable** (currently 1.91+) (specified in `rust-toolchai
 - Moved to `ritmo_db_core` since filters are tightly coupled to database queries
 - This keeps the dependency graph clean: `ritmo_cli` → `ritmo_db_core` (filters) → database
 
-**Next Steps for Filters:**
-1. Create result structs for query results
-2. Execute queries using `LibraryConfig::create_pool()`
-3. Map SQL results to structs
-4. Format output (table, JSON)
+**Filter System Implementation Complete (Session 2):**
+✅ Created result structs (`BookResult`, `ContentResult`) in `ritmo_db_core/src/results.rs`:
+  - Struct definitions with `sqlx::FromRow` derive for direct query mapping
+  - Helper methods for date formatting and short string representation
+  - Full test coverage (2/2 tests passing)
+
+✅ Implemented query execution functions in `ritmo_db_core/src/query_builder.rs`:
+  - `execute_books_query()`: Executes parameterized book queries
+  - `execute_contents_query()`: Executes parameterized content queries
+  - Proper parameter binding for SQL injection prevention
+
+✅ Created output formatter in `ritmo_cli/src/formatter.rs`:
+  - Three output formats: `table` (default), `json`, `simple`
+  - Table format with aligned columns and headers
+  - JSON format for programmatic processing
+  - Simple format for quick reading
+  - Helper functions for string truncation
+
+✅ Integrated query execution in CLI commands:
+  - Updated `cmd_list_books()` to execute queries and format results
+  - Updated `cmd_list_contents()` to execute queries and format results
+  - Added `--output` / `-o` flag for format selection
+  - Full error handling with library validation
+
+✅ Testing and Validation:
+  - All 8 unit tests passing in `ritmo_db_core`
+  - All 2 unit tests passing in `ritmo_cli` formatter
+  - End-to-end testing on empty database successful
+  - All output formats verified (table, json, simple)
+  - Help documentation complete and accurate
+
+**Files Modified/Created:**
+- Created: `ritmo_db_core/src/results.rs` (148 lines)
+- Created: `ritmo_cli/src/formatter.rs` (223 lines)
+- Modified: `ritmo_db_core/src/lib.rs` (exported new types)
+- Modified: `ritmo_db_core/src/query_builder.rs` (added execution functions)
+- Modified: `ritmo_cli/src/main.rs` (integrated query execution)
+- Modified: `ritmo_cli/Cargo.toml` (added serde_json dependency)
+
+**Preset System Implementation Complete (Session 2 - Phase 1):**
+✅ Created preset data structures in `ritmo_config/src/presets.rs`:
+  - `PresetType`: Enum for Books/Contents
+  - `BookFilterPreset` and `ContentFilterPreset`: Filter configurations
+  - `NamedPreset<T>`: Generic container with name and description
+  - `GlobalPresets`: HashMap-based storage for both preset types
+  - Full test coverage (5/5 tests passing)
+
+✅ Integrated presets into AppSettings:
+  - Added `presets: GlobalPresets` field to `AppSettings`
+  - Presets automatically saved/loaded with settings.toml
+  - Exported preset types from `ritmo_config`
+
+✅ Implemented CLI preset commands:
+  - `save-preset`: Save filter combinations with name and description
+  - `list-presets`: Display all saved presets (supports filtering by type)
+  - `delete-preset`: Remove saved presets
+  - All commands support both books and contents presets
+
+✅ Added `--preset` flag to list commands:
+  - `list-books --preset <name>`: Apply saved preset
+  - `list-contents --preset <name>`: Apply saved preset
+  - CLI parameters override preset values (explicit > preset > default)
+  - Preset not found error handling
+
+✅ Testing and Validation:
+  - End-to-end testing successful
+  - Preset save/load/delete verified
+  - Preset application in list commands verified
+  - Parameter override priority confirmed
+  - Help documentation updated with --preset flag
+
+**Files Modified/Created:**
+- Created: `ritmo_config/src/presets.rs` (280 lines)
+- Modified: `ritmo_config/src/app_settings.rs` (added presets field)
+- Modified: `ritmo_config/src/lib.rs` (exported preset types)
+- Modified: `ritmo_cli/src/main.rs` (added preset commands and --preset flag, ~200 lines added)
+- Commands: SavePreset, ListPresets, DeletePreset
+
+**Phase 1 Complete - Global Presets Working**
+The preset system is now fully functional for global presets stored in `~/.config/ritmo/settings.toml`. 
+Users can save filter combinations and reuse them across sessions.
+
+**Next Phase (Future):**
+- Library-specific presets in `library/config/filters.toml` (portable!)
+- Default preset selection per library
+- Preset resolution order (library > global)
 
 ### 2025-12-14 - Session 1: Configuration System
 
@@ -308,16 +389,20 @@ Required Rust version: **stable** (currently 1.91+) (specified in `rust-toolchai
 ## TODO/Next Steps
 
 ### High Priority
-1. **Complete Filter Implementation** (IN PROGRESS - 75%):
+1. **Complete Filter Implementation** (✅ COMPLETED - 2025-12-14):
    - ✅ CLI commands `list-books` and `list-contents` with full options
-   - ✅ Filter structs and query builder with tests (6/6 passing)
-   - ⏸️ TODO: Execute queries against real database
-   - ⏸️ TODO: Create result structs and format output
+   - ✅ Filter structs and query builder with tests (8/8 passing)
+   - ✅ Execute queries against real database
+   - ✅ Create result structs (BookResult, ContentResult) and format output (table, json, simple)
+   - ✅ Full integration tested end-to-end
    
-2. **Filter Preset System** (PLANNED - Architecture designed):
-   - Phase 1: Global presets in `~/.config/ritmo/settings.toml`
-   - Phase 2: Library presets in `library/config/filters.toml` (CRITICAL for portable mode!)
-   - Phase 3: Auto-save last filter, interactive editing
+2. **Filter Preset System - Phase 1** (✅ COMPLETED - 2025-12-14):
+   - ✅ Phase 1: Global presets in `~/.config/ritmo/settings.toml`
+   - ✅ Commands: save-preset, list-presets, delete-preset
+   - ✅ --preset flag for list-books and list-contents
+   - ✅ Parameter override priority (CLI > preset > default)
+   - ⏸️ Phase 2: Library presets in `library/config/filters.toml` (FUTURE - for portable mode)
+   - ⏸️ Phase 3: Auto-save last filter, interactive editing (FUTURE)
    - See "Filter Preset System" section below for full architecture
    
 3. **GUI Integration**: Update `ritmo_gui` to use `ritmo_config` and add library selection dialog

@@ -1,8 +1,10 @@
 mod app_settings;
 mod portable;
+mod presets;
 
 pub use app_settings::AppSettings;
 pub use portable::{detect_portable_library, is_running_portable};
+pub use presets::{BookFilterPreset, ContentFilterPreset, GlobalPresets, NamedPreset, PresetType};
 pub use ritmo_errors::RitmoErr;
 
 use std::path::PathBuf;

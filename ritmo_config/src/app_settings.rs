@@ -1,3 +1,4 @@
+use crate::presets::GlobalPresets;
 use ritmo_errors::RitmoErr;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -17,6 +18,10 @@ pub struct AppSettings {
     /// Preferenze UI
     #[serde(default)]
     pub preferences: Preferences,
+
+    /// Preset globali per filtri
+    #[serde(default)]
+    pub presets: GlobalPresets,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -53,6 +58,7 @@ impl Default for AppSettings {
             last_library_path: None,
             recent_libraries: Vec::new(),
             preferences: Preferences::default(),
+            presets: GlobalPresets::default(),
         }
     }
 }

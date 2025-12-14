@@ -4336,6 +4336,7 @@ dependencies = [
  "ritmo_db",
  "ritmo_db_core",
  "ritmo_errors",
+ "serde_json",
  "tokio",
 ]
 
