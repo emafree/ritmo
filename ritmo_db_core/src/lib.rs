@@ -1,5 +1,4 @@
 pub mod config;
-pub mod connection;
 pub mod database;
 pub mod filters;
 pub mod maintenance;

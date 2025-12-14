@@ -18,9 +18,15 @@ Each session is documented in a file named: `YYYY-MM-DD-session-summary.md`
 
 ### Available Sessions
 
-- [2025-12-14](./2025-12-14-session-summary.md) - Configuration System + Filter Architecture
+- [2025-12-14 Session 1-2](./2025-12-14-session-summary.md) - Configuration System + Filter Architecture
   - Session 1: ritmo_config crate, CLI library management
   - Session 2: Filter system with query builder, preset architecture design
+
+- [2025-12-14 Session 3](./2025-12-14-session3-preset-system.md) - Filter Preset System (Phase 1)
+  - Preset data structures and storage
+  - CLI preset commands (save-preset, list-presets, delete-preset)
+  - --preset flag for list commands
+  - Complete documentation and testing
 
 ## How to Use
 

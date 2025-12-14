@@ -92,4 +92,23 @@ impl Publisher {
         .await?;
         Ok(publishers)
     }
+
+    pub async fn get_or_create_by_name(
+        pool: &sqlx::SqlitePool,
+        name: &str,
+    ) -> Result<i64, sqlx::Error> {
+        if let Some(publisher) = Self::get_by_name(pool, name).await? {
+            return Ok(publisher.id.unwrap_or(0));
+        }
+        let publisher = Publisher {
+            id: None,
+            name: name.to_string(),
+            country: None,
+            website: None,
+            notes: None,
+            created_at: chrono::Utc::now().timestamp(),
+            updated_at: chrono::Utc::now().timestamp(),
+        };
+        publisher.save(pool).await
+    }
 }

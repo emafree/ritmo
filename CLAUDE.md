@@ -71,8 +71,18 @@ cargo run -p ritmo_cli -- set-library /path/to/library
 # Use specific library temporarily (doesn't change default)
 cargo run -p ritmo_cli -- --library /path/to/library info
 
+# Import a book into the library
+cargo run -p ritmo_cli -- add /path/to/book.epub --title "Book Title" --author "Author Name"
+cargo run -p ritmo_cli -- add book.pdf --title "My Book" --author "John Doe" --publisher "Publisher" --year 2024 --isbn "978-1234567890" --series "Series Name" --series-index 1 --notes "Some notes"
+
+# List books with filters
+cargo run -p ritmo_cli -- list-books
+cargo run -p ritmo_cli -- list-books --author "Stephen King"
+cargo run -p ritmo_cli -- list-books --format epub --year 2024
+
 # Show help
 cargo run -p ritmo_cli -- --help
+cargo run -p ritmo_cli -- add --help
 ```
 
 #### GUI Application
@@ -108,7 +118,9 @@ The project is organized as a Rust workspace with the following crates:
 **ritmo_core**
 - Core business logic and ebook management
 - DTOs in `src/dto/`: book_dto, people_dto, publishers_dto, language_dto, alias_dto, content_dto, tags_dto (some placeholders)
-- Services in `src/service/`: storage_service.rs for file storage operations
+- Services in `src/service/`:
+  - `storage_service.rs`: File storage operations
+  - `book_import_service.rs`: Book import with manual metadata (SHA256 hash, duplicate detection)
 - Uses SHA2 for content hashing
 
 **ritmo_cli**
@@ -119,6 +131,12 @@ The project is organized as a Rust workspace with the following crates:
   - `ritmo list-libraries`: Show recent libraries (max 10)
   - `ritmo info`: Display current library information
   - `ritmo set-library PATH`: Set current library
+  - `ritmo add <file> --title "..." [options]`: Import a book with manual metadata
+  - `ritmo list-books [--preset NAME] [--author ...] [--format ...] [--output table|json|simple]`: List books with filters
+  - `ritmo list-contents [--preset NAME] [--author ...] [--output table|json|simple]`: List contents with filters
+  - `ritmo save-preset books|contents --name NAME [--author ...] [--format ...]`: Save filter preset
+  - `ritmo list-presets [books|contents]`: Show saved presets
+  - `ritmo delete-preset books|contents NAME`: Delete preset
   - Global option: `--library PATH` to use specific library temporarily
 - Integrates with `ritmo_config` for global settings management
 - Auto-detects portable mode when run from bootstrap/portable_app/
@@ -359,6 +377,49 @@ Users can save filter combinations and reuse them across sessions.
 - Library-specific presets in `library/config/filters.toml` (portable!)
 - Default preset selection per library
 - Preset resolution order (library > global)
+
+**Book Import System Complete (Session 4):**
+✅ Created book import service in `ritmo_core/src/service/book_import_service.rs`:
+  - `BookImportMetadata`: Struct for manual metadata input
+  - `import_book()`: Main function to import books with metadata
+  - Helper functions: `get_or_create_format()`, `get_or_create_publisher()`, etc.
+  - SHA256 hash calculation for duplicate detection
+  - Automatic file format detection from extension
+  - File copying to `storage/books/` directory
+
+✅ Implemented CLI `add` command in `ritmo_cli`:
+  - Command: `ritmo add <file> --title "..." [options]`
+  - Required: `--title` parameter
+  - Optional: `--author`, `--publisher`, `--year`, `--isbn`, `--format`, `--series`, `--series-index`, `--notes`
+  - Automatic format detection if `--format` not specified
+  - Duplicate detection by file hash
+  - Integration with existing library system
+
+✅ Testing and Validation:
+  - All workspace tests passing (23/23 tests)
+  - Successfully imported 3 test books (EPUB, PDF formats)
+  - Duplicate detection verified (prevents re-importing same file)
+  - Format auto-detection verified (PDF format correctly detected)
+  - File storage verified (files copied to storage/books/)
+
+**Files Created/Modified:**
+- Created: `ritmo_core/src/service/book_import_service.rs` (~230 lines)
+- Modified: `ritmo_core/src/service/mod.rs` (exported new types)
+- Modified: `ritmo_cli/src/main.rs` (added `Add` command and `cmd_add()` function, ~80 lines)
+
+**Example Usage:**
+```bash
+# Import a book with minimal metadata
+ritmo add book.epub --title "My Book" --author "John Doe"
+
+# Import with full metadata
+ritmo add book.pdf --title "Complete Book" --author "Jane Smith" \
+  --publisher "Publisher Name" --year 2024 --isbn "978-1234567890" \
+  --series "Series Name" --series-index 1 --notes "First volume"
+
+# Format is detected automatically from file extension
+ritmo add file.mobi --title "Mobi Book"  # format = mobi
+```
 
 ### 2025-12-14 - Session 1: Configuration System
 

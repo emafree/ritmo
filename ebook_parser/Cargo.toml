@@ -7,3 +7,7 @@ authors.workspace = true
 repository.workspace = true
 
 [dependencies]
+zip = "2.2"
+quick-xml = "0.36"
+serde = { workspace = true }
+thiserror = "2.0"

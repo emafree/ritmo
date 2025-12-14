@@ -56,11 +56,7 @@ impl Person {
     pub fn from_dto() {}
 
     pub async fn get(pool: &sqlx::SqlitePool, id: i64) -> Result<Option<Person>, sqlx::Error> {
-        let person = sqlx::query_as!(
-            Person,
-            "SELECT * FROM people WHERE id = ?",
-            id
-            )
+        let person = sqlx::query_as!(Person, "SELECT * FROM people WHERE id = ?", id)
             .fetch_optional(pool)
             .await?;
         Ok(person)
@@ -98,20 +94,14 @@ impl Person {
     }
 
     pub async fn delete(pool: &sqlx::SqlitePool, id: i64) -> Result<u64, sqlx::Error> {
-        let result = sqlx::query!(
-            "DELETE FROM people WHERE id = ?",
-            id
-            )
+        let result = sqlx::query!("DELETE FROM people WHERE id = ?", id)
             .execute(pool)
             .await?;
         Ok(result.rows_affected())
     }
 
     pub async fn list_all(pool: &sqlx::SqlitePool) -> Result<Vec<Person>, sqlx::Error> {
-        let all = sqlx::query_as!(
-            Person,
-            "SELECT * FROM people ORDER BY name"
-            )
+        let all = sqlx::query_as!(Person, "SELECT * FROM people ORDER BY name")
             .fetch_all(pool)
             .await?;
         Ok(all)
@@ -134,5 +124,45 @@ impl Person {
         .fetch_all(pool)
         .await?;
         Ok(found)
+    }
+
+    pub async fn get_by_name(
+        pool: &sqlx::SqlitePool,
+        name: &str,
+    ) -> Result<Option<Person>, sqlx::Error> {
+        let person = sqlx::query_as!(Person, "SELECT * FROM people WHERE name = ?", name)
+            .fetch_optional(pool)
+            .await?;
+        Ok(person)
+    }
+
+    pub async fn get_or_create_by_name(
+        pool: &sqlx::SqlitePool,
+        name: &str,
+    ) -> Result<i64, sqlx::Error> {
+        if let Some(person) = Self::get_by_name(pool, name).await? {
+            return Ok(person.id.unwrap_or(0));
+        }
+        let person = Person {
+            id: None,
+            name: name.to_string(),
+            display_name: None,
+            given_name: None,
+            surname: None,
+            middle_names: None,
+            title: None,
+            suffix: None,
+            nationality: None,
+            birth_date: None,
+            death_date: None,
+            biography: None,
+            normalized_key: None,
+            confidence: 0.5,
+            source: "manual_import".to_string(),
+            verified: 0,
+            created_at: chrono::Utc::now().timestamp(),
+            updated_at: chrono::Utc::now().timestamp(),
+        };
+        person.save(pool).await
     }
 }

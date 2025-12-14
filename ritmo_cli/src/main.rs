@@ -6,6 +6,7 @@ use ritmo_config::{
     detect_portable_library, settings_file, AppSettings, BookFilterPreset, ContentFilterPreset,
     NamedPreset, PresetType,
 };
+use ritmo_core::service::{import_book, BookImportMetadata};
 use ritmo_db_core::{
     execute_books_query, execute_contents_query, BookFilters, BookSortField, ContentFilters,
     ContentSortField, LibraryConfig,
@@ -197,6 +198,48 @@ enum Commands {
         #[arg(long, short = 'o', default_value = "table")]
         output: String,
     },
+
+    /// Importa un libro nella libreria
+    Add {
+        /// Percorso del file da importare
+        file: PathBuf,
+
+        /// Titolo del libro (richiesto)
+        #[arg(long, short = 't')]
+        title: String,
+
+        /// Autore del libro
+        #[arg(long, short = 'a')]
+        author: Option<String>,
+
+        /// Editore
+        #[arg(long, short = 'p')]
+        publisher: Option<String>,
+
+        /// Anno di pubblicazione
+        #[arg(long, short = 'y')]
+        year: Option<i32>,
+
+        /// ISBN
+        #[arg(long)]
+        isbn: Option<String>,
+
+        /// Formato (epub, pdf, mobi, etc.) - rilevato automaticamente se omesso
+        #[arg(long, short = 'f')]
+        format: Option<String>,
+
+        /// Serie
+        #[arg(long, short = 's')]
+        series: Option<String>,
+
+        /// Indice nella serie
+        #[arg(long)]
+        series_index: Option<i64>,
+
+        /// Note
+        #[arg(long, short = 'n')]
+        notes: Option<String>,
+    },
 }
 
 #[tokio::main]
@@ -316,6 +359,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 limit,
                 offset,
                 output,
+            )
+            .await?;
+        }
+        Commands::Add {
+            file,
+            title,
+            author,
+            publisher,
+            year,
+            isbn,
+            format,
+            series,
+            series_index,
+            notes,
+        } => {
+            cmd_add(
+                &cli.library,
+                &app_settings,
+                file,
+                title,
+                author,
+                publisher,
+                year,
+                isbn,
+                format,
+                series,
+                series_index,
+                notes,
             )
             .await?;
         }
@@ -857,6 +928,83 @@ fn cmd_delete_preset(
         println!("✓ Preset '{}' eliminato", name);
     } else {
         println!("✗ Preset '{}' non trovato", name);
+    }
+
+    Ok(())
+}
+
+/// Comando: add - Importa un libro nella libreria
+async fn cmd_add(
+    cli_library: &Option<PathBuf>,
+    app_settings: &AppSettings,
+    file: PathBuf,
+    title: String,
+    author: Option<String>,
+    publisher: Option<String>,
+    year: Option<i32>,
+    isbn: Option<String>,
+    format: Option<String>,
+    series: Option<String>,
+    series_index: Option<i64>,
+    notes: Option<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // Determina quale libreria usare
+    let library_path = if let Some(path) = cli_library {
+        path.clone()
+    } else if let Some(portable) = detect_portable_library() {
+        portable
+    } else if let Some(path) = &app_settings.last_library_path {
+        path.clone()
+    } else {
+        println!("✗ Nessuna libreria configurata");
+        println!("  Usa 'ritmo init' per inizializzare una libreria");
+        return Ok(());
+    };
+
+    // Verifica che il file esista
+    if !file.exists() {
+        println!("✗ File non trovato: {}", file.display());
+        return Ok(());
+    }
+
+    println!("Importazione libro: {}", file.display());
+    println!("  Titolo: {}", title);
+    if let Some(ref a) = author {
+        println!("  Autore: {}", a);
+    }
+    if let Some(ref p) = publisher {
+        println!("  Editore: {}", p);
+    }
+    if let Some(y) = year {
+        println!("  Anno: {}", y);
+    }
+
+    // Crea config e pool
+    let config = LibraryConfig::new(&library_path);
+    let pool = config.create_pool().await?;
+
+    // Prepara metadati
+    let metadata = BookImportMetadata {
+        title,
+        author,
+        publisher,
+        year,
+        isbn,
+        format,
+        series,
+        series_index,
+        notes,
+    };
+
+    // Importa il libro
+    match import_book(&config, &pool, &file, metadata).await {
+        Ok(book_id) => {
+            println!("✓ Libro importato con successo!");
+            println!("  ID: {}", book_id);
+        }
+        Err(e) => {
+            println!("✗ Errore durante l'importazione: {}", e);
+        }
     }
 
     Ok(())

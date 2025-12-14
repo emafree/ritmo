@@ -30,11 +30,7 @@ impl Series {
     }
 
     pub async fn get(pool: &sqlx::SqlitePool, id: i64) -> Result<Option<Series>, sqlx::Error> {
-        let series = sqlx::query_as!(
-            Series,
-            "SELECT * FROM series WHERE id = ?",
-            id
-            )
+        let series = sqlx::query_as!(Series, "SELECT * FROM series WHERE id = ?", id)
             .fetch_optional(pool)
             .await?;
         Ok(series)
@@ -44,11 +40,7 @@ impl Series {
         pool: &sqlx::SqlitePool,
         name: &str,
     ) -> Result<Option<Series>, sqlx::Error> {
-        let series = sqlx::query_as!(
-            Series,
-            "SELECT * FROM series WHERE name = ?",
-            name
-            )
+        let series = sqlx::query_as!(Series, "SELECT * FROM series WHERE name = ?", name)
             .fetch_optional(pool)
             .await?;
         Ok(series)
@@ -71,26 +63,23 @@ impl Series {
     }
 
     pub async fn delete(pool: &sqlx::SqlitePool, id: i64) -> Result<u64, sqlx::Error> {
-        let result = sqlx::query!(
-            "DELETE FROM series WHERE id = ?",
-            id
-            )
+        let result = sqlx::query!("DELETE FROM series WHERE id = ?", id)
             .execute(pool)
             .await?;
         Ok(result.rows_affected())
     }
 
     pub async fn list_all(pool: &sqlx::SqlitePool) -> Result<Vec<Series>, sqlx::Error> {
-        let all = sqlx::query_as!(
-            Series,
-            "SELECT * FROM series ORDER BY name"
-            )
+        let all = sqlx::query_as!(Series, "SELECT * FROM series ORDER BY name")
             .fetch_all(pool)
             .await?;
         Ok(all)
     }
 
-    pub async fn search(pool: &sqlx::SqlitePool, pattern: &str) -> Result<Vec<Series>, sqlx::Error> {
+    pub async fn search(
+        pool: &sqlx::SqlitePool,
+        pattern: &str,
+    ) -> Result<Vec<Series>, sqlx::Error> {
         let search_pattern = format!("%{}%", pattern);
         let found = sqlx::query_as!(
             Series,
@@ -101,5 +90,24 @@ impl Series {
         .fetch_all(pool)
         .await?;
         Ok(found)
+    }
+
+    pub async fn get_or_create_by_name(
+        pool: &sqlx::SqlitePool,
+        name: &str,
+    ) -> Result<i64, sqlx::Error> {
+        if let Some(series) = Self::get_by_name(pool, name).await? {
+            return Ok(series.id.unwrap_or(0));
+        }
+        let series = Series {
+            id: None,
+            name: name.to_string(),
+            description: None,
+            total_books: None,
+            completed: 0,
+            created_at: chrono::Utc::now().timestamp(),
+            updated_at: chrono::Utc::now().timestamp(),
+        };
+        series.save(pool).await
     }
 }

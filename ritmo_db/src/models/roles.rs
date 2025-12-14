@@ -12,12 +12,12 @@ pub struct Role {
 impl Role {
     pub async fn save(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
         let rec = sqlx::query!(
-                "INSERT INTO roles (name, description) VALUES (?, ?)",
-                self.name,
-                self.description
-            )
-            .execute(pool)
-            .await?;
+            "INSERT INTO roles (name, description) VALUES (?, ?)",
+            self.name,
+            self.description
+        )
+        .execute(pool)
+        .await?;
         // Recupera l'ID appena inserito
         let id = rec.last_insert_rowid();
         Ok(id)
@@ -45,19 +45,46 @@ impl Role {
             name,
             description,
             id
-            )
+        )
+        .execute(pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn delete(pool: &sqlx::SqlitePool, id: i64) -> Result<(), sqlx::Error> {
+        sqlx::query!("DELETE FROM roles WHERE id = ?", id)
             .execute(pool)
             .await?;
         Ok(())
     }
 
-    pub async fn delete(pool: &sqlx::SqlitePool, id: i64) -> Result<(), sqlx::Error> {
-        sqlx::query!(
-            "DELETE FROM roles WHERE id = ?",
-            id
-            )
-            .execute(pool)
-            .await?;
-        Ok(())
+    pub async fn get_by_name(
+        pool: &sqlx::SqlitePool,
+        name: &str,
+    ) -> Result<Option<Role>, sqlx::Error> {
+        let result = sqlx::query_as!(
+            Role,
+            "SELECT id, name, description, created_at FROM roles WHERE name = ?",
+            name
+        )
+        .fetch_optional(pool)
+        .await?;
+        Ok(result)
+    }
+
+    pub async fn get_or_create_by_name(
+        pool: &sqlx::SqlitePool,
+        name: &str,
+    ) -> Result<i64, sqlx::Error> {
+        if let Some(role) = Self::get_by_name(pool, name).await? {
+            return Ok(role.id.unwrap_or(0));
+        }
+        let role = Role {
+            id: None,
+            name: name.to_string(),
+            description: None,
+            created_at: chrono::Utc::now().timestamp(),
+        };
+        role.save(pool).await
     }
 }

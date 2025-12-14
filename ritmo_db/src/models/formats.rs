@@ -9,14 +9,14 @@ pub struct Format {
 }
 
 impl Format {
-    pub async fn create(&self, pool: &sqlx::SqlitePool ) -> Result<i64, sqlx::Error> {
+    pub async fn create(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
         let result = sqlx::query!(
-                "INSERT INTO formats (name, description) VALUES (?, ?)",
-                self.name,
-                self.description
-            )
-            .execute(pool)
-            .await?;
+            "INSERT INTO formats (name, description) VALUES (?, ?)",
+            self.name,
+            self.description
+        )
+        .execute(pool)
+        .await?;
         Ok(result.last_insert_rowid())
     }
 
@@ -42,19 +42,46 @@ impl Format {
             name,
             description,
             id
-            )
+        )
+        .execute(pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn delete(pool: &sqlx::SqlitePool, id: i64) -> Result<(), sqlx::Error> {
+        sqlx::query!("DELETE FROM formats WHERE id = ?", id)
             .execute(pool)
             .await?;
         Ok(())
     }
 
-    pub async fn delete(pool: &sqlx::SqlitePool, id: i64) -> Result<(), sqlx::Error> {
-        sqlx::query!(
-            "DELETE FROM formats WHERE id = ?",
-            id
-            )
-            .execute(pool)
-            .await?;
-        Ok(())
+    pub async fn get_by_name(
+        pool: &sqlx::SqlitePool,
+        name: &str,
+    ) -> Result<Option<Format>, sqlx::Error> {
+        let result = sqlx::query_as!(
+            Format,
+            "SELECT id, name, description, created_at FROM formats WHERE name = ?",
+            name
+        )
+        .fetch_optional(pool)
+        .await?;
+        Ok(result)
+    }
+
+    pub async fn get_or_create_by_name(
+        pool: &sqlx::SqlitePool,
+        name: &str,
+    ) -> Result<i64, sqlx::Error> {
+        if let Some(format) = Self::get_by_name(pool, name).await? {
+            return Ok(format.id.unwrap_or(0));
+        }
+        let format = Format {
+            id: None,
+            name: name.to_string(),
+            description: None,
+            created_at: chrono::Utc::now().timestamp(),
+        };
+        format.create(pool).await
     }
 }
