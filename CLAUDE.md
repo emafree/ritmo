@@ -252,9 +252,36 @@ Required Rust version: **stable** (currently 1.91+) (specified in `rust-toolchai
 - Dev dependencies include `tempfile` for temporary test directories
 - Use `tokio-test` for async test utilities
 
-## Recent Changes (2025-12-14)
+## Recent Changes
 
-### New Crate: ritmo_config
+### 2025-12-14 - Session 2: Filter System Implementation (IN PROGRESS)
+
+**Filter System Architecture:**
+- Added `list-books` and `list-contents` commands to CLI with comprehensive filter options
+- Created filter structs in `ritmo_db_core/src/filters.rs`:
+  - `BookFilters`: author, publisher, series, format, year, isbn, search, sort, limit, offset
+  - `ContentFilters`: author, content_type, year, search, sort, limit, offset
+  - `BookSortField` and `ContentSortField` enums with SQL mapping
+- Implemented query builder in `ritmo_db_core/src/query_builder.rs`:
+  - `build_books_query()`: Constructs parameterized SQL with JOINs and WHERE clauses
+  - `build_contents_query()`: Similar for contents
+  - Full test coverage (6 tests passing)
+- CLI commands accept all filter options and build queries, but database execution not yet implemented
+
+**Architecture Decision: Filter Location**
+- Initially placed filters in `ritmo_core`, but caused cyclic dependency
+- Moved to `ritmo_db_core` since filters are tightly coupled to database queries
+- This keeps the dependency graph clean: `ritmo_cli` → `ritmo_db_core` (filters) → database
+
+**Next Steps for Filters:**
+1. Create result structs for query results
+2. Execute queries using `LibraryConfig::create_pool()`
+3. Map SQL results to structs
+4. Format output (table, JSON)
+
+### 2025-12-14 - Session 1: Configuration System
+
+**New Crate: ritmo_config**
 - Created `ritmo_config` crate for global application configuration
 - Manages `~/.config/ritmo/settings.toml` with last_library_path and recent_libraries
 - Implements portable mode detection (auto-detects if running from bootstrap/portable_app/)
@@ -280,8 +307,116 @@ Required Rust version: **stable** (currently 1.91+) (specified in `rust-toolchai
 
 ## TODO/Next Steps
 
-1. **GUI Integration**: Update `ritmo_gui` to use `ritmo_config` and add library selection dialog
-2. **Portable Bootstrap**: Implement automatic copying of binaries to bootstrap/portable_app/ during library initialization
-3. **Multi-platform Binaries**: Handle cross-compilation for Linux/Windows/Mac binaries in bootstrap
-4. **CLI Book Management**: Add commands for adding/listing/searching books
-5. **Documentation**: Create user documentation for portable library usage
+### High Priority
+1. **Complete Filter Implementation** (IN PROGRESS - 75%):
+   - ✅ CLI commands `list-books` and `list-contents` with full options
+   - ✅ Filter structs and query builder with tests (6/6 passing)
+   - ⏸️ TODO: Execute queries against real database
+   - ⏸️ TODO: Create result structs and format output
+   
+2. **Filter Preset System** (PLANNED - Architecture designed):
+   - Phase 1: Global presets in `~/.config/ritmo/settings.toml`
+   - Phase 2: Library presets in `library/config/filters.toml` (CRITICAL for portable mode!)
+   - Phase 3: Auto-save last filter, interactive editing
+   - See "Filter Preset System" section below for full architecture
+   
+3. **GUI Integration**: Update `ritmo_gui` to use `ritmo_config` and add library selection dialog
+
+4. **CLI Book Import**: Add `ritmo add <file>` command to import books into library
+
+### Medium Priority
+4. **Portable Bootstrap**: Implement automatic copying of binaries to bootstrap/portable_app/ during library initialization
+5. **Multi-platform Binaries**: Handle cross-compilation for Linux/Windows/Mac binaries in bootstrap
+6. **Documentation**: Create user documentation for portable library usage
+
+### Low Priority
+7. **Advanced Filters**: Implement `--filter` option with SQL-like query DSL for complex queries
+
+## Filter Preset System (Planned Architecture)
+
+### Two-Level Filter Storage
+
+**1. Global Presets** (`~/.config/ritmo/settings.toml`):
+- User's personal filter preferences
+- Not portable with library
+- Used across all libraries
+- Examples: "my favorites", "recent additions"
+
+**2. Library Presets** (`library/config/filters.toml`):
+- Library-specific filter configuration
+- ✅ Portable with library (critical for portable mode!)
+- Travels with library when copied/shared
+- Examples: "default view", "collection-specific filters"
+
+### Filter Resolution Order (Priority)
+
+When executing `ritmo list-books`:
+1. Explicit CLI options (`--author`, `--format`, etc.) - highest priority
+2. `--preset <name>` (searches library first, then global)
+3. Library default filter (from `library/config/filters.toml`)
+4. Last used filter (global `~/.config/ritmo/last_filters`)
+5. No filter (list all) - lowest priority
+
+### File Structure
+
+```
+~/.config/ritmo/
+├── settings.toml          # Global config + global presets + last_filters
+
+/path/to/library/
+├── config/
+│   ├── ritmo.toml        # Library config (existing)
+│   └── filters.toml      # Library-specific presets (NEW)
+```
+
+### Implementation Phases
+
+**Phase 1** (Next session - Foundation):
+- Data structures: `FilterPreset`, preset management
+- Save/load global presets in `~/.config/ritmo/settings.toml`
+- Commands: `save-preset`, `list-presets`, `--preset <name>`
+
+**Phase 2** (Essential - Portability):
+- Save/load library presets in `library/config/filters.toml`
+- Resolution order (library > global)
+- Default filters per library
+- Include example filters when creating new library
+
+**Phase 3** (UX Enhancement):
+- Auto-save last used filter
+- Commands: `--use-last`, `--clear-filters`
+- Interactive preset editing
+
+### Example Commands
+
+```bash
+# Global presets
+ritmo save-preset books --name "my_ebooks" --format epub
+ritmo list-presets
+ritmo delete-preset "my_ebooks"
+
+# Library presets (portable!)
+ritmo save-preset books --name "default_view" --format epub --library
+ritmo set-default-filter books default_view
+ritmo list-presets --library-only
+
+# Usage
+ritmo list-books --preset default_view  # Searches library first, then global
+ritmo list-books                        # Uses library default if set
+ritmo list-books --use-last            # Uses last global filter
+```
+
+### Portable Library Workflow
+
+```bash
+# Create library with useful presets
+ritmo init /media/usb/SharedLibrary
+ritmo save-preset books --name "epub_only" --format epub --library
+ritmo set-default-filter books epub_only
+
+# Copy to USB and share
+# Colleague opens portable library
+cd /media/usb/SharedLibrary/bootstrap/portable_app
+./ritmo_gui    # Opens with "epub_only" filter already active!
+./ritmo_cli list-books  # Automatically uses "epub_only" preset
+```

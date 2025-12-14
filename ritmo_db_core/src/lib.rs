@@ -1,9 +1,13 @@
 pub mod config;
 pub mod connection;
 pub mod database;
+pub mod filters;
 pub mod maintenance;
+pub mod query_builder;
 
 pub use database::Database;
+pub use filters::{BookFilters, BookSortField, ContentFilters, ContentSortField};
+pub use query_builder::{build_books_query, build_contents_query};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
