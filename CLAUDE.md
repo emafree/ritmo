@@ -80,6 +80,15 @@ cargo run -p ritmo_cli -- list-books
 cargo run -p ritmo_cli -- list-books --author "Stephen King"
 cargo run -p ritmo_cli -- list-books --format epub --year 2024
 
+# Filter by acquisition date (absolute)
+cargo run -p ritmo_cli -- list-books --acquired-after 2024-01-01
+cargo run -p ritmo_cli -- list-books --acquired-before 2024-12-31
+
+# Filter by acquisition date (relative)
+cargo run -p ritmo_cli -- list-books --last-days 7        # Last 7 days
+cargo run -p ritmo_cli -- list-books --last-months 1      # Last month
+cargo run -p ritmo_cli -- list-books --recent-count 10    # 10 most recent books
+
 # Show help
 cargo run -p ritmo_cli -- --help
 cargo run -p ritmo_cli -- add --help
@@ -271,6 +280,47 @@ Required Rust version: **stable** (currently 1.91+) (specified in `rust-toolchai
 - Use `tokio-test` for async test utilities
 
 ## Recent Changes
+
+### 2025-12-16 - Session 6: Relative Date Filters for Book Acquisition - COMPLETED
+
+**Relative Date Filters Implementation:**
+✅ Added three new CLI parameters for relative date filtering:
+  - `--last-days N`: Filter books acquired in the last N days
+  - `--last-months N`: Filter books acquired in the last N months (approximated to 30 days/month)
+  - `--recent-count N`: Get the N most recently acquired books (auto-sorts by date_added DESC)
+
+✅ Implementation details:
+  - Created helper functions: `timestamp_days_ago()` and `timestamp_months_ago()`
+  - Used chrono's `Duration` for accurate timestamp calculation
+  - `--last-days` and `--last-months` conflict with `--acquired-after` to prevent ambiguous queries
+  - `--recent-count` automatically overrides sort and limit parameters for convenience
+  - All filters work with existing preset system
+
+✅ Testing and Validation:
+  - Tested all three relative date filters successfully
+  - Verified `--recent-count` properly limits and sorts results
+  - All 34 workspace tests passing
+  - End-to-end testing with real books confirmed
+
+**Example Usage:**
+```bash
+# Books acquired in the last week
+ritmo list-books --last-days 7
+
+# Books acquired in the last month
+ritmo list-books --last-months 1
+
+# 10 most recently acquired books
+ritmo list-books --recent-count 10
+
+# Combine with other filters
+ritmo list-books --last-days 30 --format epub --author "King"
+```
+
+**Files Modified:**
+- `ritmo_cli/src/main.rs`: Added CLI parameters, helper functions, and filter logic
+
+**Commit:** 2bf411a - "Add relative date filters for book acquisition"
 
 ### 2025-12-16 - Session 5: Library-Specific Preset System (Phase 2) - COMPLETED
 
