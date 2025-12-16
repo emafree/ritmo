@@ -170,6 +170,18 @@ enum Commands {
         #[arg(long)]
         acquired_before: Option<String>,
 
+        /// Filtra libri acquisiti negli ultimi N giorni
+        #[arg(long, conflicts_with = "acquired_after")]
+        last_days: Option<i64>,
+
+        /// Filtra libri acquisiti negli ultimi N mesi
+        #[arg(long, conflicts_with = "acquired_after")]
+        last_months: Option<i64>,
+
+        /// Limita ai primi N libri acquisiti più recentemente (equivale a sort=date_added + limit)
+        #[arg(long)]
+        recent_count: Option<i64>,
+
         /// Ordina per campo (title, author, year, date_added)
         #[arg(long, default_value = "title")]
         sort: String,
@@ -355,6 +367,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             search,
             acquired_after,
             acquired_before,
+            last_days,
+            last_months,
+            recent_count,
             sort,
             limit,
             offset,
@@ -373,6 +388,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 search,
                 acquired_after,
                 acquired_before,
+                last_days,
+                last_months,
+                recent_count,
                 sort,
                 limit,
                 offset,
@@ -623,6 +641,9 @@ async fn cmd_list_books(
     search: Option<String>,
     acquired_after: Option<String>,
     acquired_before: Option<String>,
+    last_days: Option<i64>,
+    last_months: Option<i64>,
+    recent_count: Option<i64>,
     sort: String,
     limit: Option<i64>,
     offset: i64,
@@ -640,8 +661,15 @@ async fn cmd_list_books(
 
     let pool = config.create_pool().await?;
 
-    // Converti date da stringa a timestamp
-    let acquired_after_ts = if let Some(date_str) = &acquired_after {
+    // Gestisci filtri di data relativi
+    let acquired_after_ts = if let Some(days) = last_days {
+        // Usa filtro relativo: ultimi N giorni
+        Some(timestamp_days_ago(days))
+    } else if let Some(months) = last_months {
+        // Usa filtro relativo: ultimi N mesi
+        Some(timestamp_months_ago(months))
+    } else if let Some(date_str) = &acquired_after {
+        // Usa filtro assoluto
         Some(parse_date_to_timestamp(date_str)?)
     } else {
         None
@@ -651,6 +679,13 @@ async fn cmd_list_books(
         Some(parse_date_to_timestamp(date_str)?)
     } else {
         None
+    };
+
+    // Gestisci recent_count: override sort e limit
+    let (final_sort, final_limit) = if let Some(count) = recent_count {
+        ("date_added".to_string(), Some(count))
+    } else {
+        (sort, limit)
     };
 
     // Carica preset della libreria per resolution
@@ -679,8 +714,8 @@ async fn cmd_list_books(
             search: search.or(preset.filters.search.clone()),
             acquired_after: acquired_after_ts.or(preset.filters.acquired_after),
             acquired_before: acquired_before_ts.or(preset.filters.acquired_before),
-            sort: BookSortField::from_str(&sort),
-            limit: limit.or(preset.filters.limit),
+            sort: BookSortField::from_str(&final_sort),
+            limit: final_limit.or(preset.filters.limit),
             offset,
         }
     } else {
@@ -695,8 +730,8 @@ async fn cmd_list_books(
             search,
             acquired_after: acquired_after_ts,
             acquired_before: acquired_before_ts,
-            sort: BookSortField::from_str(&sort),
-            limit,
+            sort: BookSortField::from_str(&final_sort),
+            limit: final_limit,
             offset,
         }
     };
@@ -814,6 +849,24 @@ fn parse_date_to_timestamp(date_str: &str) -> Result<i64, Box<dyn std::error::Er
 
     // Converte a timestamp UNIX (inizio del giorno in UTC)
     Ok(date.and_hms_opt(0, 0, 0).unwrap().and_utc().timestamp())
+}
+
+// Helper: calcola timestamp di N giorni fa
+fn timestamp_days_ago(days: i64) -> i64 {
+    use chrono::{Duration, Utc};
+
+    let now = Utc::now();
+    let past = now - Duration::days(days);
+    past.timestamp()
+}
+
+// Helper: calcola timestamp di N mesi fa (approssimato a 30 giorni per mese)
+fn timestamp_months_ago(months: i64) -> i64 {
+    use chrono::{Duration, Utc};
+
+    let now = Utc::now();
+    let past = now - Duration::days(months * 30);
+    past.timestamp()
 }
 
 /// Comando: save-preset - Salva un preset di filtri
