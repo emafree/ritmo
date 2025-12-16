@@ -28,6 +28,13 @@ Each session is documented in a file named: `YYYY-MM-DD-session-summary.md`
   - --preset flag for list commands
   - Complete documentation and testing
 
+- [2025-12-16 Session 5](./2025-12-16-session5-library-presets.md) - Library-Specific Preset System (Phase 2) ✅
+  - LibraryPresets struct with filters.toml storage
+  - PresetResolver with priority resolution (library > global)
+  - CLI enhancements: --in-library flag, set-default-filter command
+  - Auto-create example presets on library init
+  - Full portable workflow tested and documented
+
 ## How to Use
 
 1. **Before starting new session:** Review previous session summary
