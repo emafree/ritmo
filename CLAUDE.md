@@ -123,6 +123,14 @@ The project is organized as a Rust workspace with the following crates:
 - Template database embedded as bytes (`DB_TEMPLATE`) in `assets/template.db`
 - Database initialization: copies from template if missing, recreates from schema.sql if template is corrupt
 - Connection pooling via SQLx with configurable max connections and auto-vacuum
+- **Filter System** (modular architecture):
+  - `filters/types.rs`: Filter structures (BookFilters, ContentFilters) with Vec<String> for OR logic
+  - `filters/builder.rs`: SQL query construction with OR/AND logic support
+  - `filters/executor.rs`: Query execution with parameter binding
+  - `filters/validator.rs`: Input validation (limits, dates, empty values)
+  - Supports multiple values with OR logic: `--author "King" --author "Tolkien"` → `(author='King' OR author='Tolkien')`
+  - Different filter types use AND logic: author AND format AND year
+  - Backward compatible with old API via helper methods
 
 **ritmo_core**
 - Core business logic and ebook management
@@ -252,6 +260,82 @@ library_root/
 
 **Workspace dependencies**: Common dependencies (serde, sqlx, tokio, chrono, toml) are defined in workspace Cargo.toml and inherited by members
 
+### Filter System Architecture (ritmo_db_core/src/filters/)
+
+The filter system is organized as a modular, isolated subsystem:
+
+**Structure**:
+```
+filters/
+├── mod.rs          # Public API and documentation
+├── types.rs        # Filter structures and result types
+├── builder.rs      # SQL query construction
+├── executor.rs     # Query execution
+└── validator.rs    # Input validation
+```
+
+**OR Logic Support**:
+```rust
+// Multiple values for the same filter → OR logic
+let filters = BookFilters::default()
+    .with_author("King")
+    .with_author("Tolkien")
+    .with_format("epub");
+
+// SQL: (author LIKE '%King%' OR author LIKE '%Tolkien%') AND format LIKE '%epub%'
+```
+
+**Field Types**:
+- `authors: Vec<String>` - Multiple authors (OR)
+- `publishers: Vec<String>` - Multiple publishers (OR)
+- `formats: Vec<String>` - Multiple formats (OR)
+- `series_list: Vec<String>` - Multiple series (OR)
+- `year: Option<i32>` - Single year (exact match)
+- `acquired_after/before: Option<i64>` - Date range
+
+**Validation**:
+- Maximum 50 values per filter (performance limit)
+- No negative offsets
+- Positive limits only
+- Valid date ranges (after < before)
+- No empty filter values
+
+**Builder Pattern**:
+```rust
+// Fluent API
+BookFilters::default()
+    .with_author("Calvino")
+    .with_format("epub")
+    .with_format("pdf")
+    // SQL: author LIKE '%Calvino%' AND (format LIKE '%epub%' OR format LIKE '%pdf%')
+```
+
+**Backward Compatibility**:
+```rust
+// Old way (still works)
+filters.set_author_opt(Some("King".to_string()))
+
+// New way (preferred)
+filters.with_author("King")
+```
+
+**Usage Example**:
+```rust
+use ritmo_db_core::filters::{BookFilters, execute_books_query, validate_book_filters};
+
+let filters = BookFilters::default()
+    .with_author("King")
+    .with_author("Tolkien")
+    .with_format("epub");
+
+// Validate before executing
+validate_book_filters(&filters)?;
+
+// Execute query
+let pool = config.create_pool().await?;
+let books = execute_books_query(&pool, &filters).await?;
+```
+
 ## Environment Variables
 
 Copy `.env.example` to `.env` for local development:
@@ -280,6 +364,54 @@ Required Rust version: **stable** (currently 1.91+) (specified in `rust-toolchai
 - Use `tokio-test` for async test utilities
 
 ## Recent Changes
+
+### 2025-12-17 - Session 7: Filter System Refactoring (Phase 1 & 2) - COMPLETED
+
+**Phase 1: Modular Architecture**
+✅ Reorganized filter system into isolated modules:
+  - Created `ritmo_db_core/src/filters/` directory structure
+  - Separated concerns: types, builder, executor into dedicated files
+  - Added comprehensive module documentation
+  - Maintained 100% backward compatibility via re-exports
+  - All 34 tests passing with zero breaking changes
+
+**Phase 2: OR Logic and Validation**
+✅ Implemented OR logic for multiple filter values:
+  - Changed filter fields from `Option<String>` to `Vec<String>` (authors, publishers, formats, series)
+  - Multiple values use OR logic: `(author='King' OR author='Tolkien')`
+  - Different filters combined with AND: `author AND format AND year`
+  - Helper function `build_or_clause()` for clean SQL generation
+
+✅ Created validation module (`filters/validator.rs`):
+  - Validates negative offsets, invalid limits, too many values (max 50)
+  - Validates date ranges and empty values
+  - Custom `ValidationError` type with Display trait
+  - 8 new validation tests
+
+✅ Builder pattern and helpers:
+  - Fluent API: `with_author()`, `with_format()`, `with_series()`
+  - Backward compatibility: `set_author_opt()`, `set_publisher_opt()`
+  - CLI updated to use new builder pattern
+
+**Statistics:**
+- Tests: 44 passing (was 34, +10 new tests for OR logic and validation)
+- Files created: `filters/{types,builder,executor,validator}.rs`
+- Backward compatibility: 100% - all existing code works unchanged
+- Commits: `11c1e6f` (Phase 1), `89f881a` (Phase 2)
+
+**Example Usage:**
+```rust
+// OR logic for authors
+let filters = BookFilters::default()
+    .with_author("King")
+    .with_author("Tolkien")
+    .with_format("epub");
+// SQL: (author LIKE '%King%' OR author LIKE '%Tolkien%') AND format LIKE '%epub%'
+
+// Validation
+validate_book_filters(&filters)?;
+execute_books_query(&pool, &filters).await?;
+```
 
 ### 2025-12-16 - Session 6: Relative Date Filters for Book Acquisition - COMPLETED
 
