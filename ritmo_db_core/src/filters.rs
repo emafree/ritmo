@@ -8,6 +8,8 @@ pub struct BookFilters {
     pub year: Option<i32>,
     pub isbn: Option<String>,
     pub search: Option<String>,
+    pub acquired_after: Option<i64>, // Timestamp UNIX: libri acquisiti dopo questa data
+    pub acquired_before: Option<i64>, // Timestamp UNIX: libri acquisiti prima di questa data
     pub sort: BookSortField,
     pub limit: Option<i64>,
     pub offset: i64,
@@ -91,18 +93,45 @@ mod tests {
 
     #[test]
     fn test_book_sort_field() {
-        assert!(matches!(BookSortField::from_str("title"), BookSortField::Title));
-        assert!(matches!(BookSortField::from_str("author"), BookSortField::Author));
-        assert!(matches!(BookSortField::from_str("year"), BookSortField::Year));
-        assert!(matches!(BookSortField::from_str("date_added"), BookSortField::DateAdded));
-        assert!(matches!(BookSortField::from_str("invalid"), BookSortField::Title));
+        assert!(matches!(
+            BookSortField::from_str("title"),
+            BookSortField::Title
+        ));
+        assert!(matches!(
+            BookSortField::from_str("author"),
+            BookSortField::Author
+        ));
+        assert!(matches!(
+            BookSortField::from_str("year"),
+            BookSortField::Year
+        ));
+        assert!(matches!(
+            BookSortField::from_str("date_added"),
+            BookSortField::DateAdded
+        ));
+        assert!(matches!(
+            BookSortField::from_str("invalid"),
+            BookSortField::Title
+        ));
     }
 
     #[test]
     fn test_content_sort_field() {
-        assert!(matches!(ContentSortField::from_str("title"), ContentSortField::Title));
-        assert!(matches!(ContentSortField::from_str("author"), ContentSortField::Author));
-        assert!(matches!(ContentSortField::from_str("year"), ContentSortField::Year));
-        assert!(matches!(ContentSortField::from_str("type"), ContentSortField::Type));
+        assert!(matches!(
+            ContentSortField::from_str("title"),
+            ContentSortField::Title
+        ));
+        assert!(matches!(
+            ContentSortField::from_str("author"),
+            ContentSortField::Author
+        ));
+        assert!(matches!(
+            ContentSortField::from_str("year"),
+            ContentSortField::Year
+        ));
+        assert!(matches!(
+            ContentSortField::from_str("type"),
+            ContentSortField::Type
+        ));
     }
 }

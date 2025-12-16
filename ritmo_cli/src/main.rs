@@ -84,6 +84,12 @@ enum Commands {
         #[arg(long)]
         search: Option<String>,
 
+        #[arg(long)]
+        acquired_after: Option<String>,
+
+        #[arg(long)]
+        acquired_before: Option<String>,
+
         // Filtro per contents
         #[arg(long)]
         content_type: Option<String>,
@@ -155,6 +161,14 @@ enum Commands {
         /// Ricerca full-text (titolo, autori, note)
         #[arg(long, short)]
         search: Option<String>,
+
+        /// Filtra libri acquisiti dopo questa data (YYYY-MM-DD)
+        #[arg(long)]
+        acquired_after: Option<String>,
+
+        /// Filtra libri acquisiti prima di questa data (YYYY-MM-DD)
+        #[arg(long)]
+        acquired_before: Option<String>,
 
         /// Ordina per campo (title, author, year, date_added)
         #[arg(long, default_value = "title")]
@@ -288,6 +302,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             year,
             isbn,
             search,
+            acquired_after,
+            acquired_before,
             content_type,
             sort,
             limit,
@@ -308,6 +324,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 year,
                 isbn,
                 search,
+                acquired_after,
+                acquired_before,
                 content_type,
                 sort,
                 limit,
@@ -335,6 +353,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             year,
             isbn,
             search,
+            acquired_after,
+            acquired_before,
             sort,
             limit,
             offset,
@@ -351,6 +371,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 year,
                 isbn,
                 search,
+                acquired_after,
+                acquired_before,
                 sort,
                 limit,
                 offset,
@@ -599,6 +621,8 @@ async fn cmd_list_books(
     year: Option<i32>,
     isbn: Option<String>,
     search: Option<String>,
+    acquired_after: Option<String>,
+    acquired_before: Option<String>,
     sort: String,
     limit: Option<i64>,
     offset: i64,
@@ -615,6 +639,19 @@ async fn cmd_list_books(
     }
 
     let pool = config.create_pool().await?;
+
+    // Converti date da stringa a timestamp
+    let acquired_after_ts = if let Some(date_str) = &acquired_after {
+        Some(parse_date_to_timestamp(date_str)?)
+    } else {
+        None
+    };
+
+    let acquired_before_ts = if let Some(date_str) = &acquired_before {
+        Some(parse_date_to_timestamp(date_str)?)
+    } else {
+        None
+    };
 
     // Carica preset della libreria per resolution
     let library_presets = config.load_library_presets().ok();
@@ -640,6 +677,8 @@ async fn cmd_list_books(
             year: year.or(preset.filters.year),
             isbn: isbn.or(preset.filters.isbn.clone()),
             search: search.or(preset.filters.search.clone()),
+            acquired_after: acquired_after_ts.or(preset.filters.acquired_after),
+            acquired_before: acquired_before_ts.or(preset.filters.acquired_before),
             sort: BookSortField::from_str(&sort),
             limit: limit.or(preset.filters.limit),
             offset,
@@ -654,6 +693,8 @@ async fn cmd_list_books(
             year,
             isbn,
             search,
+            acquired_after: acquired_after_ts,
+            acquired_before: acquired_before_ts,
             sort: BookSortField::from_str(&sort),
             limit,
             offset,
@@ -764,6 +805,17 @@ fn get_library_path(
     }
 }
 
+// Helper: converte data YYYY-MM-DD in timestamp UNIX
+fn parse_date_to_timestamp(date_str: &str) -> Result<i64, Box<dyn std::error::Error>> {
+    use chrono::NaiveDate;
+
+    let date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d")
+        .map_err(|_| format!("Formato data non valido: '{}'. Usa YYYY-MM-DD", date_str))?;
+
+    // Converte a timestamp UNIX (inizio del giorno in UTC)
+    Ok(date.and_hms_opt(0, 0, 0).unwrap().and_utc().timestamp())
+}
+
 /// Comando: save-preset - Salva un preset di filtri
 #[allow(clippy::too_many_arguments)]
 fn cmd_save_preset(
@@ -781,6 +833,8 @@ fn cmd_save_preset(
     year: Option<i32>,
     isbn: Option<String>,
     search: Option<String>,
+    acquired_after: Option<String>,
+    acquired_before: Option<String>,
     content_type: Option<String>,
     sort: String,
     limit: Option<i64>,
@@ -792,6 +846,19 @@ fn cmd_save_preset(
             preset_type
         )
     })?;
+
+    // Converti date da stringa a timestamp se presenti
+    let acquired_after_ts = if let Some(date_str) = &acquired_after {
+        Some(parse_date_to_timestamp(date_str)?)
+    } else {
+        None
+    };
+
+    let acquired_before_ts = if let Some(date_str) = &acquired_before {
+        Some(parse_date_to_timestamp(date_str)?)
+    } else {
+        None
+    };
 
     // Se in_library è true, salva nei preset della libreria
     if in_library {
@@ -814,6 +881,8 @@ fn cmd_save_preset(
                     year,
                     isbn,
                     search,
+                    acquired_after: acquired_after_ts,
+                    acquired_before: acquired_before_ts,
                     sort,
                     limit,
                     offset,
@@ -865,6 +934,8 @@ fn cmd_save_preset(
                     year,
                     isbn,
                     search,
+                    acquired_after: acquired_after_ts,
+                    acquired_before: acquired_before_ts,
                     sort,
                     limit,
                     offset,

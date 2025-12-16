@@ -83,6 +83,18 @@ pub fn build_books_query(filters: &BookFilters) -> (String, Vec<String>) {
         params.push(search_pattern);
     }
 
+    // Filtro data acquisizione (dopo)
+    if let Some(acquired_after) = filters.acquired_after {
+        where_clauses.push("books.created_at >= ?".to_string());
+        params.push(acquired_after.to_string());
+    }
+
+    // Filtro data acquisizione (prima)
+    if let Some(acquired_before) = filters.acquired_before {
+        where_clauses.push("books.created_at <= ?".to_string());
+        params.push(acquired_before.to_string());
+    }
+
     // Aggiungi WHERE se ci sono filtri
     if !where_clauses.is_empty() {
         query.push_str(" WHERE ");

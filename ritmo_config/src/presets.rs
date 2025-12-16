@@ -49,6 +49,12 @@ pub struct BookFilterPreset {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub search: Option<String>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub acquired_after: Option<i64>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub acquired_before: Option<i64>,
+
     #[serde(default = "default_sort")]
     pub sort: String,
 
@@ -98,6 +104,8 @@ impl Default for BookFilterPreset {
             year: None,
             isbn: None,
             search: None,
+            acquired_after: None,
+            acquired_before: None,
             sort: default_sort(),
             limit: None,
             offset: 0,
