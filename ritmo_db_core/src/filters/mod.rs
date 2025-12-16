@@ -28,11 +28,10 @@
 //! let config = LibraryConfig::new("/path/to/library");
 //! let pool = config.create_pool().await?;
 //!
-//! let filters = BookFilters {
-//!     author: Some("Calvino".to_string()),
-//!     format: Some("epub".to_string()),
-//!     ..Default::default()
-//! };
+//! // Use builder pattern for filters
+//! let filters = BookFilters::default()
+//!     .with_author("Calvino")
+//!     .with_format("epub");
 //!
 //! let books = execute_books_query(&pool, &filters).await?;
 //! println!("Found {} books", books.len());
