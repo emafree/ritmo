@@ -272,7 +272,69 @@ Required Rust version: **stable** (currently 1.91+) (specified in `rust-toolchai
 
 ## Recent Changes
 
-### 2025-12-14 - Session 2: Filter System Implementation (IN PROGRESS)
+### 2025-12-16 - Session 5: Library-Specific Preset System (Phase 2) - COMPLETED
+
+**Library-Specific Presets Implementation:**
+✅ Created `LibraryPresets` struct in `ritmo_db_core/src/library_presets.rs`:
+  - Manages presets stored in `library/config/filters.toml` (portable with library!)
+  - Supports both book and content presets
+  - Default preset selection per library
+  - Auto-creates example presets: `epub_only`, `pdf_only`, `novels`
+  - Full test coverage (7/7 tests passing)
+
+✅ Implemented preset resolution system in `ritmo_config/src/preset_resolver.rs`:
+  - `PresetResolver`: resolves presets with priority order (library > global)
+  - `LibraryPresetsHolder`: bridge struct to avoid circular dependencies
+  - `PresetSource`: enum to identify preset origin (Library/Global)
+  - Full test coverage (4/4 tests passing)
+
+✅ Enhanced CLI commands:
+  - `save-preset --in-library`: saves preset in library instead of globally
+  - `set-default-filter <type> <name>`: sets library default preset
+  - `list-presets`: shows library and global presets separately with clear labels
+  - `list-books/list-contents`: automatic preset resolution (library > global)
+  - `init`: auto-creates example presets in new libraries
+
+✅ Testing and Validation:
+  - End-to-end testing with real library
+  - Preset resolution priority verified (library overrides global)
+  - Portable `filters.toml` file created and tested
+  - Default preset functionality confirmed
+  - All 23 workspace tests passing
+
+**Files Created:**
+- `ritmo_db_core/src/library_presets.rs` (~280 lines)
+- `ritmo_config/src/preset_resolver.rs` (~240 lines)
+
+**Files Modified:**
+- `ritmo_db_core/src/lib.rs`: exported LibraryPresets and added helper methods
+- `ritmo_db_core/Cargo.toml`: added ritmo_config dependency
+- `ritmo_config/src/lib.rs`: made presets module public, exported resolver
+- `ritmo_cli/src/main.rs`: added --in-library flag, set-default-filter command, updated list-presets
+
+**Portable Workflow Verified:**
+```bash
+# Initialize library (creates example presets automatically)
+ritmo init /media/usb/MyLibrary
+
+# Save custom preset to library (travels with library!)
+ritmo --library /media/usb/MyLibrary save-preset books \
+  --name my_collection --in-library --format epub
+
+# Set as default for this library
+ritmo --library /media/usb/MyLibrary set-default-filter books my_collection
+
+# Preset resolution: library preset takes priority over global
+ritmo --library /media/usb/MyLibrary list-books --preset my_collection
+```
+
+**Benefits:**
+- Presets are fully portable with the library
+- Per-library customization without affecting global settings
+- Seamless integration with portable mode
+- Clear separation between library and global presets
+
+### 2025-12-14 - Session 2: Filter System Implementation (COMPLETED)
 
 **Filter System Architecture:**
 - Added `list-books` and `list-contents` commands to CLI with comprehensive filter options
@@ -457,18 +519,23 @@ ritmo add file.mobi --title "Mobi Book"  # format = mobi
    - ✅ Create result structs (BookResult, ContentResult) and format output (table, json, simple)
    - ✅ Full integration tested end-to-end
    
-2. **Filter Preset System - Phase 1** (✅ COMPLETED - 2025-12-14):
+2. **Filter Preset System** (✅ COMPLETED - 2025-12-16):
    - ✅ Phase 1: Global presets in `~/.config/ritmo/settings.toml`
-   - ✅ Commands: save-preset, list-presets, delete-preset
+   - ✅ Phase 2: Library presets in `library/config/filters.toml` (portable!)
+   - ✅ Commands: save-preset (--in-library), list-presets, delete-preset, set-default-filter
    - ✅ --preset flag for list-books and list-contents
    - ✅ Parameter override priority (CLI > preset > default)
-   - ⏸️ Phase 2: Library presets in `library/config/filters.toml` (FUTURE - for portable mode)
+   - ✅ Preset resolution order (library > global)
+   - ✅ Auto-create example presets on init
    - ⏸️ Phase 3: Auto-save last filter, interactive editing (FUTURE)
-   - See "Filter Preset System" section below for full architecture
    
 3. **GUI Integration**: Update `ritmo_gui` to use `ritmo_config` and add library selection dialog
 
-4. **CLI Book Import**: Add `ritmo add <file>` command to import books into library
+4. **Integrate ebook_parser** (HIGH PRIORITY):
+   - Reactivate and integrate the `ebook_parser` crate
+   - Extract metadata automatically from EPUB files
+   - Goal: handle ~95% of books automatically (target: 12,000+ books)
+   - Enhance `add` command to use extracted metadata
 
 ### Medium Priority
 4. **Portable Bootstrap**: Implement automatic copying of binaries to bootstrap/portable_app/ during library initialization
