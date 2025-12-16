@@ -43,6 +43,7 @@
 pub mod builder;
 pub mod executor;
 pub mod types;
+pub mod validator;
 
 // Re-export types for convenient access
 pub use builder::{build_books_query, build_contents_query};
@@ -50,3 +51,4 @@ pub use executor::{execute_books_query, execute_contents_query};
 pub use types::{
     BookFilters, BookResult, BookSortField, ContentFilters, ContentResult, ContentSortField,
 };
+pub use validator::{validate_book_filters, validate_content_filters, ValidationError};

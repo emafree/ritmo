@@ -1,10 +1,50 @@
 //! Query builder for filters
 //!
 //! This module contains the logic for building SQL queries from filter structures.
+//! Supports OR logic for multiple values within the same filter type.
 
 use super::types::{BookFilters, ContentFilters};
 
+/// Helper function to build OR clauses for multiple values
+/// Returns (sql_clause, params) or None if values is empty
+fn build_or_clause(
+    field_name: &str,
+    values: &[String],
+    use_like: bool,
+) -> Option<(String, Vec<String>)> {
+    if values.is_empty() {
+        return None;
+    }
+
+    let mut or_parts = Vec::new();
+    let mut params = Vec::new();
+
+    for value in values {
+        if use_like {
+            or_parts.push(format!("{} LIKE ?", field_name));
+            params.push(format!("%{}%", value));
+        } else {
+            or_parts.push(format!("{} = ?", field_name));
+            params.push(value.clone());
+        }
+    }
+
+    // If single value, no need for parentheses
+    let clause = if or_parts.len() == 1 {
+        or_parts[0].clone()
+    } else {
+        format!("({})", or_parts.join(" OR "))
+    };
+
+    Some((clause, params))
+}
+
 /// Costruisce la query SQL per listare libri con filtri
+///
+/// Supports OR logic for multiple values:
+/// - Multiple authors: (author LIKE '%King%' OR author LIKE '%Tolkien%')
+/// - Multiple formats: (format LIKE '%epub%' OR format LIKE '%pdf%')
+/// - Different filter types are combined with AND
 pub fn build_books_query(filters: &BookFilters) -> (String, Vec<String>) {
     let mut query = String::from(
         r#"
@@ -31,34 +71,45 @@ pub fn build_books_query(filters: &BookFilters) -> (String, Vec<String>) {
     let mut params: Vec<String> = Vec::new();
     let mut where_clauses: Vec<String> = Vec::new();
 
-    // Filtro autore (richiede JOIN con people)
-    if filters.author.is_some() {
+    // Filtro autori (OR logic if multiple, richiede JOIN con people)
+    if !filters.authors.is_empty() {
         query.push_str(
             r#"
             LEFT JOIN x_books_people_roles ON books.id = x_books_people_roles.book_id
             LEFT JOIN people ON x_books_people_roles.person_id = people.id
             "#,
         );
-        where_clauses.push("people.name LIKE ?".to_string());
-        params.push(format!("%{}%", filters.author.as_ref().unwrap()));
+
+        if let Some((clause, mut clause_params)) =
+            build_or_clause("people.name", &filters.authors, true)
+        {
+            where_clauses.push(clause);
+            params.append(&mut clause_params);
+        }
     }
 
-    // Filtro editore
-    if let Some(pub_name) = &filters.publisher {
-        where_clauses.push("publishers.name LIKE ?".to_string());
-        params.push(format!("%{}%", pub_name));
+    // Filtro editori (OR logic if multiple)
+    if let Some((clause, mut clause_params)) =
+        build_or_clause("publishers.name", &filters.publishers, true)
+    {
+        where_clauses.push(clause);
+        params.append(&mut clause_params);
     }
 
-    // Filtro serie
-    if let Some(ser_name) = &filters.series {
-        where_clauses.push("series.name LIKE ?".to_string());
-        params.push(format!("%{}%", ser_name));
+    // Filtro serie (OR logic if multiple)
+    if let Some((clause, mut clause_params)) =
+        build_or_clause("series.name", &filters.series_list, true)
+    {
+        where_clauses.push(clause);
+        params.append(&mut clause_params);
     }
 
-    // Filtro formato
-    if let Some(fmt_name) = &filters.format {
-        where_clauses.push("formats.name LIKE ?".to_string());
-        params.push(format!("%{}%", fmt_name));
+    // Filtro formati (OR logic if multiple)
+    if let Some((clause, mut clause_params)) =
+        build_or_clause("formats.name", &filters.formats, true)
+    {
+        where_clauses.push(clause);
+        params.append(&mut clause_params);
     }
 
     // Filtro anno
@@ -117,6 +168,8 @@ pub fn build_books_query(filters: &BookFilters) -> (String, Vec<String>) {
 }
 
 /// Costruisce la query SQL per listare contenuti con filtri
+///
+/// Supports OR logic for multiple authors and content types.
 pub fn build_contents_query(filters: &ContentFilters) -> (String, Vec<String>) {
     let mut query = String::from(
         r#"
@@ -136,22 +189,29 @@ pub fn build_contents_query(filters: &ContentFilters) -> (String, Vec<String>) {
     let mut params: Vec<String> = Vec::new();
     let mut where_clauses: Vec<String> = Vec::new();
 
-    // Filtro autore (richiede JOIN con people)
-    if filters.author.is_some() {
+    // Filtro autori (OR logic if multiple, richiede JOIN con people)
+    if !filters.authors.is_empty() {
         query.push_str(
             r#"
             LEFT JOIN x_contents_people_roles ON contents.id = x_contents_people_roles.content_id
             LEFT JOIN people ON x_contents_people_roles.person_id = people.id
             "#,
         );
-        where_clauses.push("people.name LIKE ?".to_string());
-        params.push(format!("%{}%", filters.author.as_ref().unwrap()));
+
+        if let Some((clause, mut clause_params)) =
+            build_or_clause("people.name", &filters.authors, true)
+        {
+            where_clauses.push(clause);
+            params.append(&mut clause_params);
+        }
     }
 
-    // Filtro tipo
-    if let Some(type_name) = &filters.content_type {
-        where_clauses.push("types.name LIKE ?".to_string());
-        params.push(format!("%{}%", type_name));
+    // Filtro tipi di contenuto (OR logic if multiple)
+    if let Some((clause, mut clause_params)) =
+        build_or_clause("types.name", &filters.content_types, true)
+    {
+        where_clauses.push(clause);
+        params.append(&mut clause_params);
     }
 
     // Filtro anno
@@ -199,6 +259,33 @@ mod tests {
     use crate::filters::types::BookSortField;
 
     #[test]
+    fn test_build_or_clause_empty() {
+        let result = build_or_clause("field", &[], true);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_build_or_clause_single() {
+        let values = vec!["test".to_string()];
+        let (clause, params) = build_or_clause("field", &values, true).unwrap();
+
+        assert_eq!(clause, "field LIKE ?");
+        assert_eq!(params.len(), 1);
+        assert_eq!(params[0], "%test%");
+    }
+
+    #[test]
+    fn test_build_or_clause_multiple() {
+        let values = vec!["value1".to_string(), "value2".to_string()];
+        let (clause, params) = build_or_clause("field", &values, true).unwrap();
+
+        assert_eq!(clause, "(field LIKE ? OR field LIKE ?)");
+        assert_eq!(params.len(), 2);
+        assert_eq!(params[0], "%value1%");
+        assert_eq!(params[1], "%value2%");
+    }
+
+    #[test]
     fn test_build_books_query_no_filters() {
         let filters = BookFilters::default();
         let (query, params) = build_books_query(&filters);
@@ -210,11 +297,8 @@ mod tests {
     }
 
     #[test]
-    fn test_build_books_query_with_author() {
-        let filters = BookFilters {
-            author: Some("Calvino".to_string()),
-            ..Default::default()
-        };
+    fn test_build_books_query_with_single_author() {
+        let filters = BookFilters::default().with_author("Calvino");
         let (query, params) = build_books_query(&filters);
 
         assert!(query.contains("people.name LIKE ?"));
@@ -223,10 +307,24 @@ mod tests {
     }
 
     #[test]
+    fn test_build_books_query_with_multiple_authors() {
+        let filters = BookFilters::default()
+            .with_author("King")
+            .with_author("Tolkien");
+        let (query, params) = build_books_query(&filters);
+
+        assert!(query.contains("people.name LIKE ?"));
+        assert!(query.contains("OR"));
+        assert_eq!(params.len(), 2);
+        assert_eq!(params[0], "%King%");
+        assert_eq!(params[1], "%Tolkien%");
+    }
+
+    #[test]
     fn test_build_books_query_with_multiple_filters() {
         let filters = BookFilters {
-            author: Some("Calvino".to_string()),
-            format: Some("epub".to_string()),
+            authors: vec!["Calvino".to_string()],
+            formats: vec!["epub".to_string()],
             year: Some(2020),
             ..Default::default()
         };
@@ -234,7 +332,7 @@ mod tests {
 
         assert!(query.contains("WHERE"));
         assert!(query.contains("AND"));
-        assert_eq!(params.len(), 3);
+        assert_eq!(params.len(), 3); // author + format + year
     }
 
     #[test]
@@ -248,5 +346,21 @@ mod tests {
 
         assert!(query.contains("LIMIT 10 OFFSET 20"));
         assert!(params.is_empty());
+    }
+
+    #[test]
+    fn test_build_books_query_or_and_combination() {
+        // (author=King OR author=Tolkien) AND (format=epub OR format=pdf)
+        let filters = BookFilters {
+            authors: vec!["King".to_string(), "Tolkien".to_string()],
+            formats: vec!["epub".to_string(), "pdf".to_string()],
+            ..Default::default()
+        };
+        let (query, params) = build_books_query(&filters);
+
+        // Should have 2 OR groups combined with AND
+        assert!(query.contains("OR"));
+        assert!(query.contains("AND"));
+        assert_eq!(params.len(), 4); // 2 authors + 2 formats
     }
 }

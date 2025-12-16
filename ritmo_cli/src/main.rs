@@ -692,7 +692,11 @@ async fn cmd_list_books(
     let library_presets = config.load_library_presets().ok();
 
     // Costruisci filtri (con supporto preset con resolution order)
-    let filters = if let Some(preset_name) = preset {
+    // Costruisci filtri usando builder pattern
+    let mut filters = BookFilters::default();
+
+    // Se c'è un preset, carica i suoi valori come base
+    if let Some(preset_name) = preset {
         // Risolvi preset: library > global
         let preset = if let Some(ref lib_presets) = library_presets {
             lib_presets
@@ -703,38 +707,47 @@ async fn cmd_list_books(
         }
         .ok_or_else(|| format!("Preset '{}' non trovato", preset_name))?;
 
-        // Merge preset con parametri CLI (i parametri CLI hanno priorità)
-        BookFilters {
-            author: author.or(preset.filters.author.clone()),
-            publisher: publisher.or(preset.filters.publisher.clone()),
-            series: series.or(preset.filters.series.clone()),
-            format: format.or(preset.filters.format.clone()),
-            year: year.or(preset.filters.year),
-            isbn: isbn.or(preset.filters.isbn.clone()),
-            search: search.or(preset.filters.search.clone()),
-            acquired_after: acquired_after_ts.or(preset.filters.acquired_after),
-            acquired_before: acquired_before_ts.or(preset.filters.acquired_before),
-            sort: BookSortField::from_str(&final_sort),
-            limit: final_limit.or(preset.filters.limit),
-            offset,
-        }
-    } else {
-        // Usa solo parametri CLI
-        BookFilters {
-            author,
-            publisher,
-            series,
-            format,
-            year,
-            isbn,
-            search,
-            acquired_after: acquired_after_ts,
-            acquired_before: acquired_before_ts,
-            sort: BookSortField::from_str(&final_sort),
-            limit: final_limit,
-            offset,
-        }
-    };
+        // Applica valori dal preset (i parametri CLI sovrascriveranno questi)
+        filters = filters
+            .set_author_opt(preset.filters.author.clone())
+            .set_publisher_opt(preset.filters.publisher.clone())
+            .set_series_opt(preset.filters.series.clone())
+            .set_format_opt(preset.filters.format.clone());
+
+        filters.year = preset.filters.year;
+        filters.isbn = preset.filters.isbn.clone();
+        filters.search = preset.filters.search.clone();
+        filters.acquired_after = preset.filters.acquired_after;
+        filters.acquired_before = preset.filters.acquired_before;
+        filters.limit = preset.filters.limit;
+    }
+
+    // Applica parametri CLI (hanno priorità su preset)
+    filters = filters
+        .set_author_opt(author)
+        .set_publisher_opt(publisher)
+        .set_series_opt(series)
+        .set_format_opt(format);
+
+    if let Some(y) = year {
+        filters.year = Some(y);
+    }
+    if let Some(i) = isbn {
+        filters.isbn = Some(i);
+    }
+    if let Some(s) = search {
+        filters.search = Some(s);
+    }
+    if let Some(aa) = acquired_after_ts {
+        filters.acquired_after = Some(aa);
+    }
+    if let Some(ab) = acquired_before_ts {
+        filters.acquired_before = Some(ab);
+    }
+
+    filters.sort = BookSortField::from_str(&final_sort);
+    filters.limit = final_limit;
+    filters.offset = offset;
 
     // Esegui query
     let books = execute_books_query(&pool, &filters).await?;
@@ -777,8 +790,11 @@ async fn cmd_list_contents(
     // Carica preset della libreria per resolution
     let library_presets = config.load_library_presets().ok();
 
-    // Costruisci filtri (con supporto preset con resolution order)
-    let filters = if let Some(preset_name) = preset {
+    // Costruisci filtri usando builder pattern
+    let mut filters = ContentFilters::default();
+
+    // Se c'è un preset, carica i suoi valori come base
+    if let Some(preset_name) = preset {
         // Risolvi preset: library > global
         let preset = if let Some(ref lib_presets) = library_presets {
             lib_presets
@@ -789,28 +805,31 @@ async fn cmd_list_contents(
         }
         .ok_or_else(|| format!("Preset '{}' non trovato", preset_name))?;
 
-        // Merge preset con parametri CLI (i parametri CLI hanno priorità)
-        ContentFilters {
-            author: author.or(preset.filters.author.clone()),
-            content_type: content_type.or(preset.filters.content_type.clone()),
-            year: year.or(preset.filters.year),
-            search: search.or(preset.filters.search.clone()),
-            sort: ContentSortField::from_str(&sort),
-            limit: limit.or(preset.filters.limit),
-            offset,
-        }
-    } else {
-        // Usa solo parametri CLI
-        ContentFilters {
-            author,
-            content_type,
-            year,
-            search,
-            sort: ContentSortField::from_str(&sort),
-            limit,
-            offset,
-        }
-    };
+        // Applica valori dal preset
+        filters = filters
+            .set_author_opt(preset.filters.author.clone())
+            .set_content_type_opt(preset.filters.content_type.clone());
+
+        filters.year = preset.filters.year;
+        filters.search = preset.filters.search.clone();
+        filters.limit = preset.filters.limit;
+    }
+
+    // Applica parametri CLI (hanno priorità su preset)
+    filters = filters
+        .set_author_opt(author)
+        .set_content_type_opt(content_type);
+
+    if let Some(y) = year {
+        filters.year = Some(y);
+    }
+    if let Some(s) = search {
+        filters.search = Some(s);
+    }
+
+    filters.sort = ContentSortField::from_str(&sort);
+    filters.limit = limit;
+    filters.offset = offset;
 
     // Esegui query
     let contents = execute_contents_query(&pool, &filters).await?;

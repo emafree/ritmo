@@ -5,20 +5,109 @@
 use serde::{Deserialize, Serialize};
 
 /// Filtri per la ricerca di libri
+///
+/// Supports both single and multiple values for certain filters.
+/// Multiple values use OR logic within the same filter type.
+/// Different filter types use AND logic.
+///
+/// Example:
+/// ```ignore
+/// BookFilters {
+///     authors: vec!["King".to_string(), "Tolkien".to_string()],
+///     formats: vec!["epub".to_string()],
+///     year: Some(2020),
+///     ..Default::default()
+/// }
+/// // SQL: (author LIKE '%King%' OR author LIKE '%Tolkien%') AND format LIKE '%epub%' AND year = 2020
+/// ```
 #[derive(Debug, Clone, Default)]
 pub struct BookFilters {
-    pub author: Option<String>,
-    pub publisher: Option<String>,
-    pub series: Option<String>,
-    pub format: Option<String>,
+    /// Authors (OR logic if multiple)
+    pub authors: Vec<String>,
+    /// Publishers (OR logic if multiple)
+    pub publishers: Vec<String>,
+    /// Series (OR logic if multiple)
+    pub series_list: Vec<String>,
+    /// Formats (OR logic if multiple)
+    pub formats: Vec<String>,
+    /// Publication year (exact match)
     pub year: Option<i32>,
+    /// ISBN search pattern
     pub isbn: Option<String>,
+    /// Full-text search
     pub search: Option<String>,
+    /// Acquisition date filters
     pub acquired_after: Option<i64>, // Timestamp UNIX: libri acquisiti dopo questa data
     pub acquired_before: Option<i64>, // Timestamp UNIX: libri acquisiti prima di questa data
+    /// Sort configuration
     pub sort: BookSortField,
+    /// Result pagination
     pub limit: Option<i64>,
     pub offset: i64,
+}
+
+impl BookFilters {
+    /// Helper to add a single author
+    pub fn with_author(mut self, author: impl Into<String>) -> Self {
+        self.authors.push(author.into());
+        self
+    }
+
+    /// Helper to add multiple authors
+    pub fn with_authors(mut self, authors: Vec<String>) -> Self {
+        self.authors = authors;
+        self
+    }
+
+    /// Helper to add a single publisher
+    pub fn with_publisher(mut self, publisher: impl Into<String>) -> Self {
+        self.publishers.push(publisher.into());
+        self
+    }
+
+    /// Helper to add a single format
+    pub fn with_format(mut self, format: impl Into<String>) -> Self {
+        self.formats.push(format.into());
+        self
+    }
+
+    /// Helper to add a single series
+    pub fn with_series(mut self, series: impl Into<String>) -> Self {
+        self.series_list.push(series.into());
+        self
+    }
+
+    /// Backward compatibility: set author from Option<String>
+    pub fn set_author_opt(mut self, author: Option<String>) -> Self {
+        if let Some(a) = author {
+            self.authors = vec![a];
+        }
+        self
+    }
+
+    /// Backward compatibility: set publisher from Option<String>
+    pub fn set_publisher_opt(mut self, publisher: Option<String>) -> Self {
+        if let Some(p) = publisher {
+            self.publishers = vec![p];
+        }
+        self
+    }
+
+    /// Backward compatibility: set series from Option<String>
+    pub fn set_series_opt(mut self, series: Option<String>) -> Self {
+        if let Some(s) = series {
+            self.series_list = vec![s];
+        }
+        self
+    }
+
+    /// Backward compatibility: set format from Option<String>
+    pub fn set_format_opt(mut self, format: Option<String>) -> Self {
+        if let Some(f) = format {
+            self.formats = vec![f];
+        }
+        self
+    }
 }
 
 /// Campi per ordinamento libri
@@ -52,15 +141,53 @@ impl BookSortField {
 }
 
 /// Filtri per la ricerca di contenuti
+///
+/// Supports multiple values with OR logic for authors and content types.
 #[derive(Debug, Clone, Default)]
 pub struct ContentFilters {
-    pub author: Option<String>,
-    pub content_type: Option<String>,
+    /// Authors (OR logic if multiple)
+    pub authors: Vec<String>,
+    /// Content types (OR logic if multiple)
+    pub content_types: Vec<String>,
+    /// Publication year (exact match)
     pub year: Option<i32>,
+    /// Full-text search
     pub search: Option<String>,
+    /// Sort configuration
     pub sort: ContentSortField,
+    /// Result pagination
     pub limit: Option<i64>,
     pub offset: i64,
+}
+
+impl ContentFilters {
+    /// Helper to add a single author
+    pub fn with_author(mut self, author: impl Into<String>) -> Self {
+        self.authors.push(author.into());
+        self
+    }
+
+    /// Helper to add a single content type
+    pub fn with_content_type(mut self, content_type: impl Into<String>) -> Self {
+        self.content_types.push(content_type.into());
+        self
+    }
+
+    /// Backward compatibility: set author from Option<String>
+    pub fn set_author_opt(mut self, author: Option<String>) -> Self {
+        if let Some(a) = author {
+            self.authors = vec![a];
+        }
+        self
+    }
+
+    /// Backward compatibility: set content_type from Option<String>
+    pub fn set_content_type_opt(mut self, content_type: Option<String>) -> Self {
+        if let Some(ct) = content_type {
+            self.content_types = vec![ct];
+        }
+        self
+    }
 }
 
 /// Campi per ordinamento contenuti
