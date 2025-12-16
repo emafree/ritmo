@@ -58,6 +58,10 @@ enum Commands {
         #[arg(long)]
         description: Option<String>,
 
+        /// Salva nella libreria corrente invece che globalmente
+        #[arg(long)]
+        in_library: bool,
+
         // Filtri per books
         #[arg(long)]
         author: Option<String>,
@@ -107,6 +111,15 @@ enum Commands {
 
         /// Nome del preset da eliminare
         name: String,
+    },
+
+    /// Imposta il preset di default per una libreria
+    SetDefaultFilter {
+        /// Tipo: books o contents
+        preset_type: String,
+
+        /// Nome del preset da impostare come default (usa 'none' per rimuovere)
+        preset_name: String,
     },
 
     /// Lista libri con filtri
@@ -267,6 +280,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             preset_type,
             name,
             description,
+            in_library,
             author,
             publisher,
             series,
@@ -280,10 +294,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             offset,
         } => {
             cmd_save_preset(
+                &cli.library,
                 &mut app_settings,
                 &settings_path,
                 preset_type,
                 name,
+                in_library,
                 description,
                 author,
                 publisher,
@@ -299,10 +315,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             )?;
         }
         Commands::ListPresets { preset_type } => {
-            cmd_list_presets(&app_settings, preset_type)?;
+            cmd_list_presets(&cli.library, &app_settings, preset_type)?;
         }
         Commands::DeletePreset { preset_type, name } => {
             cmd_delete_preset(&mut app_settings, &settings_path, preset_type, name)?;
+        }
+        Commands::SetDefaultFilter {
+            preset_type,
+            preset_name,
+        } => {
+            cmd_set_default_filter(&cli.library, &app_settings, preset_type, preset_name)?;
         }
         Commands::ListBooks {
             preset,
@@ -441,6 +463,10 @@ async fn cmd_init(
     config.save(config.main_config_file())?;
     println!("✓ Configurazione salvata");
 
+    // Crea preset di esempio per la libreria (load_or_create crea automaticamente gli esempi)
+    let _library_presets = config.load_library_presets()?;
+    println!("✓ Preset di esempio creati (epub_only, pdf_only, novels)");
+
     // Aggiorna AppSettings
     app_settings.update_last_library(&library_path);
     app_settings.save(settings_path)?;
@@ -448,6 +474,7 @@ async fn cmd_init(
 
     println!("\n✓ Libreria inizializzata con successo!");
     println!("  Path: {}", library_path.display());
+    println!("\nUsa 'ritmo list-presets' per vedere i preset disponibili.");
 
     Ok(())
 }
@@ -589,13 +616,20 @@ async fn cmd_list_books(
 
     let pool = config.create_pool().await?;
 
-    // Costruisci filtri (con supporto preset)
+    // Carica preset della libreria per resolution
+    let library_presets = config.load_library_presets().ok();
+
+    // Costruisci filtri (con supporto preset con resolution order)
     let filters = if let Some(preset_name) = preset {
-        // Carica filtri dal preset
-        let preset = app_settings
-            .presets
-            .get_book_preset(&preset_name)
-            .ok_or_else(|| format!("Preset '{}' non trovato", preset_name))?;
+        // Risolvi preset: library > global
+        let preset = if let Some(ref lib_presets) = library_presets {
+            lib_presets
+                .get_book_preset(&preset_name)
+                .or_else(|| app_settings.presets.get_book_preset(&preset_name))
+        } else {
+            app_settings.presets.get_book_preset(&preset_name)
+        }
+        .ok_or_else(|| format!("Preset '{}' non trovato", preset_name))?;
 
         // Merge preset con parametri CLI (i parametri CLI hanno priorità)
         BookFilters {
@@ -664,13 +698,20 @@ async fn cmd_list_contents(
 
     let pool = config.create_pool().await?;
 
-    // Costruisci filtri (con supporto preset)
+    // Carica preset della libreria per resolution
+    let library_presets = config.load_library_presets().ok();
+
+    // Costruisci filtri (con supporto preset con resolution order)
     let filters = if let Some(preset_name) = preset {
-        // Carica filtri dal preset
-        let preset = app_settings
-            .presets
-            .get_content_preset(&preset_name)
-            .ok_or_else(|| format!("Preset '{}' non trovato", preset_name))?;
+        // Risolvi preset: library > global
+        let preset = if let Some(ref lib_presets) = library_presets {
+            lib_presets
+                .get_content_preset(&preset_name)
+                .or_else(|| app_settings.presets.get_content_preset(&preset_name))
+        } else {
+            app_settings.presets.get_content_preset(&preset_name)
+        }
+        .ok_or_else(|| format!("Preset '{}' non trovato", preset_name))?;
 
         // Merge preset con parametri CLI (i parametri CLI hanno priorità)
         ContentFilters {
@@ -726,10 +767,12 @@ fn get_library_path(
 /// Comando: save-preset - Salva un preset di filtri
 #[allow(clippy::too_many_arguments)]
 fn cmd_save_preset(
+    cli_library: &Option<PathBuf>,
     app_settings: &mut AppSettings,
     settings_path: &PathBuf,
     preset_type: String,
     name: String,
+    in_library: bool,
     description: Option<String>,
     author: Option<String>,
     publisher: Option<String>,
@@ -750,53 +793,116 @@ fn cmd_save_preset(
         )
     })?;
 
-    match preset_type_enum {
-        PresetType::Books => {
-            let filters = BookFilterPreset {
-                author,
-                publisher,
-                series,
-                format,
-                year,
-                isbn,
-                search,
-                sort,
-                limit,
-                offset,
-            };
+    // Se in_library è true, salva nei preset della libreria
+    if in_library {
+        let library_path = get_library_path(cli_library, app_settings)?;
+        let config = LibraryConfig::new(&library_path);
 
-            let preset = NamedPreset {
-                name: name.clone(),
-                description,
-                filters,
-            };
-
-            app_settings.presets.add_book_preset(preset);
-            app_settings.save(settings_path)?;
-
-            println!("✓ Preset '{}' salvato per libri", name);
+        if !config.exists() {
+            return Err(format!("La libreria non esiste: {}", library_path.display()).into());
         }
-        PresetType::Contents => {
-            let filters = ContentFilterPreset {
-                author,
-                content_type,
-                year,
-                search,
-                sort,
-                limit,
-                offset,
-            };
 
-            let preset = NamedPreset {
-                name: name.clone(),
-                description,
-                filters,
-            };
+        let mut library_presets = config.load_library_presets()?;
 
-            app_settings.presets.add_content_preset(preset);
-            app_settings.save(settings_path)?;
+        match preset_type_enum {
+            PresetType::Books => {
+                let filters = BookFilterPreset {
+                    author,
+                    publisher,
+                    series,
+                    format,
+                    year,
+                    isbn,
+                    search,
+                    sort,
+                    limit,
+                    offset,
+                };
 
-            println!("✓ Preset '{}' salvato per contenuti", name);
+                let preset = NamedPreset {
+                    name: name.clone(),
+                    description,
+                    filters,
+                };
+
+                library_presets.add_book_preset(preset);
+                config.save_library_presets(&library_presets)?;
+
+                println!("✓ Preset '{}' salvato nella libreria per libri", name);
+            }
+            PresetType::Contents => {
+                let filters = ContentFilterPreset {
+                    author,
+                    content_type,
+                    year,
+                    search,
+                    sort,
+                    limit,
+                    offset,
+                };
+
+                let preset = NamedPreset {
+                    name: name.clone(),
+                    description,
+                    filters,
+                };
+
+                library_presets.add_content_preset(preset);
+                config.save_library_presets(&library_presets)?;
+
+                println!("✓ Preset '{}' salvato nella libreria per contenuti", name);
+            }
+        }
+    } else {
+        // Salva nei preset globali
+        match preset_type_enum {
+            PresetType::Books => {
+                let filters = BookFilterPreset {
+                    author,
+                    publisher,
+                    series,
+                    format,
+                    year,
+                    isbn,
+                    search,
+                    sort,
+                    limit,
+                    offset,
+                };
+
+                let preset = NamedPreset {
+                    name: name.clone(),
+                    description,
+                    filters,
+                };
+
+                app_settings.presets.add_book_preset(preset);
+                app_settings.save(settings_path)?;
+
+                println!("✓ Preset '{}' salvato globalmente per libri", name);
+            }
+            PresetType::Contents => {
+                let filters = ContentFilterPreset {
+                    author,
+                    content_type,
+                    year,
+                    search,
+                    sort,
+                    limit,
+                    offset,
+                };
+
+                let preset = NamedPreset {
+                    name: name.clone(),
+                    description,
+                    filters,
+                };
+
+                app_settings.presets.add_content_preset(preset);
+                app_settings.save(settings_path)?;
+
+                println!("✓ Preset '{}' salvato globalmente per contenuti", name);
+            }
         }
     }
 
@@ -805,6 +911,7 @@ fn cmd_save_preset(
 
 /// Comando: list-presets - Lista tutti i preset salvati
 fn cmd_list_presets(
+    cli_library: &Option<PathBuf>,
     app_settings: &AppSettings,
     preset_type: Option<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -816,10 +923,115 @@ fn cmd_list_presets(
         || preset_type.as_ref().map(|s| s.to_lowercase()) == Some("contents".to_string())
         || preset_type.as_ref().map(|s| s.to_lowercase()) == Some("content".to_string());
 
+    // Prova a caricare preset della libreria
+    let library_presets = if let Ok(library_path) = get_library_path(cli_library, app_settings) {
+        let config = LibraryConfig::new(&library_path);
+        if config.exists() {
+            config.load_library_presets().ok()
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
     let mut found_any = false;
 
+    // Mostra preset della libreria
+    if let Some(ref lib_presets) = library_presets {
+        if show_books && !lib_presets.books.is_empty() {
+            println!("Preset per Libri (Libreria):");
+            println!("{}", "-".repeat(50));
+            for (name, preset) in &lib_presets.books {
+                println!("• {}", name);
+                if let Some(desc) = &preset.description {
+                    println!("  Descrizione: {}", desc);
+                }
+
+                let mut filters = Vec::new();
+                if let Some(a) = &preset.filters.author {
+                    filters.push(format!("autore={}", a));
+                }
+                if let Some(p) = &preset.filters.publisher {
+                    filters.push(format!("editore={}", p));
+                }
+                if let Some(s) = &preset.filters.series {
+                    filters.push(format!("serie={}", s));
+                }
+                if let Some(f) = &preset.filters.format {
+                    filters.push(format!("formato={}", f));
+                }
+                if let Some(y) = preset.filters.year {
+                    filters.push(format!("anno={}", y));
+                }
+                if let Some(i) = &preset.filters.isbn {
+                    filters.push(format!("isbn={}", i));
+                }
+                if let Some(s) = &preset.filters.search {
+                    filters.push(format!("ricerca={}", s));
+                }
+                filters.push(format!("ordina={}", preset.filters.sort));
+                if let Some(l) = preset.filters.limit {
+                    filters.push(format!("limite={}", l));
+                }
+
+                println!("  Filtri: {}", filters.join(", "));
+                println!();
+            }
+
+            // Mostra default se presente
+            if let Some(default) = lib_presets.get_default_books_preset() {
+                println!("Default: {}", default);
+                println!();
+            }
+
+            found_any = true;
+        }
+
+        if show_contents && !lib_presets.contents.is_empty() {
+            println!("Preset per Contenuti (Libreria):");
+            println!("{}", "-".repeat(50));
+            for (name, preset) in &lib_presets.contents {
+                println!("• {}", name);
+                if let Some(desc) = &preset.description {
+                    println!("  Descrizione: {}", desc);
+                }
+
+                let mut filters = Vec::new();
+                if let Some(a) = &preset.filters.author {
+                    filters.push(format!("autore={}", a));
+                }
+                if let Some(t) = &preset.filters.content_type {
+                    filters.push(format!("tipo={}", t));
+                }
+                if let Some(y) = preset.filters.year {
+                    filters.push(format!("anno={}", y));
+                }
+                if let Some(s) = &preset.filters.search {
+                    filters.push(format!("ricerca={}", s));
+                }
+                filters.push(format!("ordina={}", preset.filters.sort));
+                if let Some(l) = preset.filters.limit {
+                    filters.push(format!("limite={}", l));
+                }
+
+                println!("  Filtri: {}", filters.join(", "));
+                println!();
+            }
+
+            // Mostra default se presente
+            if let Some(default) = lib_presets.get_default_contents_preset() {
+                println!("Default: {}", default);
+                println!();
+            }
+
+            found_any = true;
+        }
+    }
+
+    // Mostra preset globali
     if show_books && !app_settings.presets.books.is_empty() {
-        println!("Preset per Libri:");
+        println!("Preset per Libri (Globali):");
         println!("{}", "-".repeat(50));
         for (name, preset) in &app_settings.presets.books {
             println!("• {}", name);
@@ -864,7 +1076,7 @@ fn cmd_list_presets(
         if found_any {
             println!();
         }
-        println!("Preset per Contenuti:");
+        println!("Preset per Contenuti (Globali):");
         println!("{}", "-".repeat(50));
         for (name, preset) in &app_settings.presets.contents {
             println!("• {}", name);
@@ -929,6 +1141,79 @@ fn cmd_delete_preset(
     } else {
         println!("✗ Preset '{}' non trovato", name);
     }
+
+    Ok(())
+}
+
+/// Comando: set-default-filter - Imposta il preset di default per una libreria
+fn cmd_set_default_filter(
+    cli_library: &Option<PathBuf>,
+    app_settings: &AppSettings,
+    preset_type: String,
+    preset_name: String,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let preset_type_enum = PresetType::from_str(&preset_type).ok_or_else(|| {
+        format!(
+            "Tipo preset non valido: '{}'. Usa 'books' o 'contents'",
+            preset_type
+        )
+    })?;
+
+    let library_path = get_library_path(cli_library, app_settings)?;
+    let config = LibraryConfig::new(&library_path);
+
+    if !config.exists() {
+        return Err(format!("La libreria non esiste: {}", library_path.display()).into());
+    }
+
+    let mut library_presets = config.load_library_presets()?;
+
+    // Controlla se rimuovere il default
+    if preset_name.to_lowercase() == "none" {
+        match preset_type_enum {
+            PresetType::Books => {
+                library_presets.set_default_books_preset(None);
+                println!("✓ Preset di default rimosso per libri");
+            }
+            PresetType::Contents => {
+                library_presets.set_default_contents_preset(None);
+                println!("✓ Preset di default rimosso per contenuti");
+            }
+        }
+    } else {
+        // Verifica che il preset esista
+        let exists = match preset_type_enum {
+            PresetType::Books => library_presets.get_book_preset(&preset_name).is_some(),
+            PresetType::Contents => library_presets.get_content_preset(&preset_name).is_some(),
+        };
+
+        if !exists {
+            return Err(format!(
+                "Preset '{}' non trovato nella libreria. Usa 'ritmo save-preset --in-library' per crearlo.",
+                preset_name
+            )
+            .into());
+        }
+
+        match preset_type_enum {
+            PresetType::Books => {
+                library_presets.set_default_books_preset(Some(preset_name.clone()));
+                println!(
+                    "✓ Preset '{}' impostato come default per libri",
+                    preset_name
+                );
+            }
+            PresetType::Contents => {
+                library_presets.set_default_contents_preset(Some(preset_name.clone()));
+                println!(
+                    "✓ Preset '{}' impostato come default per contenuti",
+                    preset_name
+                );
+            }
+        }
+    }
+
+    config.save_library_presets(&library_presets)?;
 
     Ok(())
 }

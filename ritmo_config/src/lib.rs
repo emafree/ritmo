@@ -1,9 +1,11 @@
 mod app_settings;
 mod portable;
-mod presets;
+pub mod preset_resolver;
+pub mod presets;
 
 pub use app_settings::AppSettings;
 pub use portable::{detect_portable_library, is_running_portable};
+pub use preset_resolver::{LibraryPresetsHolder, PresetResolver, PresetSource};
 pub use presets::{BookFilterPreset, ContentFilterPreset, GlobalPresets, NamedPreset, PresetType};
 pub use ritmo_errors::RitmoErr;
 

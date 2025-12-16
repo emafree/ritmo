@@ -15,6 +15,7 @@ sqlx = { workspace = true, features = [
 tokio = { workspace = true, features = ["full"] }
 chrono = { workspace = true }
 ritmo_errors = { path = "../ritmo_errors" }
+ritmo_config = { path = "../ritmo_config" }
 tracing = "0.1"
 serde = { workspace = true }
 serde_json = { workspace = true }

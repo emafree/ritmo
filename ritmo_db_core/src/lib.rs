@@ -1,12 +1,14 @@
 pub mod config;
 pub mod database;
 pub mod filters;
+pub mod library_presets;
 pub mod maintenance;
 pub mod query_builder;
 pub mod results;
 
 pub use database::Database;
 pub use filters::{BookFilters, BookSortField, ContentFilters, ContentSortField};
+pub use library_presets::LibraryPresets;
 pub use query_builder::{
     build_books_query, build_contents_query, execute_books_query, execute_contents_query,
 };
@@ -142,9 +144,27 @@ impl LibraryConfig {
         self.canonical_config_path().join("ritmo.toml")
     }
 
+    /// Percorso del file dei preset della libreria
+    pub fn filters_file(&self) -> PathBuf {
+        self.canonical_config_path().join("filters.toml")
+    }
+
     /// Percorso del database template per bootstrap
     pub fn template_db_path(&self) -> PathBuf {
         self.canonical_bootstrap_path().join("template.db")
+    }
+
+    /// Carica i preset della libreria dal file filters.toml
+    pub fn load_library_presets(&self) -> Result<LibraryPresets, Box<dyn std::error::Error>> {
+        LibraryPresets::load_or_create(self.filters_file())
+    }
+
+    /// Salva i preset della libreria nel file filters.toml
+    pub fn save_library_presets(
+        &self,
+        presets: &LibraryPresets,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        presets.save(self.filters_file())
     }
 
     /// Inizializza tutte le directory necessarie
