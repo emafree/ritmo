@@ -4,22 +4,12 @@ pub mod filters;
 pub mod library_presets;
 pub mod maintenance;
 
-// Backward compatibility: re-export old modules (deprecated)
-#[deprecated(since = "0.2.0", note = "Use filters module instead")]
-pub mod query_builder;
-#[deprecated(since = "0.2.0", note = "Use filters::types instead")]
-pub mod results;
-
 pub use database::Database;
 pub use filters::{
-    execute_books_query, execute_contents_query, BookFilters, BookResult, BookSortField,
-    ContentFilters, ContentResult, ContentSortField,
+    build_books_query, build_contents_query, execute_books_query, execute_contents_query,
+    BookFilters, BookResult, BookSortField, ContentFilters, ContentResult, ContentSortField,
 };
 pub use library_presets::LibraryPresets;
-
-// Backward compatibility exports
-#[allow(deprecated)]
-pub use query_builder::{build_books_query, build_contents_query};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
