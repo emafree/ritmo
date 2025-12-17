@@ -3,7 +3,113 @@
 use crate::helpers::{get_library_path, parse_date_to_timestamp};
 use ritmo_config::{AppSettings, BookFilterPreset, ContentFilterPreset, NamedPreset, PresetType};
 use ritmo_db_core::LibraryConfig;
+use std::collections::HashMap;
 use std::path::PathBuf;
+
+/// Helper: formatta i filtri di un book preset come stringa
+fn format_book_filters(filters: &BookFilterPreset) -> String {
+    let mut parts = Vec::new();
+
+    if let Some(a) = &filters.author {
+        parts.push(format!("autore={}", a));
+    }
+    if let Some(p) = &filters.publisher {
+        parts.push(format!("editore={}", p));
+    }
+    if let Some(s) = &filters.series {
+        parts.push(format!("serie={}", s));
+    }
+    if let Some(f) = &filters.format {
+        parts.push(format!("formato={}", f));
+    }
+    if let Some(y) = filters.year {
+        parts.push(format!("anno={}", y));
+    }
+    if let Some(i) = &filters.isbn {
+        parts.push(format!("isbn={}", i));
+    }
+    if let Some(s) = &filters.search {
+        parts.push(format!("ricerca={}", s));
+    }
+    parts.push(format!("ordina={}", filters.sort));
+    if let Some(l) = filters.limit {
+        parts.push(format!("limite={}", l));
+    }
+
+    parts.join(", ")
+}
+
+/// Helper: formatta i filtri di un content preset come stringa
+fn format_content_filters(filters: &ContentFilterPreset) -> String {
+    let mut parts = Vec::new();
+
+    if let Some(a) = &filters.author {
+        parts.push(format!("autore={}", a));
+    }
+    if let Some(t) = &filters.content_type {
+        parts.push(format!("tipo={}", t));
+    }
+    if let Some(y) = filters.year {
+        parts.push(format!("anno={}", y));
+    }
+    if let Some(s) = &filters.search {
+        parts.push(format!("ricerca={}", s));
+    }
+    parts.push(format!("ordina={}", filters.sort));
+    if let Some(l) = filters.limit {
+        parts.push(format!("limite={}", l));
+    }
+
+    parts.join(", ")
+}
+
+/// Helper: mostra una lista di book preset
+fn display_book_presets(
+    title: &str,
+    presets: &HashMap<String, NamedPreset<BookFilterPreset>>,
+    default_preset: Option<String>,
+) {
+    println!("{}:", title);
+    println!("{}", "-".repeat(50));
+
+    for (name, preset) in presets {
+        println!("• {}", name);
+        if let Some(desc) = &preset.description {
+            println!("  Descrizione: {}", desc);
+        }
+        println!("  Filtri: {}", format_book_filters(&preset.filters));
+        println!();
+    }
+
+    if let Some(default) = default_preset {
+        println!("Default: {}", default);
+        println!();
+    }
+}
+
+/// Helper: mostra una lista di content preset
+fn display_content_presets(
+    title: &str,
+    presets: &HashMap<String, NamedPreset<ContentFilterPreset>>,
+    default_preset: Option<String>,
+) {
+    println!("{}:", title);
+    println!("{}", "-".repeat(50));
+
+    for (name, preset) in presets {
+        println!("• {}", name);
+        if let Some(desc) = &preset.description {
+            println!("  Descrizione: {}", desc);
+        }
+        println!("  Filtri: {}", format_content_filters(&preset.filters));
+        println!();
+    }
+
+    if let Some(default) = default_preset {
+        println!("Default: {}", default);
+        println!();
+    }
+}
 
 /// Comando: save-preset - Salva un preset di filtri
 #[allow(clippy::too_many_arguments)]
@@ -200,135 +306,35 @@ pub fn cmd_list_presets(
     // Mostra preset della libreria
     if let Some(ref lib_presets) = library_presets {
         if show_books && !lib_presets.books.is_empty() {
-            println!("Preset per Libri (Libreria):");
-            println!("{}", "-".repeat(50));
-            for (name, preset) in &lib_presets.books {
-                println!("• {}", name);
-                if let Some(desc) = &preset.description {
-                    println!("  Descrizione: {}", desc);
-                }
-
-                let mut filters = Vec::new();
-                if let Some(a) = &preset.filters.author {
-                    filters.push(format!("autore={}", a));
-                }
-                if let Some(p) = &preset.filters.publisher {
-                    filters.push(format!("editore={}", p));
-                }
-                if let Some(s) = &preset.filters.series {
-                    filters.push(format!("serie={}", s));
-                }
-                if let Some(f) = &preset.filters.format {
-                    filters.push(format!("formato={}", f));
-                }
-                if let Some(y) = preset.filters.year {
-                    filters.push(format!("anno={}", y));
-                }
-                if let Some(i) = &preset.filters.isbn {
-                    filters.push(format!("isbn={}", i));
-                }
-                if let Some(s) = &preset.filters.search {
-                    filters.push(format!("ricerca={}", s));
-                }
-                filters.push(format!("ordina={}", preset.filters.sort));
-                if let Some(l) = preset.filters.limit {
-                    filters.push(format!("limite={}", l));
-                }
-
-                println!("  Filtri: {}", filters.join(", "));
-                println!();
-            }
-
-            // Mostra default se presente
-            if let Some(default) = lib_presets.get_default_books_preset() {
-                println!("Default: {}", default);
-                println!();
-            }
-
+            display_book_presets(
+                "Preset per Libri (Libreria)",
+                &lib_presets.books,
+                lib_presets
+                    .get_default_books_preset()
+                    .map(|s| s.to_string()),
+            );
             found_any = true;
         }
 
         if show_contents && !lib_presets.contents.is_empty() {
-            println!("Preset per Contenuti (Libreria):");
-            println!("{}", "-".repeat(50));
-            for (name, preset) in &lib_presets.contents {
-                println!("• {}", name);
-                if let Some(desc) = &preset.description {
-                    println!("  Descrizione: {}", desc);
-                }
-
-                let mut filters = Vec::new();
-                if let Some(a) = &preset.filters.author {
-                    filters.push(format!("autore={}", a));
-                }
-                if let Some(t) = &preset.filters.content_type {
-                    filters.push(format!("tipo={}", t));
-                }
-                if let Some(y) = preset.filters.year {
-                    filters.push(format!("anno={}", y));
-                }
-                if let Some(s) = &preset.filters.search {
-                    filters.push(format!("ricerca={}", s));
-                }
-                filters.push(format!("ordina={}", preset.filters.sort));
-                if let Some(l) = preset.filters.limit {
-                    filters.push(format!("limite={}", l));
-                }
-
-                println!("  Filtri: {}", filters.join(", "));
-                println!();
-            }
-
-            // Mostra default se presente
-            if let Some(default) = lib_presets.get_default_contents_preset() {
-                println!("Default: {}", default);
-                println!();
-            }
-
+            display_content_presets(
+                "Preset per Contenuti (Libreria)",
+                &lib_presets.contents,
+                lib_presets
+                    .get_default_contents_preset()
+                    .map(|s| s.to_string()),
+            );
             found_any = true;
         }
     }
 
     // Mostra preset globali
     if show_books && !app_settings.presets.books.is_empty() {
-        println!("Preset per Libri (Globali):");
-        println!("{}", "-".repeat(50));
-        for (name, preset) in &app_settings.presets.books {
-            println!("• {}", name);
-            if let Some(desc) = &preset.description {
-                println!("  Descrizione: {}", desc);
-            }
-
-            let mut filters = Vec::new();
-            if let Some(a) = &preset.filters.author {
-                filters.push(format!("autore={}", a));
-            }
-            if let Some(p) = &preset.filters.publisher {
-                filters.push(format!("editore={}", p));
-            }
-            if let Some(s) = &preset.filters.series {
-                filters.push(format!("serie={}", s));
-            }
-            if let Some(f) = &preset.filters.format {
-                filters.push(format!("formato={}", f));
-            }
-            if let Some(y) = preset.filters.year {
-                filters.push(format!("anno={}", y));
-            }
-            if let Some(i) = &preset.filters.isbn {
-                filters.push(format!("isbn={}", i));
-            }
-            if let Some(s) = &preset.filters.search {
-                filters.push(format!("ricerca={}", s));
-            }
-            filters.push(format!("ordina={}", preset.filters.sort));
-            if let Some(l) = preset.filters.limit {
-                filters.push(format!("limite={}", l));
-            }
-
-            println!("  Filtri: {}", filters.join(", "));
-            println!();
-        }
+        display_book_presets(
+            "Preset per Libri (Globali)",
+            &app_settings.presets.books,
+            None,
+        );
         found_any = true;
     }
 
@@ -336,35 +342,11 @@ pub fn cmd_list_presets(
         if found_any {
             println!();
         }
-        println!("Preset per Contenuti (Globali):");
-        println!("{}", "-".repeat(50));
-        for (name, preset) in &app_settings.presets.contents {
-            println!("• {}", name);
-            if let Some(desc) = &preset.description {
-                println!("  Descrizione: {}", desc);
-            }
-
-            let mut filters = Vec::new();
-            if let Some(a) = &preset.filters.author {
-                filters.push(format!("autore={}", a));
-            }
-            if let Some(t) = &preset.filters.content_type {
-                filters.push(format!("tipo={}", t));
-            }
-            if let Some(y) = preset.filters.year {
-                filters.push(format!("anno={}", y));
-            }
-            if let Some(s) = &preset.filters.search {
-                filters.push(format!("ricerca={}", s));
-            }
-            filters.push(format!("ordina={}", preset.filters.sort));
-            if let Some(l) = preset.filters.limit {
-                filters.push(format!("limite={}", l));
-            }
-
-            println!("  Filtri: {}", filters.join(", "));
-            println!();
-        }
+        display_content_presets(
+            "Preset per Contenuti (Globali)",
+            &app_settings.presets.contents,
+            None,
+        );
         found_any = true;
     }
 
