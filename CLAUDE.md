@@ -386,6 +386,45 @@ Required Rust version: **stable** (currently 1.91+) (specified in `rust-toolchai
 
 ## Recent Changes
 
+### 2025-12-18 - Session 9: RitmoReporter Trait System - COMPLETED
+
+**Problem**: Shared library modules (`ritmo_db_core`, `ritmo_core`, `ritmo_ml`) contained `println!`, `eprintln!`, and `dbg!` statements that would cause unwanted console output when used in GUI applications.
+
+**Solution**: Created a reporter trait abstraction layer to decouple output from business logic.
+
+✅ **RitmoReporter Trait** (`ritmo_errors/src/reporter.rs`):
+  - Trait with 3 methods: `status()`, `progress()`, `error()`
+  - `SilentReporter`: no-op implementation for libraries and tests
+  - Comprehensive documentation with GuiReporter implementation guidelines
+  - 8 tests (3 unit tests + 5 doc tests)
+
+✅ **Refactored Core Modules**:
+  - `ritmo_db_core` (4 statements removed):
+    - `Database::from_pool(&mut impl RitmoReporter)` 
+    - `LibraryConfig::create_pool(&mut impl RitmoReporter)`
+    - `LibraryConfig::create_database(&mut impl RitmoReporter)`
+    - Removed `dbg!()` from `LibraryConfig::save()`
+  - `ritmo_core` (3 statements removed):
+    - `delete_book(&mut impl RitmoReporter)`
+    - `delete_content(&mut impl RitmoReporter)`
+  - `ritmo_ml` (1 statement removed):
+    - `TagRecord::set_variants()` cleaned up
+
+✅ **CLI Integration**:
+  - Implemented `CliReporter` struct in `ritmo_cli/src/main.rs`
+  - Updated all CLI commands to use `SilentReporter` for library calls
+  - CLI continues to print directly for user-facing output (unchanged behavior)
+
+**Benefits**:
+- GUI compatibility: shared modules no longer output to console
+- Testability: tests run without console noise
+- Flexibility: different frontends can implement custom reporters
+- No breaking changes: all existing code works unchanged
+- All 59 tests passing
+
+**Files Modified**: 11 files, +299 lines, -28 lines
+**Commit**: `42e6759` - "Refactor: replace println!/eprintln! with RitmoReporter trait"
+
 ### 2025-12-18 - Session 8: Complete CRUD System Implementation - COMPLETED
 
 **System CRUD Implementation:**
