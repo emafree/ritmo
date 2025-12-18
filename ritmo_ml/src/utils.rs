@@ -12,6 +12,13 @@ impl MLStringUtils {
         MLStringUtils { name_variants }
     }
 
+    /// Create a new MLStringUtils with an empty variants map
+    pub fn default() -> Self {
+        MLStringUtils {
+            name_variants: std::collections::HashMap::new(),
+        }
+    }
+
     pub fn normalize_string(&self, text: &str) -> String {
         let normalized = text
             .nfc()
