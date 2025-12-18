@@ -55,7 +55,9 @@ impl MLEntityLearner {
         let mut used = vec![false; items.len()];
         let threshold = 0.85;
         for (i, a) in items.iter().enumerate() {
-            if used[i] { continue; }
+            if used[i] {
+                continue;
+            }
             let mut group = vec![a.clone()];
             used[i] = true;
             for (j, b) in items.iter().enumerate().skip(i + 1) {
@@ -67,12 +69,17 @@ impl MLEntityLearner {
             if group.len() > 1 {
                 let centroid = Self::find_centroid(&group);
                 let confidence = Self::calc_group_confidence(&group);
-                clusters.push(EntityCluster { centroid, members: group, confidence });
+                clusters.push(EntityCluster {
+                    centroid,
+                    members: group,
+                    confidence,
+                });
             }
         }
         self.clusters = clusters;
     }
 
+    /// Identifica pattern di varianti usando funzioni custom
     pub fn identify_variant_patterns(
         &mut self,
         classify_fn: &dyn Fn(&str, &str, usize) -> VariantPatternType,
@@ -85,12 +92,19 @@ impl MLEntityLearner {
                     let b = &cluster.members[j];
                     let edit_dist = strsim::levenshtein(a, b);
                     let sim = jaro_winkler(a, b);
-                    if sim < 0.7 { continue; }
+                    if sim < 0.7 {
+                        continue;
+                    }
                     let pattern_type = classify_fn(a, b, edit_dist);
                     let confidence = confidence_fn(a, b, &pattern_type, sim);
                     let pattern_key = format!("{:?}->{:?}", pattern_type, &a);
-                    *self.pattern_frequency.entry(pattern_key.clone()).or_insert(0) += 1;
-                    if confidence >= self.minimum_confidence && self.pattern_frequency[&pattern_key] >= self.minimum_frequency {
+                    *self
+                        .pattern_frequency
+                        .entry(pattern_key.clone())
+                        .or_insert(0) += 1;
+                    if confidence >= self.minimum_confidence
+                        && self.pattern_frequency[&pattern_key] >= self.minimum_frequency
+                    {
                         self.learned_patterns.push(EntityVariantPattern {
                             base_form: a.to_string(),
                             variant_form: b.to_string(),
@@ -103,15 +117,20 @@ impl MLEntityLearner {
                 }
             }
         }
-        self.learned_patterns.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap());
-        self.learned_patterns.dedup_by(|a, b| a.base_form == b.base_form && a.variant_form == b.variant_form);
+        self.learned_patterns
+            .sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap());
+        self.learned_patterns
+            .dedup_by(|a, b| a.base_form == b.base_form && a.variant_form == b.variant_form);
     }
 
     fn find_centroid(group: &[String]) -> String {
         let mut min_dist_sum = std::f64::MAX;
         let mut centroid = group[0].clone();
         for candidate in group {
-            let sum: f64 = group.iter().map(|other| 1.0 - jaro_winkler(candidate, other)).sum();
+            let sum: f64 = group
+                .iter()
+                .map(|other| 1.0 - jaro_winkler(candidate, other))
+                .sum();
             if sum < min_dist_sum {
                 min_dist_sum = sum;
                 centroid = candidate.clone();
@@ -121,7 +140,9 @@ impl MLEntityLearner {
     }
 
     fn calc_group_confidence(group: &[String]) -> f64 {
-        if group.len() < 2 { return 1.0; }
+        if group.len() < 2 {
+            return 1.0;
+        }
         let mut sum = 0.0;
         let mut count = 0;
         for (i, x) in group.iter().enumerate() {
@@ -130,6 +151,21 @@ impl MLEntityLearner {
                 count += 1;
             }
         }
-        if count > 0 { sum / (count as f64) } else { 1.0 }
+        if count > 0 {
+            sum / (count as f64)
+        } else {
+            1.0
+        }
+    }
+
+    /// Identifica pattern di varianti usando le funzioni di classificazione di default
+    pub fn identify_variant_patterns_with_defaults(&mut self) {
+        use crate::pattern_functions::{
+            default_classify_pattern_type, default_confidence_function,
+        };
+        self.identify_variant_patterns(
+            &default_classify_pattern_type,
+            &default_confidence_function,
+        );
     }
 }

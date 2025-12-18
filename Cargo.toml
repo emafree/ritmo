@@ -7,9 +7,9 @@ members = [
     "ritmo_db_core", # Gestione database e metadata
     "ritmo_config",    # Configurazione globale applicazione
     "ritmo_mapping" ,
+    "ritmo_ml",
     #    "ritmo_search",    # Sistema di ricerca e indicizzazione
     "ritmo_errors" ,
-    #    "ritmo_ml",
     #    "ebook_parser",
 ]
 resolver = "2"
