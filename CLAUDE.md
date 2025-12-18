@@ -503,6 +503,108 @@ Required Rust version: **stable** (currently 1.91+) (specified in `rust-toolchai
 
 **Next Phase**: End-to-end workflow with database integration and CLI commands.
 
+### 2025-12-18 - Session 10: ritmo_ml Phase 2 - End-to-end Deduplication Workflow - COMPLETED
+
+**Goal**: Build complete deduplication workflow from database loading to safe merging.
+
+**What Was Implemented**:
+
+✅ **Step 1: Database Loaders** (`db_loaders.rs`, ~190 lines):
+  - `load_people_from_db()`: Load and parse all people with MLStringUtils normalization
+  - `load_publishers_from_db()`: Load all publishers with normalized names
+  - `load_series_from_db()`: Load all series with normalized titles
+  - `load_tags_from_db()`: Load all tags with normalized labels
+  - Smart parsing for PersonRecord using `PersonRecord::new()`
+  - Error handling: skip unparseable records, continue loading rest
+
+✅ **Step 2: Merge Operations** (`merge.rs`, ~410 lines):
+  - `merge_people(pool, primary_id, duplicate_ids)`: Merge duplicate authors
+    - Updates `x_books_people_roles` junction table
+    - Updates `x_contents_people_roles` junction table
+    - Deletes duplicate person records
+  - `merge_publishers(pool, primary_id, duplicate_ids)`: Merge duplicate publishers
+    - Updates `books.publisher_id` foreign key
+    - Deletes duplicate publisher records
+  - `merge_series(pool, primary_id, duplicate_ids)`: Merge duplicate series
+    - Updates `books.series_id` foreign key
+    - Deletes duplicate series records
+  - `MergeStats`: Return statistics (primary_id, merged_ids, books/contents updated)
+  - **Safety Features**:
+    - All operations in database transactions (rollback on error)
+    - Full validation: check all IDs exist before merge
+    - Update all foreign keys and junction tables atomically
+    - Detailed error messages for debugging
+
+✅ **Step 3: Deduplication Workflow** (`deduplication.rs`, ~380 lines):
+  - `deduplicate_people(pool, config)`: Complete workflow for authors
+  - `deduplicate_publishers(pool, config)`: Complete workflow for publishers
+  - `deduplicate_series(pool, config)`: Complete workflow for series
+  - **DeduplicationConfig**:
+    - `min_confidence: 0.90` (default, high confidence for safety)
+    - `min_frequency: 3` (minimum pattern frequency)
+    - `auto_merge: false` (default, requires manual approval)
+    - `dry_run: true` (default, preview mode only)
+  - **DeduplicationResult**:
+    - `total_entities`: count of entities processed
+    - `duplicate_groups`: list of DuplicateGroup with details
+    - `merged_groups`: list of MergeStats (if auto_merge=true)
+    - `skipped_low_confidence`: count of groups below threshold
+  - **DuplicateGroup**:
+    - `primary_id`, `primary_name`: entity to keep
+    - `duplicate_ids`, `duplicate_names`: entities to merge
+    - `confidence`: ML confidence score (0.0-1.0)
+  - **Workflow Steps**:
+    1. Load all entities from database
+    2. Extract canonical keys for ML comparison
+    3. Run ML clustering (Jaro-Winkler similarity)
+    4. Convert clusters to duplicate groups with confidence
+    5. Optionally auto-merge high-confidence duplicates
+    6. Return detailed results and statistics
+
+✅ **Utils Enhancement**:
+  - Added `MLStringUtils::default()` for convenient initialization
+  - Enables use without pre-configured name variants
+
+**Statistics**:
+- Files created: 3 (db_loaders.rs, merge.rs, deduplication.rs)
+- Files modified: 2 (lib.rs, utils.rs)
+- Lines added: ~1,000 lines of production code
+- Tests: 2 unit tests + comprehensive docs (ignored, require real DB)
+- Compilation: ✅ Success (1 minor warning)
+
+**Safety & Design Principles**:
+- **Dry-run by default**: No accidental data loss
+- **High confidence threshold**: 0.90 for auto-merge
+- **Transactional merges**: Atomic operations with rollback
+- **Error resilience**: Skip failed merges, continue with rest
+- **Detailed logging**: Track all operations and failures
+- **Configurable**: Adjust thresholds for different use cases
+
+**What's Complete**:
+- ✅ ML clustering and duplicate detection
+- ✅ Safe database merging with transactions
+- ✅ End-to-end workflow (load → detect → merge)
+- ✅ Configurable behavior (thresholds, dry-run, auto-merge)
+- ✅ Comprehensive error handling and statistics
+
+**What's Missing (Next Session)**:
+- ❌ CLI commands to expose functionality (`ritmo deduplicate-people`, etc.)
+- ❌ Integration tests with real database
+- ❌ Interactive mode for manual duplicate review
+
+**Files Modified**:
+- `ritmo_ml/src/db_loaders.rs`: created (~190 lines)
+- `ritmo_ml/src/merge.rs`: created (~410 lines)
+- `ritmo_ml/src/deduplication.rs`: created (~380 lines)
+- `ritmo_ml/src/utils.rs`: added `default()` method
+- `ritmo_ml/src/lib.rs`: exported new modules
+
+**Commits**: 
+- `74dd548` - "ritmo_ml Phase 2: Database loaders and merge operations"
+- `bd8073f` - "ritmo_ml Phase 2 Step 3: Deduplication workflow"
+
+**Next Phase**: CLI commands and integration tests to make ML deduplication user-accessible.
+
 ### 2025-12-18 - Session 8: Complete CRUD System Implementation - COMPLETED
 
 **System CRUD Implementation:**
