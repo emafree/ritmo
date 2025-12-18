@@ -22,7 +22,9 @@ impl TagRecord {
     }
 
     pub fn normalize(label: &str) -> String {
-        label.to_lowercase().replace(|c: char| !c.is_alphanumeric(), "")
+        label
+            .to_lowercase()
+            .replace(|c: char| !c.is_alphanumeric(), "")
     }
 }
 
@@ -40,7 +42,8 @@ impl MLProcessable for TagRecord {
         vec![self.label.clone()]
     }
 
-    fn set_variants(&mut self, variants: Vec<String>) {
-        println!("Aggiornando varianti per tag {}: {:?}", self.label, variants);
+    fn set_variants(&mut self, _variants: Vec<String>) {
+        // Variants are set but TagRecord doesn't store them separately
+        // This is a no-op implementation for tags
     }
 }

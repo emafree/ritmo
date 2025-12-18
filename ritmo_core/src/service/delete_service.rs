@@ -1,5 +1,6 @@
 use ritmo_db::{Book, Content};
 use ritmo_db_core::LibraryConfig;
+use ritmo_errors::reporter::RitmoReporter;
 use ritmo_errors::{RitmoErr, RitmoResult};
 use std::fs;
 
@@ -24,11 +25,13 @@ pub struct DeleteOptions {
 /// * `pool` - Pool di connessioni al database
 /// * `book_id` - ID del libro da eliminare
 /// * `options` - Opzioni di cancellazione
+/// * `reporter` - Reporter per messaggi di stato ed errori
 pub async fn delete_book(
     config: &LibraryConfig,
     pool: &sqlx::SqlitePool,
     book_id: i64,
     options: &DeleteOptions,
+    reporter: &mut impl RitmoReporter,
 ) -> RitmoResult<()> {
     // 1. Verifica che il libro esista e ottieni i dettagli
     let book = Book::get(pool, book_id)
@@ -43,7 +46,7 @@ pub async fn delete_book(
             if file_path.exists() {
                 match fs::remove_file(&file_path) {
                     Ok(_) => {
-                        println!("File eliminato: {}", file_path.display());
+                        reporter.status(&format!("File eliminato: {}", file_path.display()));
                     }
                     Err(e) => {
                         if !options.force {
@@ -53,11 +56,11 @@ pub async fn delete_book(
                                 e
                             )));
                         } else {
-                            eprintln!(
+                            reporter.error(&format!(
                                 "Warning: impossibile eliminare file {} (continuando per --force): {}",
                                 file_path.display(),
                                 e
-                            );
+                            ));
                         }
                     }
                 }
@@ -94,7 +97,12 @@ pub async fn delete_book(
 /// # Arguments
 /// * `pool` - Pool di connessioni al database
 /// * `content_id` - ID del contenuto da eliminare
-pub async fn delete_content(pool: &sqlx::SqlitePool, content_id: i64) -> RitmoResult<()> {
+/// * `reporter` - Reporter per messaggi di stato
+pub async fn delete_content(
+    pool: &sqlx::SqlitePool,
+    content_id: i64,
+    reporter: &mut impl RitmoReporter,
+) -> RitmoResult<()> {
     // 1. Verifica che il contenuto esista
     let content = Content::get(pool, content_id)
         .await?
@@ -112,7 +120,10 @@ pub async fn delete_content(pool: &sqlx::SqlitePool, content_id: i64) -> RitmoRe
         )));
     }
 
-    println!("Contenuto '{}' eliminato con successo", content.name);
+    reporter.status(&format!(
+        "Contenuto '{}' eliminato con successo",
+        content.name
+    ));
 
     Ok(())
 }

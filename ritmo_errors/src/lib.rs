@@ -1,6 +1,8 @@
 #![allow(unused)]
 
 // ritmo_errors/src/lib.rs
+pub mod reporter;
+
 pub type RitmoResult<T> = Result<T, RitmoErr>;
 
 use sqlx::Error as SqlxError;

@@ -5,7 +5,25 @@ mod helpers;
 use clap::{Parser, Subcommand};
 use commands::*;
 use ritmo_config::{settings_file, AppSettings};
+use ritmo_errors::reporter::RitmoReporter;
 use std::path::PathBuf;
+
+/// CLI Reporter implementation that prints to stdout/stderr
+struct CliReporter;
+
+impl RitmoReporter for CliReporter {
+    fn status(&mut self, message: &str) {
+        println!("{}", message);
+    }
+
+    fn progress(&mut self, message: &str) {
+        println!("{}", message);
+    }
+
+    fn error(&mut self, message: &str) {
+        eprintln!("Error: {}", message);
+    }
+}
 
 #[derive(Parser)]
 #[command(name = "ritmo")]

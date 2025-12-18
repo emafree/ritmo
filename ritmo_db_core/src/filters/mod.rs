@@ -23,10 +23,12 @@
 //! ```rust,no_run
 //! use ritmo_db_core::filters::{BookFilters, execute_books_query};
 //! use ritmo_db_core::LibraryConfig;
+//! use ritmo_errors::reporter::SilentReporter;
 //!
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 //! let config = LibraryConfig::new("/path/to/library");
-//! let pool = config.create_pool().await?;
+//! let mut reporter = SilentReporter;
+//! let pool = config.create_pool(&mut reporter).await?;
 //!
 //! // Use builder pattern for filters
 //! let filters = BookFilters::default()

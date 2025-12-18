@@ -10,6 +10,7 @@ pub use filters::{
     BookFilters, BookResult, BookSortField, ContentFilters, ContentResult, ContentSortField,
 };
 pub use library_presets::LibraryPresets;
+use ritmo_errors::reporter::RitmoReporter;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -98,7 +99,6 @@ impl LibraryConfig {
         if let Some(parent) = config_file.as_ref().parent() {
             fs::create_dir_all(parent)?;
         }
-        dbg!(&content);
         fs::write(config_file, content)?;
         Ok(())
     }
@@ -291,7 +291,10 @@ impl LibraryConfig {
         cleaned.replace('\\', "/")
     }
 
-    pub async fn create_pool(&self) -> Result<sqlx::SqlitePool, ritmo_errors::RitmoErr> {
+    pub async fn create_pool(
+        &self,
+        reporter: &mut impl RitmoReporter,
+    ) -> Result<sqlx::SqlitePool, ritmo_errors::RitmoErr> {
         let db_path = self.db_file_path();
         let normalized_path = Self::normalize_db_path(&db_path);
 
@@ -303,7 +306,7 @@ impl LibraryConfig {
             db_url.push_str("&auto_vacuum=INCREMENTAL");
         }
 
-        println!("Connecting to database: {}", db_url);
+        reporter.status(&format!("Connecting to database: {}", db_url));
 
         let pool = sqlx::sqlite::SqlitePoolOptions::new()
             .max_connections(self.max_db_connections)
@@ -315,9 +318,12 @@ impl LibraryConfig {
     }
 
     /// Crea una connessione Database completa
-    pub async fn create_database(&self) -> Result<Database, ritmo_errors::RitmoErr> {
-        let pool = self.create_pool().await?;
-        Database::from_pool(pool).await
+    pub async fn create_database(
+        &self,
+        reporter: &mut impl RitmoReporter,
+    ) -> Result<Database, ritmo_errors::RitmoErr> {
+        let pool = self.create_pool(reporter).await?;
+        Database::from_pool(pool, reporter).await
     }
 
     /// Backup del database

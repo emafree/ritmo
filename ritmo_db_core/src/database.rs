@@ -1,3 +1,4 @@
+use ritmo_errors::reporter::RitmoReporter;
 use ritmo_errors::RitmoErr;
 use ritmo_errors::RitmoResult;
 use serde_json::Value;
@@ -31,14 +32,17 @@ pub struct DatabaseHealthReport {
 
 impl Database {
     /// Crea una nuova istanza Database da un pool esistente
-    pub async fn from_pool(pool: SqlitePool) -> RitmoResult<Self> {
+    pub async fn from_pool(
+        pool: SqlitePool,
+        reporter: &mut impl RitmoReporter,
+    ) -> RitmoResult<Self> {
         // Verifica che il database sia accessibile
         Self::verify_database_connection(&pool).await?;
 
-        println!("verified connection");
+        reporter.status("Database connection verified");
         // Configura SQLite per performance ottimali
         Self::configure_sqlite(&pool).await?;
-        println!("configured pool");
+        reporter.status("Database pool configured");
         // Carica o crea i metadati del database
         let db_metadata = Self::load_or_create_metadata(&pool).await?;
 

@@ -5,6 +5,7 @@ use crate::helpers::get_library_path;
 use ritmo_config::AppSettings;
 use ritmo_core::service::{delete_content, update_content, ContentUpdateMetadata};
 use ritmo_db_core::{execute_contents_query, ContentFilters, ContentSortField, LibraryConfig};
+use ritmo_errors::reporter::SilentReporter;
 use std::path::PathBuf;
 
 /// Comando: list-contents - Lista contenuti con filtri
@@ -32,7 +33,8 @@ pub async fn cmd_list_contents(
         return Err(format!("La libreria non esiste: {}", library_path.display()).into());
     }
 
-    let pool = config.create_pool().await?;
+    let mut reporter = SilentReporter;
+    let pool = config.create_pool(&mut reporter).await?;
 
     // Carica preset della libreria per resolution
     let library_presets = config.load_library_presets().ok();
@@ -111,7 +113,8 @@ pub async fn cmd_update_content(
         return Err(format!("La libreria non esiste: {}", library_path.display()).into());
     }
 
-    let pool = config.create_pool().await?;
+    let mut reporter = SilentReporter;
+    let pool = config.create_pool(&mut reporter).await?;
 
     println!("Aggiornamento contenuto ID {}...", content_id);
 
@@ -151,11 +154,12 @@ pub async fn cmd_delete_content(
         return Err(format!("La libreria non esiste: {}", library_path.display()).into());
     }
 
-    let pool = config.create_pool().await?;
+    let mut reporter = SilentReporter;
+    let pool = config.create_pool(&mut reporter).await?;
 
     println!("Eliminazione contenuto ID {}...", content_id);
 
-    match delete_content(&pool, content_id).await {
+    match delete_content(&pool, content_id, &mut reporter).await {
         Ok(_) => {
             println!("✓ Contenuto eliminato con successo!");
         }

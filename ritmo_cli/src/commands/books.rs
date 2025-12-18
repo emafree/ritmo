@@ -9,6 +9,7 @@ use ritmo_core::service::{
     delete_book, import_book, update_book, BookImportMetadata, BookUpdateMetadata, DeleteOptions,
 };
 use ritmo_db_core::{execute_books_query, BookFilters, BookSortField, LibraryConfig};
+use ritmo_errors::reporter::SilentReporter;
 use std::path::PathBuf;
 
 /// Comando: list-books - Lista libri con filtri
@@ -44,7 +45,8 @@ pub async fn cmd_list_books(
         return Err(format!("La libreria non esiste: {}", library_path.display()).into());
     }
 
-    let pool = config.create_pool().await?;
+    let mut reporter = SilentReporter;
+    let pool = config.create_pool(&mut reporter).await?;
 
     // Gestisci filtri di data relativi
     let acquired_after_ts = if let Some(days) = last_days {
@@ -170,7 +172,8 @@ pub async fn cmd_update_book(
         return Err(format!("La libreria non esiste: {}", library_path.display()).into());
     }
 
-    let pool = config.create_pool().await?;
+    let mut reporter = SilentReporter;
+    let pool = config.create_pool(&mut reporter).await?;
 
     println!("Aggiornamento libro ID {}...", book_id);
 
@@ -216,7 +219,8 @@ pub async fn cmd_delete_book(
         return Err(format!("La libreria non esiste: {}", library_path.display()).into());
     }
 
-    let pool = config.create_pool().await?;
+    let mut reporter = SilentReporter;
+    let pool = config.create_pool(&mut reporter).await?;
 
     println!("Eliminazione libro ID {}...", book_id);
     if delete_file {
@@ -225,7 +229,7 @@ pub async fn cmd_delete_book(
 
     let options = DeleteOptions { delete_file, force };
 
-    match delete_book(&config, &pool, book_id, &options).await {
+    match delete_book(&config, &pool, book_id, &options, &mut reporter).await {
         Ok(_) => {
             println!("✓ Libro eliminato con successo!");
         }
@@ -287,7 +291,8 @@ pub async fn cmd_add(
 
     // Crea config e pool
     let config = LibraryConfig::new(&library_path);
-    let pool = config.create_pool().await?;
+    let mut reporter = SilentReporter;
+    let pool = config.create_pool(&mut reporter).await?;
 
     // Prepara metadati
     let metadata = BookImportMetadata {

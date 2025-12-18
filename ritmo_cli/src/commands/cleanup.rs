@@ -4,6 +4,7 @@ use crate::helpers::get_library_path;
 use ritmo_config::AppSettings;
 use ritmo_core::service::cleanup_orphaned_entities;
 use ritmo_db_core::LibraryConfig;
+use ritmo_errors::reporter::SilentReporter;
 use std::path::PathBuf;
 
 /// Comando: cleanup - Rimuove entità orfane dal database
@@ -19,7 +20,8 @@ pub async fn cmd_cleanup(
         return Err(format!("La libreria non esiste: {}", library_path.display()).into());
     }
 
-    let pool = config.create_pool().await?;
+    let mut reporter = SilentReporter;
+    let pool = config.create_pool(&mut reporter).await?;
 
     if dry_run {
         println!("🔍 Modalità dry-run: nessuna modifica verrà applicata");
