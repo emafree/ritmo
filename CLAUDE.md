@@ -89,9 +89,30 @@ cargo run -p ritmo_cli -- list-books --last-days 7        # Last 7 days
 cargo run -p ritmo_cli -- list-books --last-months 1      # Last month
 cargo run -p ritmo_cli -- list-books --recent-count 10    # 10 most recent books
 
+# Update book metadata
+cargo run -p ritmo_cli -- update-book 1 --title "New Title" --year 2024
+cargo run -p ritmo_cli -- update-book 1 --author "New Author" --notes "Updated notes"
+
+# Delete book
+cargo run -p ritmo_cli -- delete-book 1                   # Delete record only
+cargo run -p ritmo_cli -- delete-book 1 --delete-file     # Delete record + file
+cargo run -p ritmo_cli -- delete-book 1 --delete-file --force  # Force deletion
+
+# Update content metadata
+cargo run -p ritmo_cli -- update-content 1 --title "New Title" --author "New Author"
+cargo run -p ritmo_cli -- update-content 1 --content-type "Romanzo" --year 2024
+
+# Delete content
+cargo run -p ritmo_cli -- delete-content 1
+
+# Cleanup orphaned entities (authors, publishers, series not referenced)
+cargo run -p ritmo_cli -- cleanup
+cargo run -p ritmo_cli -- cleanup --dry-run               # Preview without changes
+
 # Show help
 cargo run -p ritmo_cli -- --help
 cargo run -p ritmo_cli -- add --help
+cargo run -p ritmo_cli -- update-book --help
 ```
 
 #### GUI Application
@@ -364,6 +385,66 @@ Required Rust version: **stable** (currently 1.91+) (specified in `rust-toolchai
 - Use `tokio-test` for async test utilities
 
 ## Recent Changes
+
+### 2025-12-18 - Session 8: Complete CRUD System Implementation - COMPLETED
+
+**System CRUD Implementation:**
+✅ Implemented full CRUD operations for Books and Contents:
+  - **UPDATE**: `update-book` and `update-content` commands with optional field updates
+  - **DELETE**: `delete-book` and `delete-content` commands with file management options
+  - **CLEANUP**: `cleanup` command to remove orphaned entities
+
+✅ Database Layer (ritmo_db):
+  - Added `update()` method to Book model
+  - Added `get_by_name()` and `get_or_create_by_name()` to Type model
+  - Content model already had update/delete methods
+
+✅ Service Layer (ritmo_core/src/service/):
+  - `book_update_service.rs`: Update book metadata with optional fields
+  - `content_update_service.rs`: Update content metadata
+  - `delete_service.rs`: Delete operations with file management + cleanup utilities
+  - All services properly handle relationships (authors, publishers, series)
+
+✅ CLI Commands:
+  - `update-book <id>`: Update book metadata (title, author, publisher, year, isbn, format, series, notes, pages)
+  - `delete-book <id>`: Delete book with `--delete-file` and `--force` options
+  - `update-content <id>`: Update content metadata (title, author, type, year, notes, pages)
+  - `delete-content <id>`: Delete content from database
+  - `cleanup`: Remove orphaned entities with `--dry-run` option
+
+✅ Features:
+  - Optional field updates (only specified fields are modified)
+  - Automatic relationship management (get_or_create for related entities)
+  - File deletion support with force mode for error handling
+  - CASCADE deletion for related records via database constraints
+  - Comprehensive cleanup statistics (people, publishers, series, formats, types, tags)
+
+✅ Testing:
+  - End-to-end CRUD workflow verified
+  - All operations tested successfully
+  - 100% compilation success
+  - All existing tests passing
+
+**Files Created:**
+- `ritmo_cli/src/commands/cleanup.rs` (63 lines)
+- `ritmo_core/src/service/book_update_service.rs` (127 lines)
+- `ritmo_core/src/service/content_update_service.rs` (107 lines)
+- `ritmo_core/src/service/delete_service.rs` (245 lines)
+
+**Files Modified:**
+- `ritmo_db/src/models/books.rs`: Added update() method
+- `ritmo_db/src/models/types.rs`: Added get_by_name() and get_or_create_by_name()
+- `ritmo_cli/src/commands/books.rs`: Added cmd_update_book() and cmd_delete_book()
+- `ritmo_cli/src/commands/contents.rs`: Added cmd_update_content() and cmd_delete_content()
+- `ritmo_cli/src/commands/mod.rs`: Exported new command functions
+- `ritmo_cli/src/main.rs`: Added command enum variants and handlers
+- `ritmo_core/src/service/mod.rs`: Exported new services
+
+**Statistics:**
+- 11 files changed
+- 955 insertions (+), 14 deletions (-)
+- 5 new CLI commands
+- 100% CRUD coverage for Books and Contents
 
 ### 2025-12-17 - Session 7: Filter System Refactoring (Phase 1 & 2) - COMPLETED
 
@@ -693,39 +774,34 @@ ritmo add file.mobi --title "Mobi Book"  # format = mobi
 
 ## TODO/Next Steps
 
-### High Priority
-1. **Complete Filter Implementation** (✅ COMPLETED - 2025-12-14):
-   - ✅ CLI commands `list-books` and `list-contents` with full options
-   - ✅ Filter structs and query builder with tests (8/8 passing)
-   - ✅ Execute queries against real database
-   - ✅ Create result structs (BookResult, ContentResult) and format output (table, json, simple)
-   - ✅ Full integration tested end-to-end
-   
-2. **Filter Preset System** (✅ COMPLETED - 2025-12-16):
-   - ✅ Phase 1: Global presets in `~/.config/ritmo/settings.toml`
-   - ✅ Phase 2: Library presets in `library/config/filters.toml` (portable!)
-   - ✅ Commands: save-preset (--in-library), list-presets, delete-preset, set-default-filter
-   - ✅ --preset flag for list-books and list-contents
-   - ✅ Parameter override priority (CLI > preset > default)
-   - ✅ Preset resolution order (library > global)
-   - ✅ Auto-create example presets on init
-   - ⏸️ Phase 3: Auto-save last filter, interactive editing (FUTURE)
-   
-3. **GUI Integration**: Update `ritmo_gui` to use `ritmo_config` and add library selection dialog
+### Completed
+1. **Complete Filter Implementation** (✅ COMPLETED - 2025-12-14)
+2. **Filter Preset System** (✅ COMPLETED - 2025-12-16)
+3. **Complete CRUD System** (✅ COMPLETED - 2025-12-18):
+   - ✅ UPDATE operations for Books and Contents
+   - ✅ DELETE operations with file management
+   - ✅ CLEANUP command for orphaned entities
+   - ✅ 5 new CLI commands (update-book, delete-book, update-content, delete-content, cleanup)
+   - ✅ Optional field updates, relationship management, CASCADE deletion
+   - ✅ End-to-end testing verified
 
-4. **Integrate ebook_parser** (HIGH PRIORITY):
+### High Priority
+1. **Portable Bootstrap**: 
+   - Implement automatic copying of binaries to bootstrap/portable_app/ during library initialization
+   - Handle cross-compilation for Linux/Windows/Mac binaries
+   - Complete portable library distribution workflow
+
+### Medium Priority
+2. **Advanced Filters**: Implement `--filter` option with SQL-like query DSL for complex queries
+3. **Preset System Phase 3**: Auto-save last filter, interactive editing
+4. **Documentation**: Create comprehensive user documentation
+
+### Low Priority
+5. **GUI Integration**: Update `ritmo_gui` to use `ritmo_config` and add library selection dialog
+6. **Integrate ebook_parser**: 
    - Reactivate and integrate the `ebook_parser` crate
    - Extract metadata automatically from EPUB files
    - Goal: handle ~95% of books automatically (target: 12,000+ books)
-   - Enhance `add` command to use extracted metadata
-
-### Medium Priority
-4. **Portable Bootstrap**: Implement automatic copying of binaries to bootstrap/portable_app/ during library initialization
-5. **Multi-platform Binaries**: Handle cross-compilation for Linux/Windows/Mac binaries in bootstrap
-6. **Documentation**: Create user documentation for portable library usage
-
-### Low Priority
-7. **Advanced Filters**: Implement `--filter` option with SQL-like query DSL for complex queries
 
 ## Filter Preset System (Planned Architecture)
 
