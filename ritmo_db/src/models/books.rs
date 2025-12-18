@@ -61,6 +61,38 @@ impl Book {
         Ok(book)
     }
 
+    pub async fn update(&self, pool: &sqlx::SqlitePool) -> Result<u64, sqlx::Error> {
+        let now = chrono::Utc::now().timestamp();
+        let result = sqlx::query!(
+            "UPDATE books SET
+                name = ?, original_title = ?, publisher_id = ?, format_id = ?, series_id = ?,
+                series_index = ?, publication_date = ?, last_modified_date = ?, isbn = ?,
+                pages = ?, notes = ?, has_cover = ?, has_paper = ?, file_link = ?,
+                file_size = ?, file_hash = ?
+            WHERE id = ?",
+            self.name,
+            self.original_title,
+            self.publisher_id,
+            self.format_id,
+            self.series_id,
+            self.series_index,
+            self.publication_date,
+            now,
+            self.isbn,
+            self.pages,
+            self.notes,
+            self.has_cover,
+            self.has_paper,
+            self.file_link,
+            self.file_size,
+            self.file_hash,
+            self.id
+        )
+        .execute(pool)
+        .await?;
+        Ok(result.rows_affected())
+    }
+
     pub async fn delete(pool: &sqlx::SqlitePool, id: i64) -> Result<u64, sqlx::Error> {
         let result = sqlx::query!("DELETE FROM books WHERE id = ?", id)
             .execute(pool)

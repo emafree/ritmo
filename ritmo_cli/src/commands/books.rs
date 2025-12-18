@@ -5,7 +5,9 @@ use crate::helpers::{
     get_library_path, parse_date_to_timestamp, timestamp_days_ago, timestamp_months_ago,
 };
 use ritmo_config::{detect_portable_library, AppSettings};
-use ritmo_core::service::{import_book, BookImportMetadata};
+use ritmo_core::service::{
+    delete_book, import_book, update_book, BookImportMetadata, BookUpdateMetadata, DeleteOptions,
+};
 use ritmo_db_core::{execute_books_query, BookFilters, BookSortField, LibraryConfig};
 use std::path::PathBuf;
 
@@ -139,6 +141,99 @@ pub async fn cmd_list_books(
     let formatted = format_books(&books, &output_format);
 
     println!("{}", formatted);
+
+    Ok(())
+}
+
+/// Comando: update-book - Aggiorna metadati di un libro esistente
+#[allow(clippy::too_many_arguments)]
+pub async fn cmd_update_book(
+    cli_library: &Option<PathBuf>,
+    app_settings: &AppSettings,
+    book_id: i64,
+    title: Option<String>,
+    original_title: Option<String>,
+    author: Option<String>,
+    publisher: Option<String>,
+    year: Option<i32>,
+    isbn: Option<String>,
+    format: Option<String>,
+    series: Option<String>,
+    series_index: Option<i64>,
+    notes: Option<String>,
+    pages: Option<i64>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let library_path = get_library_path(cli_library, app_settings)?;
+
+    let config = LibraryConfig::new(&library_path);
+    if !config.exists() {
+        return Err(format!("La libreria non esiste: {}", library_path.display()).into());
+    }
+
+    let pool = config.create_pool().await?;
+
+    println!("Aggiornamento libro ID {}...", book_id);
+
+    let metadata = BookUpdateMetadata {
+        title,
+        original_title,
+        author,
+        publisher,
+        year,
+        isbn,
+        format,
+        series,
+        series_index,
+        notes,
+        pages,
+    };
+
+    match update_book(&pool, book_id, metadata).await {
+        Ok(_) => {
+            println!("✓ Libro aggiornato con successo!");
+        }
+        Err(e) => {
+            println!("✗ Errore durante l'aggiornamento: {}", e);
+            return Err(e.into());
+        }
+    }
+
+    Ok(())
+}
+
+/// Comando: delete-book - Elimina un libro dal database
+pub async fn cmd_delete_book(
+    cli_library: &Option<PathBuf>,
+    app_settings: &AppSettings,
+    book_id: i64,
+    delete_file: bool,
+    force: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let library_path = get_library_path(cli_library, app_settings)?;
+
+    let config = LibraryConfig::new(&library_path);
+    if !config.exists() {
+        return Err(format!("La libreria non esiste: {}", library_path.display()).into());
+    }
+
+    let pool = config.create_pool().await?;
+
+    println!("Eliminazione libro ID {}...", book_id);
+    if delete_file {
+        println!("  ⚠ Il file fisico verrà eliminato");
+    }
+
+    let options = DeleteOptions { delete_file, force };
+
+    match delete_book(&config, &pool, book_id, &options).await {
+        Ok(_) => {
+            println!("✓ Libro eliminato con successo!");
+        }
+        Err(e) => {
+            println!("✗ Errore durante l'eliminazione: {}", e);
+            return Err(e.into());
+        }
+    }
 
     Ok(())
 }

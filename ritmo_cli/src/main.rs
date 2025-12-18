@@ -273,6 +273,117 @@ enum Commands {
         #[arg(long, short = 'n')]
         notes: Option<String>,
     },
+
+    /// Aggiorna metadati di un libro esistente
+    UpdateBook {
+        /// ID del libro da aggiornare
+        id: i64,
+
+        /// Nuovo titolo
+        #[arg(long)]
+        title: Option<String>,
+
+        /// Nuovo titolo originale
+        #[arg(long)]
+        original_title: Option<String>,
+
+        /// Nuovo autore
+        #[arg(long)]
+        author: Option<String>,
+
+        /// Nuovo editore
+        #[arg(long)]
+        publisher: Option<String>,
+
+        /// Nuovo anno di pubblicazione
+        #[arg(long)]
+        year: Option<i32>,
+
+        /// Nuovo ISBN
+        #[arg(long)]
+        isbn: Option<String>,
+
+        /// Nuovo formato
+        #[arg(long)]
+        format: Option<String>,
+
+        /// Nuova serie
+        #[arg(long)]
+        series: Option<String>,
+
+        /// Nuovo indice nella serie
+        #[arg(long)]
+        series_index: Option<i64>,
+
+        /// Nuove note
+        #[arg(long)]
+        notes: Option<String>,
+
+        /// Numero di pagine
+        #[arg(long)]
+        pages: Option<i64>,
+    },
+
+    /// Elimina un libro dal database
+    DeleteBook {
+        /// ID del libro da eliminare
+        id: i64,
+
+        /// Elimina anche il file fisico dallo storage
+        #[arg(long)]
+        delete_file: bool,
+
+        /// Forza l'eliminazione anche in caso di errori filesystem
+        #[arg(long)]
+        force: bool,
+    },
+
+    /// Aggiorna metadati di un contenuto esistente
+    UpdateContent {
+        /// ID del contenuto da aggiornare
+        id: i64,
+
+        /// Nuovo titolo
+        #[arg(long)]
+        title: Option<String>,
+
+        /// Nuovo titolo originale
+        #[arg(long)]
+        original_title: Option<String>,
+
+        /// Nuovo autore
+        #[arg(long)]
+        author: Option<String>,
+
+        /// Nuovo tipo di contenuto
+        #[arg(long)]
+        content_type: Option<String>,
+
+        /// Nuovo anno di pubblicazione
+        #[arg(long)]
+        year: Option<i32>,
+
+        /// Nuove note
+        #[arg(long)]
+        notes: Option<String>,
+
+        /// Numero di pagine
+        #[arg(long)]
+        pages: Option<i64>,
+    },
+
+    /// Elimina un contenuto dal database
+    DeleteContent {
+        /// ID del contenuto da eliminare
+        id: i64,
+    },
+
+    /// Pulisci entità orfane (autori, editori, serie non referenziati)
+    Cleanup {
+        /// Mostra cosa verrebbe eliminato senza applicare modifiche
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 
 #[tokio::main]
@@ -445,6 +556,75 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 notes,
             )
             .await?;
+        }
+        Commands::UpdateBook {
+            id,
+            title,
+            original_title,
+            author,
+            publisher,
+            year,
+            isbn,
+            format,
+            series,
+            series_index,
+            notes,
+            pages,
+        } => {
+            cmd_update_book(
+                &cli.library,
+                &app_settings,
+                id,
+                title,
+                original_title,
+                author,
+                publisher,
+                year,
+                isbn,
+                format,
+                series,
+                series_index,
+                notes,
+                pages,
+            )
+            .await?;
+        }
+        Commands::DeleteBook {
+            id,
+            delete_file,
+            force,
+        } => {
+            cmd_delete_book(&cli.library, &app_settings, id, delete_file, force).await?;
+        }
+        Commands::UpdateContent {
+            id,
+            title,
+            original_title,
+            author,
+            content_type,
+            year,
+            notes,
+            pages,
+        } => {
+            cmd_update_content(
+                &cli.library,
+                &app_settings,
+                id,
+                title,
+                original_title,
+                author,
+                content_type,
+                year,
+                notes,
+                pages,
+            )
+            .await?;
+        }
+        Commands::DeleteContent { id } => {
+            cmd_delete_content(&cli.library, &app_settings, id).await?;
+        }
+        Commands::Cleanup { dry_run } => {
+            cmd_cleanup(&cli.library, &app_settings, dry_run).await?;
         }
     }
 
