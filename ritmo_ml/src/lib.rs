@@ -1,5 +1,6 @@
 pub mod core;
 pub mod db_loaders;
+pub mod deduplication;
 pub mod entity_learner;
 pub mod entity_persistence;
 pub mod feedback;
