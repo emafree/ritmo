@@ -161,29 +161,103 @@ pub async fn load_tags_from_db(pool: &SqlitePool) -> RitmoResult<Vec<TagRecord>>
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_helpers::*;
 
     #[tokio::test]
-    #[ignore] // Requires actual database
     async fn test_load_people_from_db() {
-        // This test requires a real database with test data
-        // Run with: cargo test --package ritmo_ml -- --ignored
+        // Create test database with people data
+        let pool = create_test_db().await.unwrap();
+        populate_test_people(&pool).await.unwrap();
+
+        // Load people from database
+        let people = load_people_from_db(&pool).await.unwrap();
+
+        // Verify we loaded all 12 people
+        assert_eq!(people.len(), 12);
+
+        // Verify first person (Stephen King)
+        assert_eq!(people[0].id, 1);
+        assert_eq!(people[0].original_input, "Stephen King");
+
+        // Verify normalization is working
+        assert!(!people[0].normalized_key.is_empty());
+
+        // Verify all records have valid IDs
+        for person in &people {
+            assert!(person.id > 0);
+            assert!(!person.original_input.is_empty());
+        }
     }
 
     #[tokio::test]
-    #[ignore] // Requires actual database
     async fn test_load_publishers_from_db() {
-        // This test requires a real database with test data
+        // Create test database with publishers data
+        let pool = create_test_db().await.unwrap();
+        populate_test_publishers(&pool).await.unwrap();
+
+        // Load publishers from database
+        let publishers = load_publishers_from_db(&pool).await.unwrap();
+
+        // Verify we loaded all 9 publishers
+        assert_eq!(publishers.len(), 9);
+
+        // Verify first publisher
+        assert_eq!(publishers[0].id, 1);
+        assert_eq!(publishers[0].name, "Penguin Random House");
+
+        // Verify all records have valid data
+        for publisher in &publishers {
+            assert!(publisher.id > 0);
+            assert!(!publisher.name.is_empty());
+            assert!(!publisher.normalized_name.is_empty());
+        }
     }
 
     #[tokio::test]
-    #[ignore] // Requires actual database
     async fn test_load_series_from_db() {
-        // This test requires a real database with test data
+        // Create test database with series data
+        let pool = create_test_db().await.unwrap();
+        populate_test_series(&pool).await.unwrap();
+
+        // Load series from database
+        let series = load_series_from_db(&pool).await.unwrap();
+
+        // Verify we loaded all 8 series
+        assert_eq!(series.len(), 8);
+
+        // Verify first series
+        assert_eq!(series[0].id, 1);
+        assert_eq!(series[0].title, "The Dark Tower");
+
+        // Verify all records have valid data
+        for s in &series {
+            assert!(s.id > 0);
+            assert!(!s.title.is_empty());
+            assert!(!s.normalized_title.is_empty());
+        }
     }
 
     #[tokio::test]
-    #[ignore] // Requires actual database
     async fn test_load_tags_from_db() {
-        // This test requires a real database with test data
+        // Create test database with tags data
+        let pool = create_test_db().await.unwrap();
+        populate_test_tags(&pool).await.unwrap();
+
+        // Load tags from database
+        let tags = load_tags_from_db(&pool).await.unwrap();
+
+        // Verify we loaded all 8 tags
+        assert_eq!(tags.len(), 8);
+
+        // Verify first tag
+        assert_eq!(tags[0].id, 1);
+        assert_eq!(tags[0].label, "Fantasy");
+
+        // Verify all records have valid data
+        for tag in &tags {
+            assert!(tag.id > 0);
+            assert!(!tag.label.is_empty());
+            assert!(!tag.normalized_label.is_empty());
+        }
     }
 }

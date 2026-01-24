@@ -113,6 +113,14 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 
 ## Recent Changes
 
+### 2026-01-25 - Session 11: ritmo_ml Test Coverage - COMPLETED
+Comprehensive test suite for ritmo_ml with 17 tests (previously 8 were empty/ignored).
+- Created test_helpers module with in-memory test databases
+- Realistic test data with duplicate entities (Stephen King variants, etc.)
+- Full coverage: db_loaders (4), merge operations (4), deduplication (2), patterns (7)
+- All tests passing in ~10ms
+See [Session History](docs/sessions/2025-01-sessions.md) for details.
+
 ### 2025-12-18 - Session 10: ritmo_ml Phase 2 - COMPLETED
 Complete deduplication workflow with database loaders, merge operations, and configurable safety features.
 See [Session History](docs/sessions/2025-12-sessions.md) for details.

@@ -215,6 +215,69 @@ ritmo deduplicate-publishers --auto-merge
 ritmo deduplicate-series --dry-run
 ```
 
+## Testing
+
+The `ritmo_ml` crate has comprehensive test coverage with **17 unit tests** covering all major functionality.
+
+### Test Infrastructure
+
+The test suite uses an in-memory SQLite database with realistic test data:
+
+```rust
+use ritmo_ml::test_helpers::*;
+
+// Create test database with sample data
+let pool = create_test_db().await?;
+populate_test_people(&pool).await?;  // 12 people with duplicates
+populate_test_publishers(&pool).await?;  // 9 publishers with duplicates
+populate_test_series(&pool).await?;  // 8 series with duplicates
+```
+
+### Test Categories
+
+**Database Loaders (4 tests)**
+- `test_load_people_from_db` - Loads 12 people, verifies normalization
+- `test_load_publishers_from_db` - Loads 9 publishers
+- `test_load_series_from_db` - Loads 8 series
+- `test_load_tags_from_db` - Loads 8 tags
+
+**Merge Operations (4 tests)**
+- `test_merge_people` - Merges Stephen King variants, verifies relationship updates
+- `test_merge_publishers` - Merges publisher duplicates
+- `test_merge_series` - Merges series duplicates
+- `test_merge_people_validation_errors` - Tests error handling
+
+**Deduplication Workflow (2 tests)**
+- `test_deduplicate_people` - End-to-end dry-run workflow
+- `test_deduplicate_people_with_auto_merge` - Auto-merge workflow with verification
+
+**Pattern Functions (7 tests)**
+- Classification and confidence scoring tests
+- Abbreviation, prefix, suffix, typo detection
+- Initials matching and penalties
+
+### Test Data
+
+Test databases include realistic duplicates:
+- **People**: "Stephen King", "Stephen Edwin King", "King, Stephen", "S. King"
+- **Publishers**: "Penguin Random House", "Penguin Books", "Random House"
+- **Series**: "The Dark Tower", "Dark Tower"
+
+### Running Tests
+
+```bash
+# Run all tests
+cargo test -p ritmo_ml
+
+# Run with output
+cargo test -p ritmo_ml -- --nocapture
+
+# Include ignored tests (none currently)
+cargo test -p ritmo_ml -- --include-ignored
+```
+
+All tests run in milliseconds using in-memory databases.
+
 ## Implementation History
 
 - **Session 7 (2025-12-18)**: Phase 1 - Core ML infrastructure
@@ -230,5 +293,12 @@ ritmo deduplicate-series --dry-run
   - Deduplication workflow (~380 lines)
   - Safety features and error handling
   - Comprehensive documentation
+
+- **Session 11 (2026-01-25)**: Test Coverage Complete
+  - Created `test_helpers.rs` module with in-memory test databases
+  - Implemented 9 comprehensive integration tests
+  - Added realistic test data with duplicates
+  - All 17 tests passing (previously 8 were empty/ignored)
+  - Full test coverage for db_loaders, merge, and deduplication modules
 
 For detailed session history, see [Session Documentation](sessions/).

@@ -88,7 +88,7 @@ pub async fn deduplicate_people(
     config: &DeduplicationConfig,
 ) -> RitmoResult<DeduplicationResult> {
     // Step 1: Load all people from database
-    let mut people = load_people_from_db(pool).await?;
+    let people = load_people_from_db(pool).await?;
     let total_entities = people.len();
 
     if people.is_empty() {
@@ -372,9 +372,92 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore] // Requires actual database
     async fn test_deduplicate_people() {
-        // This test requires a real database with duplicate data
-        // Run with: cargo test --package ritmo_ml -- --ignored
+        use crate::test_helpers::*;
+
+        // Create test database with duplicate people
+        let pool = create_test_db().await.unwrap();
+        populate_test_people(&pool).await.unwrap();
+        populate_test_books_with_people(&pool).await.unwrap();
+
+        // Configure deduplication with low confidence threshold to catch test duplicates
+        let config = DeduplicationConfig {
+            min_confidence: 0.80,
+            min_frequency: 2,
+            auto_merge: false, // Dry run only
+            dry_run: true,
+        };
+
+        // Run deduplication
+        let result = deduplicate_people(&pool, &config).await.unwrap();
+
+        // Verify we found duplicates
+        assert_eq!(result.total_entities, 12);
+        assert!(!result.duplicate_groups.is_empty(), "Should find duplicate groups");
+
+        // Verify duplicate groups structure
+        for group in &result.duplicate_groups {
+            assert!(group.duplicate_ids.len() >= 1, "Each group should have at least 1 duplicate");
+            assert!(group.confidence >= config.min_confidence);
+            assert!(!group.primary_name.is_empty());
+        }
+
+        // Since dry_run is true, no merges should have happened
+        assert_eq!(result.merged_groups.len(), 0);
+
+        // Verify database is unchanged (still 12 people)
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM people")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 12);
+    }
+
+    #[tokio::test]
+    async fn test_deduplicate_people_with_auto_merge() {
+        use crate::test_helpers::*;
+
+        // Create test database with duplicate people
+        let pool = create_test_db().await.unwrap();
+        populate_test_people(&pool).await.unwrap();
+        populate_test_books_with_people(&pool).await.unwrap();
+
+        // Initial count
+        let initial_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM people")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(initial_count, 12);
+
+        // Configure deduplication with auto-merge enabled
+        let config = DeduplicationConfig {
+            min_confidence: 0.85,
+            min_frequency: 2,
+            auto_merge: true,
+            dry_run: false,
+        };
+
+        // Run deduplication with merge
+        let result = deduplicate_people(&pool, &config).await.unwrap();
+
+        // Verify duplicates were found
+        assert_eq!(result.total_entities, 12);
+        assert!(!result.duplicate_groups.is_empty());
+
+        // Verify some merges happened
+        assert!(!result.merged_groups.is_empty(), "Should have merged some groups");
+
+        // Verify database has fewer people now
+        let final_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM people")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert!(final_count < initial_count, "People count should decrease after merging");
+
+        // Verify merged groups have valid stats
+        for merged in &result.merged_groups {
+            assert!(merged.primary_id > 0);
+            assert!(!merged.merged_ids.is_empty());
+        }
     }
 }

@@ -4527,6 +4527,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "strsim",
+ "tokio",
  "unicode-normalization",
 ]
 

@@ -382,23 +382,157 @@ async fn delete_series(tx: &mut Transaction<'_, Sqlite>, ids: &[i64]) -> RitmoRe
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_helpers::*;
 
     #[tokio::test]
-    #[ignore] // Requires actual database with test data
     async fn test_merge_people() {
-        // This test requires a real database with test data
-        // Run with: cargo test --package ritmo_ml -- --ignored
+        // Create test database with people and books
+        let pool = create_test_db().await.unwrap();
+        populate_test_people(&pool).await.unwrap();
+        populate_test_books_with_people(&pool).await.unwrap();
+
+        // Verify initial state: 12 people, 3 books
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM people")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 12);
+
+        // Merge Stephen King variants (IDs 2, 3, 4) into ID 1
+        let stats = merge_people(&pool, 1, &[2, 3, 4]).await.unwrap();
+
+        // Verify merge stats
+        assert_eq!(stats.primary_id, 1);
+        assert_eq!(stats.merged_ids, vec![2, 3, 4]);
+        assert_eq!(stats.books_updated, 2); // Books 2 and 3 should be updated
+
+        // Verify people count reduced by 3
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM people")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 9);
+
+        // Verify that duplicate IDs no longer exist
+        let exists: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM people WHERE id IN (2, 3, 4)")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(exists, 0);
+
+        // Verify all book relationships now point to primary ID (1)
+        let book_refs: Vec<i64> = sqlx::query_scalar(
+            "SELECT person_id FROM x_books_people_roles WHERE book_id IN (1, 2, 3) ORDER BY book_id"
+        )
+            .fetch_all(&pool)
+            .await
+            .unwrap();
+        assert_eq!(book_refs, vec![1, 1, 1]); // All should point to ID 1
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_merge_publishers() {
-        // This test requires a real database with test data
+        // Create test database with publishers
+        let pool = create_test_db().await.unwrap();
+        populate_test_publishers(&pool).await.unwrap();
+
+        // Create test books with publishers
+        sqlx::query("INSERT INTO books (id, name, publisher_id) VALUES (1, 'Book 1', 2), (2, 'Book 2', 3)")
+            .execute(&pool)
+            .await
+            .unwrap();
+
+        // Verify initial state: 9 publishers
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM publishers")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 9);
+
+        // Merge Penguin/Random House variants (IDs 2, 3) into ID 1
+        let stats = merge_publishers(&pool, 1, &[2, 3]).await.unwrap();
+
+        // Verify merge stats
+        assert_eq!(stats.primary_id, 1);
+        assert_eq!(stats.merged_ids, vec![2, 3]);
+        assert_eq!(stats.books_updated, 2);
+
+        // Verify publisher count reduced by 2
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM publishers")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 7);
+
+        // Verify all book relationships now point to primary ID (1)
+        let publisher_ids: Vec<Option<i64>> = sqlx::query_scalar(
+            "SELECT publisher_id FROM books WHERE id IN (1, 2) ORDER BY id"
+        )
+            .fetch_all(&pool)
+            .await
+            .unwrap();
+        assert_eq!(publisher_ids, vec![Some(1), Some(1)]);
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_merge_series() {
-        // This test requires a real database with test data
+        // Create test database with series
+        let pool = create_test_db().await.unwrap();
+        populate_test_series(&pool).await.unwrap();
+
+        // Create test books with series
+        sqlx::query("INSERT INTO books (id, name, series_id) VALUES (1, 'Book 1', 2), (2, 'Book 2', 1)")
+            .execute(&pool)
+            .await
+            .unwrap();
+
+        // Verify initial state: 8 series
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM series")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 8);
+
+        // Merge Dark Tower variants (ID 2) into ID 1
+        let stats = merge_series(&pool, 1, &[2]).await.unwrap();
+
+        // Verify merge stats
+        assert_eq!(stats.primary_id, 1);
+        assert_eq!(stats.merged_ids, vec![2]);
+        assert_eq!(stats.books_updated, 1);
+
+        // Verify series count reduced by 1
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM series")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 7);
+
+        // Verify all book relationships now point to primary ID (1)
+        let series_ids: Vec<Option<i64>> = sqlx::query_scalar(
+            "SELECT series_id FROM books WHERE id IN (1, 2) ORDER BY id"
+        )
+            .fetch_all(&pool)
+            .await
+            .unwrap();
+        assert_eq!(series_ids, vec![Some(1), Some(1)]);
+    }
+
+    #[tokio::test]
+    async fn test_merge_people_validation_errors() {
+        let pool = create_test_db().await.unwrap();
+        populate_test_people(&pool).await.unwrap();
+
+        // Test empty duplicate IDs
+        let result = merge_people(&pool, 1, &[]).await;
+        assert!(result.is_err());
+
+        // Test primary ID in duplicate list
+        let result = merge_people(&pool, 1, &[1, 2]).await;
+        assert!(result.is_err());
+
+        // Test non-existent ID
+        let result = merge_people(&pool, 1, &[999]).await;
+        assert!(result.is_err());
     }
 }

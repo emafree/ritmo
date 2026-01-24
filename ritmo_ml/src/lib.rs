@@ -13,3 +13,6 @@ pub mod series;
 pub mod tags;
 pub mod traits;
 pub mod utils;
+
+#[cfg(test)]
+pub mod test_helpers;

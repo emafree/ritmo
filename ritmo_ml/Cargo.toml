@@ -14,3 +14,6 @@ human_name = "2.0.4"
 strsim = "0.11.1"
 unicode-normalization = "0.1.24"
 
+[dev-dependencies]
+tokio = { workspace = true }
+
