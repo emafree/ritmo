@@ -379,6 +379,158 @@ async fn delete_series(tx: &mut Transaction<'_, Sqlite>, ids: &[i64]) -> RitmoRe
     Ok(())
 }
 
+// ============================================================================
+// Merge tags
+// ============================================================================
+
+/// Merge duplicate tags into a single primary record
+///
+/// This function:
+/// 1. Validates that all IDs exist
+/// 2. Updates all references in junction tables to point to primary_id
+/// 3. Deletes duplicate tag records
+/// 4. Returns statistics about the merge
+///
+/// # Safety
+/// This operation is executed within a transaction. If any step fails,
+/// all changes are rolled back.
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+/// * `primary_id` - ID of the tag to keep (primary record)
+/// * `duplicate_ids` - IDs of tags to merge into primary (will be deleted)
+pub async fn merge_tags(
+    pool: &SqlitePool,
+    primary_id: i64,
+    duplicate_ids: &[i64],
+) -> RitmoResult<MergeStats> {
+    if duplicate_ids.is_empty() {
+        return Err(RitmoErr::Generic("No duplicate IDs provided".to_string()));
+    }
+
+    if duplicate_ids.contains(&primary_id) {
+        return Err(RitmoErr::Generic(
+            "Primary ID cannot be in duplicate IDs list".to_string(),
+        ));
+    }
+
+    let mut tx = pool.begin().await?;
+
+    // Step 1: Validate that all tag IDs exist
+    validate_tags_exist(&mut tx, primary_id, duplicate_ids).await?;
+
+    // Step 2: Update x_books_tags to point to primary_id
+    let books_updated = update_books_tags(&mut tx, primary_id, duplicate_ids).await?;
+
+    // Step 3: Update x_contents_tags to point to primary_id
+    let contents_updated = update_contents_tags(&mut tx, primary_id, duplicate_ids).await?;
+
+    // Step 4: Delete duplicate tag records
+    delete_tags(&mut tx, duplicate_ids).await?;
+
+    // Commit transaction
+    tx.commit().await?;
+
+    Ok(MergeStats {
+        primary_id,
+        merged_ids: duplicate_ids.to_vec(),
+        books_updated,
+        contents_updated,
+    })
+}
+
+// ============================================================================
+// Helper functions for tag merging
+// ============================================================================
+
+async fn validate_tags_exist(
+    tx: &mut Transaction<'_, Sqlite>,
+    primary_id: i64,
+    duplicate_ids: &[i64],
+) -> RitmoResult<()> {
+    // Check primary exists
+    let primary_exists = sqlx::query!("SELECT id FROM tags WHERE id = ?", primary_id)
+        .fetch_optional(&mut **tx)
+        .await?;
+
+    if primary_exists.is_none() {
+        return Err(RitmoErr::Generic(format!(
+            "Primary tag ID {} not found",
+            primary_id
+        )));
+    }
+
+    // Check all duplicates exist
+    for &dup_id in duplicate_ids {
+        let exists = sqlx::query!("SELECT id FROM tags WHERE id = ?", dup_id)
+            .fetch_optional(&mut **tx)
+            .await?;
+
+        if exists.is_none() {
+            return Err(RitmoErr::Generic(format!(
+                "Duplicate tag ID {} not found",
+                dup_id
+            )));
+        }
+    }
+
+    Ok(())
+}
+
+async fn update_books_tags(
+    tx: &mut Transaction<'_, Sqlite>,
+    primary_id: i64,
+    duplicate_ids: &[i64],
+) -> RitmoResult<usize> {
+    let mut total_updated = 0;
+
+    for &dup_id in duplicate_ids {
+        let result = sqlx::query!(
+            "UPDATE x_books_tags SET tag_id = ? WHERE tag_id = ?",
+            primary_id,
+            dup_id
+        )
+        .execute(&mut **tx)
+        .await?;
+
+        total_updated += result.rows_affected() as usize;
+    }
+
+    Ok(total_updated)
+}
+
+async fn update_contents_tags(
+    tx: &mut Transaction<'_, Sqlite>,
+    primary_id: i64,
+    duplicate_ids: &[i64],
+) -> RitmoResult<usize> {
+    let mut total_updated = 0;
+
+    for &dup_id in duplicate_ids {
+        let result = sqlx::query!(
+            "UPDATE x_contents_tags SET tag_id = ? WHERE tag_id = ?",
+            primary_id,
+            dup_id
+        )
+        .execute(&mut **tx)
+        .await?;
+
+        total_updated += result.rows_affected() as usize;
+    }
+
+    Ok(total_updated)
+}
+
+async fn delete_tags(tx: &mut Transaction<'_, Sqlite>, ids: &[i64]) -> RitmoResult<()> {
+    for &id in ids {
+        sqlx::query!("DELETE FROM tags WHERE id = ?", id)
+            .execute(&mut **tx)
+            .await?;
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

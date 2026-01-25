@@ -94,7 +94,7 @@ for group in result.duplicate_groups {
 
 ## CLI Usage
 
-The ritmo CLI provides four commands for ML-based deduplication:
+The ritmo CLI provides five commands for ML-based deduplication:
 
 ### Command Overview
 
@@ -107,6 +107,9 @@ ritmo deduplicate-publishers --dry-run
 
 # Find duplicate series
 ritmo deduplicate-series --dry-run
+
+# Find duplicate tags
+ritmo deduplicate-tags --dry-run
 
 # Run deduplication for all entity types
 ritmo deduplicate-all --dry-run
@@ -132,7 +135,11 @@ cargo run -p ritmo_cli -- deduplicate-authors --threshold 0.90 --dry-run
 # Actually merge duplicate authors (CAUTION: modifies database!)
 cargo run -p ritmo_cli -- deduplicate-authors --threshold 0.90 --auto-merge
 
-# Find duplicates across all entity types
+# Find duplicate tags
+cargo run -p ritmo_cli -- deduplicate-tags --dry-run
+cargo run -p ritmo_cli -- deduplicate-tags --threshold 0.85 --auto-merge
+
+# Find duplicates across all entity types (authors, publishers, series, tags)
 cargo run -p ritmo_cli -- deduplicate-all --threshold 0.85 --dry-run
 
 # Merge all duplicates with high confidence

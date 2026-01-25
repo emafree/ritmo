@@ -448,7 +448,22 @@ enum Commands {
         dry_run: bool,
     },
 
-    /// Find and merge all duplicate entities (authors, publishers, series) using ML
+    /// Find and merge duplicate tags using ML
+    DeduplicateTags {
+        /// Minimum confidence threshold (0.0-1.0)
+        #[arg(long, short = 't', default_value = "0.85")]
+        threshold: f64,
+
+        /// Automatically merge high-confidence duplicates
+        #[arg(long)]
+        auto_merge: bool,
+
+        /// Show what would be merged without making changes (default: true)
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Find and merge all duplicate entities (authors, publishers, series, tags) using ML
     DeduplicateAll {
         /// Minimum confidence threshold (0.0-1.0)
         #[arg(long, short = 't', default_value = "0.85")]
@@ -732,6 +747,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             dry_run,
         } => {
             cmd_deduplicate_series(&cli.library, &app_settings, threshold, auto_merge, dry_run)
+                .await?;
+        }
+        Commands::DeduplicateTags {
+            threshold,
+            auto_merge,
+            dry_run,
+        } => {
+            cmd_deduplicate_tags(&cli.library, &app_settings, threshold, auto_merge, dry_run)
                 .await?;
         }
         Commands::DeduplicateAll {

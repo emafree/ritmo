@@ -5,8 +5,8 @@ use ritmo_config::AppSettings;
 use ritmo_db_core::LibraryConfig;
 use ritmo_errors::reporter::SilentReporter;
 use ritmo_ml::deduplication::{
-    deduplicate_people, deduplicate_publishers, deduplicate_series, DeduplicationConfig,
-    DeduplicationResult,
+    deduplicate_people, deduplicate_publishers, deduplicate_series, deduplicate_tags,
+    DeduplicationConfig, DeduplicationResult,
 };
 use std::path::PathBuf;
 
@@ -210,6 +210,52 @@ pub async fn cmd_deduplicate_series(
     }
 }
 
+/// Command: deduplicate-tags - Find and merge duplicate tags
+pub async fn cmd_deduplicate_tags(
+    cli_library: &Option<PathBuf>,
+    app_settings: &AppSettings,
+    threshold: f64,
+    auto_merge: bool,
+    dry_run: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let library_path = get_library_path(cli_library, app_settings)?;
+
+    let config = LibraryConfig::new(&library_path);
+    if !config.exists() {
+        return Err(format!("Library does not exist: {}", library_path.display()).into());
+    }
+
+    let mut reporter = SilentReporter;
+    let pool = config.create_pool(&mut reporter).await?;
+
+    println!("🔍 Searching for duplicate tags...");
+
+    // Default to dry-run mode for safety (invert the flag logic)
+    let actual_dry_run = if auto_merge && !dry_run {
+        false  // Only disable dry-run if auto-merge is requested AND --dry-run was NOT passed
+    } else {
+        true   // Default to dry-run in all other cases
+    };
+
+    let dedup_config = DeduplicationConfig {
+        min_confidence: threshold,
+        min_frequency: 2,
+        auto_merge,
+        dry_run: actual_dry_run,
+    };
+
+    match deduplicate_tags(&pool, &dedup_config).await {
+        Ok(result) => {
+            print_deduplication_results(&result, "Tags", dry_run);
+            Ok(())
+        }
+        Err(e) => {
+            eprintln!("✗ Error during deduplication: {}", e);
+            Err(e.into())
+        }
+    }
+}
+
 /// Command: deduplicate-all - Find and merge duplicates for all entity types
 pub async fn cmd_deduplicate_all(
     cli_library: &Option<PathBuf>,
@@ -269,6 +315,15 @@ pub async fn cmd_deduplicate_all(
     match deduplicate_series(&pool, &dedup_config).await {
         Ok(result) => print_deduplication_results(&result, "Series", dry_run),
         Err(e) => eprintln!("✗ Error deduplicating series: {}", e),
+    }
+
+    // Deduplicate tags
+    println!("\n═══════════════════════════════════════════════════════");
+    println!("🏷️  TAGS");
+    println!("═══════════════════════════════════════════════════════");
+    match deduplicate_tags(&pool, &dedup_config).await {
+        Ok(result) => print_deduplication_results(&result, "Tags", dry_run),
+        Err(e) => eprintln!("✗ Error deduplicating tags: {}", e),
     }
 
     println!("\n✓ Deduplication complete for all entity types!");

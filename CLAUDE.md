@@ -117,7 +117,10 @@ cargo run -p ritmo_cli -- deduplicate-publishers --dry-run
 # Find duplicate series
 cargo run -p ritmo_cli -- deduplicate-series --dry-run
 
-# Run deduplication for all entity types
+# Find duplicate tags
+cargo run -p ritmo_cli -- deduplicate-tags --dry-run
+
+# Run deduplication for all entity types (authors, publishers, series, tags)
 cargo run -p ritmo_cli -- deduplicate-all --threshold 0.85 --dry-run
 ```
 
@@ -146,7 +149,7 @@ Comprehensive test suite for ritmo_ml with 17 tests (previously 8 were empty/ign
 - Realistic test data with duplicate entities (Stephen King variants, etc.)
 - Full coverage: db_loaders (4), merge operations (4), deduplication (2), patterns (7)
 - All tests passing in ~10ms
-See [Session History](docs/sessions/2025-01-sessions.md) for details.
+See [Session History](docs/sessions/2026-01-sessions.md) for details.
 
 ### 2025-12-18 - Session 10: ritmo_ml Phase 2 - COMPLETED
 Complete deduplication workflow with database loaders, merge operations, and configurable safety features.

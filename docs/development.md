@@ -166,7 +166,11 @@ cargo run -p ritmo_cli -- deduplicate-publishers --threshold 0.85 --auto-merge
 # Find duplicate series
 cargo run -p ritmo_cli -- deduplicate-series --dry-run
 
-# Find and merge all duplicate entities (authors, publishers, series)
+# Find duplicate tags
+cargo run -p ritmo_cli -- deduplicate-tags --dry-run
+cargo run -p ritmo_cli -- deduplicate-tags --threshold 0.85 --auto-merge
+
+# Find and merge all duplicate entities (authors, publishers, series, tags)
 cargo run -p ritmo_cli -- deduplicate-all --dry-run
 cargo run -p ritmo_cli -- deduplicate-all --threshold 0.92 --auto-merge
 ```

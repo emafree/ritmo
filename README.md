@@ -129,7 +129,10 @@ cargo run -p ritmo_cli -- deduplicate-publishers --dry-run
 # Find duplicate series
 cargo run -p ritmo_cli -- deduplicate-series --dry-run
 
-# Run deduplication for all entity types
+# Find duplicate tags
+cargo run -p ritmo_cli -- deduplicate-tags --dry-run
+
+# Run deduplication for all entity types (authors, publishers, series, tags)
 cargo run -p ritmo_cli -- deduplicate-all --threshold 0.85 --dry-run
 ```
 

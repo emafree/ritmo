@@ -3,9 +3,9 @@
 //! This module provides high-level functions that combine ML detection
 //! with database operations to identify and optionally merge duplicates.
 
-use crate::db_loaders::{load_people_from_db, load_publishers_from_db, load_series_from_db};
+use crate::db_loaders::{load_people_from_db, load_publishers_from_db, load_series_from_db, load_tags_from_db};
 use crate::entity_learner::MLEntityLearner;
-use crate::merge::{merge_people, merge_publishers, merge_series, MergeStats};
+use crate::merge::{merge_people, merge_publishers, merge_series, merge_tags, MergeStats};
 use crate::traits::MLProcessable;
 use ritmo_errors::RitmoResult;
 use sqlx::SqlitePool;
@@ -207,6 +207,46 @@ pub async fn deduplicate_series(
     })
 }
 
+/// Find and optionally merge duplicate tags
+pub async fn deduplicate_tags(
+    pool: &SqlitePool,
+    config: &DeduplicationConfig,
+) -> RitmoResult<DeduplicationResult> {
+    let tags = load_tags_from_db(pool).await?;
+    let total_entities = tags.len();
+
+    if tags.is_empty() {
+        return Ok(DeduplicationResult {
+            total_entities: 0,
+            duplicate_groups: Vec::new(),
+            merged_groups: Vec::new(),
+            skipped_low_confidence: 0,
+        });
+    }
+
+    let canonical_keys: Vec<String> = tags.iter().map(|t| t.canonical_key()).collect();
+
+    let mut learner = MLEntityLearner::new();
+    learner.minimum_confidence = config.min_confidence;
+    learner.minimum_frequency = config.min_frequency;
+    learner.create_clusters(&canonical_keys);
+
+    let duplicate_groups = clusters_to_duplicate_groups(&learner, &tags);
+
+    let (merged_groups, skipped) = if !config.dry_run && config.auto_merge {
+        merge_duplicate_tags(pool, &duplicate_groups, config).await?
+    } else {
+        (Vec::new(), 0)
+    };
+
+    Ok(DeduplicationResult {
+        total_entities,
+        duplicate_groups,
+        merged_groups,
+        skipped_low_confidence: skipped,
+    })
+}
+
 // ============================================================================
 // Helper functions
 // ============================================================================
@@ -348,6 +388,36 @@ async fn merge_duplicate_series(
             Err(e) => {
                 eprintln!(
                     "Warning: failed to merge series group (primary={}, duplicates={:?}): {}",
+                    group.primary_id, group.duplicate_ids, e
+                );
+                skipped += 1;
+            }
+        }
+    }
+
+    Ok((merged, skipped))
+}
+
+/// Merge duplicate tags based on duplicate groups
+async fn merge_duplicate_tags(
+    pool: &SqlitePool,
+    groups: &[DuplicateGroup],
+    config: &DeduplicationConfig,
+) -> RitmoResult<(Vec<MergeStats>, usize)> {
+    let mut merged = Vec::new();
+    let mut skipped = 0;
+
+    for group in groups {
+        if group.confidence < config.min_confidence {
+            skipped += 1;
+            continue;
+        }
+
+        match merge_tags(pool, group.primary_id, &group.duplicate_ids).await {
+            Ok(stats) => merged.push(stats),
+            Err(e) => {
+                eprintln!(
+                    "Warning: failed to merge tags group (primary={}, duplicates={:?}): {}",
                     group.primary_id, group.duplicate_ids, e
                 );
                 skipped += 1;

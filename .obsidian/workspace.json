@@ -11,10 +11,14 @@
             "id": "6c37c8528be1f98a",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "docs/architecture decisions.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "architecture decisions"
             }
           }
         ]
@@ -181,17 +185,20 @@
   },
   "active": "6c37c8528be1f98a",
   "lastOpenFiles": [
-    "docs/sessions/2025-01-sessions.md.tmp.83205.1769360298903",
-    "target/debug/deps/ritmo_cli-9947818fe34a123d",
-    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/work-products.bin",
-    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/query-cache.bin",
-    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/f48q4i5h48u02w1yoi9zofv2l.o",
-    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/f0pxem16sjp8ocogxnivmdwsv.o",
-    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/eyd6f9zxxdzhq7i2qroag2dvq.o",
-    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/exigt7habtot5pksdrtug2ctr.o",
-    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/ev38yp8ax1o9wn1in4i0ulk6e.o",
-    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/et0t8uoqi8mfegeihjmegmqo4.o",
-    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/en4t0slzfl2o1adaw8nj6787j.o",
+    "CLAUDE.md.tmp.83205.1769376074179",
+    "docs/sessions/2026-01-sessions.md.tmp.83205.1769376054383",
+    "docs/sessions/2026-01-sessions.md",
+    "docs/sessions/2025-01-sessions.md.tmp.83205.1769375980494",
+    "docs/sessions/2025-01-sessions.md.tmp.83205.1769375980276",
+    "docs/sessions/2025-01-sessions.md.tmp.83205.1769375980070",
+    "docs/sessions/2025-01-sessions.md.tmp.83205.1769375979914",
+    "docs/sessions/2025-01-sessions.md.tmp.83205.1769375979800",
+    "docs/development.md.tmp.83205.1769375876087",
+    "docs/ml-system.md.tmp.83205.1769375871044",
+    "docs/ml-system.md.tmp.83205.1769375870927",
+    "README.md.tmp.83205.1769375862099",
+    "docs/sessions/2025-01-sessions.md",
+    "docs/sessions/2025-12-sessions.md",
     "CONTRIBUTING.md",
     "docs/workspace.md",
     "docs/sessions.md",
@@ -203,13 +210,11 @@
     "docs/architecture decisions.md",
     "docs/architecture.md",
     "docs/sessions/README.md",
-    "docs/sessions/2025-12-sessions.md",
     "docs/sessions/2025-12-17-session7-filter-refactoring.md",
     "docs/sessions/2025-12-16-session6-relative-date-filters.md",
     "docs/sessions/2025-12-16-session5-library-presets.md",
     "docs/sessions/2025-12-14-session3-preset-system.md",
     "docs/sessions/2025-12-14-session-summary.md",
-    "docs/sessions/2025-01-sessions.md",
     "CLAUDE.md",
     "README.md",
     "sessions.md",
