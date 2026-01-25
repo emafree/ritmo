@@ -1,42 +1,42 @@
-# Workspace Ritmo — Guida rapida
+# Ritmo Workspace — Quick Guide
 
-Questo repository è organizzato come workspace Rust. Lo scopo di questo documento è spiegare come lavorare con il workspace.
+This repository is organized as a Rust workspace. The purpose of this document is to explain how to work with the workspace.
 
-## Membri del workspace
-I crate principali sono elencati nel Cargo.toml di root come `members`:
-- ritmo_core: logica principale e gestione ebook
-- ritmo_cli: interfaccia a linea di comando
-- ritmo_db / ritmo_db_core: gestione DB e metadati
-- ritmo_mapping: mapping metadati
-- ritmo_errors: crate per tipi di errore condivisi
-Altri crate (gui, search, ml, ebook_parser) possono essere presenti ma commentati se non pronti.
+## Workspace Members
+The main crates are listed in the root Cargo.toml as `members`:
+- ritmo_core: core logic and ebook management
+- ritmo_cli: command-line interface
+- ritmo_db / ritmo_db_core: database and metadata management
+- ritmo_mapping: metadata mapping
+- ritmo_errors: shared error types crate
+Other crates (gui, search, ml, ebook_parser) may be present but commented out if not ready.
 
-## Comandi utili
-- Build di tutto il workspace:
+## Useful Commands
+- Build the entire workspace:
   cargo build --workspace
 
-- Eseguire i test per tutto il workspace:
+- Run tests for the entire workspace:
   cargo test --workspace
 
-- Formattare il codice:
+- Format code:
   cargo fmt --all
 
-- Eseguire clippy (lint):
+- Run clippy (lint):
   cargo clippy --all -- -D warnings
 
-- Aggiungere un nuovo crate:
-  1. Creare la cartella del crate con `cargo new --lib nome_crate` o `cargo new --bin nome_crate`.
-  2. Aggiungere il path nella lista `members` del `Cargo.toml` di root.
-  3. Documentare il crate in questo file.
+- Add a new crate:
+  1. Create the crate folder with `cargo new --lib crate_name` or `cargo new --bin crate_name`.
+  2. Add the path to the `members` list in the root `Cargo.toml`.
+  3. Document the crate in this file.
 
 ## Database
-- Per sviluppo locale si usa SQLite. La stringa di connessione d'esempio è in `.env.example` (`DATABASE_URL`).
-- Le migrazioni (se usate) devono essere versionate e documentate nel crate `ritmo_db_core`.
+- For local development, SQLite is used. The example connection string is in `.env.example` (`DATABASE_URL`).
+- Migrations (if used) must be versioned and documented in the `ritmo_db_core` crate.
 
-## CI e quality gates
-- Il repo include un workflow CI che esegue: formattazione (check), clippy, build e test per tutto il workspace.
-- Assicurarsi che i job CI passino prima di aprire una PR significativa.
+## CI and Quality Gates
+- The repo includes a CI workflow that runs: formatting (check), clippy, build, and tests for the entire workspace.
+- Ensure CI jobs pass before opening a significant PR.
 
-## Note
-- Non committare file `.env`. Usa `.env.example`.
-- Se aggiungi dipendenze native o binarie (es. motori di conversione), documenta come installarle nella sezione `docs/build.md` (non ancora presente).
+## Notes
+- Do not commit `.env` files. Use `.env.example`.
+- If you add native or binary dependencies (e.g., conversion engines), document how to install them in the `docs/build.md` section (not yet present).

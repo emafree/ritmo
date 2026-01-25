@@ -1,7 +1,7 @@
 use crate::entity_learner::VariantPatternType;
 use strsim::levenshtein;
 
-/// Classifica il tipo di pattern tra due stringhe basandosi sulla loro struttura
+/// Classifies the pattern type between two strings based on their structure
 pub fn default_classify_pattern_type(
     base: &str,
     variant: &str,
@@ -10,30 +10,30 @@ pub fn default_classify_pattern_type(
     let base_lower = base.to_lowercase();
     let variant_lower = variant.to_lowercase();
 
-    // Abbreviazione: se variant è molto più corto
+    // Abbreviation: if variant is much shorter
     if variant_lower.len() < base_lower.len() / 2 {
         return VariantPatternType::Abbreviation;
     }
 
-    // Prefix: variant inizia uguale poi diverge
+    // Prefix: variant starts the same then diverges
     if base_lower.starts_with(&variant_lower) || variant_lower.starts_with(&base_lower) {
         return VariantPatternType::Prefix;
     }
 
-    // Suffix: variant finisce uguale ma inizia diverso
+    // Suffix: variant ends the same but starts different
     if base_lower.ends_with(&variant_lower) || variant_lower.ends_with(&base_lower) {
         return VariantPatternType::Suffix;
     }
 
-    // Compound: uno contiene l'altro completamente
+    // Compound: one contains the other completely
     if base_lower.contains(&variant_lower) || variant_lower.contains(&base_lower) {
         return VariantPatternType::Compound;
     }
 
-    // Transliterazione: lunghezza simile ma caratteri diversi (es. accenti)
+    // Transliteration: similar length but different characters (e.g., accents)
     let len_diff = (base.len() as i32 - variant.len() as i32).abs();
     if len_diff <= 2 && edit_distance <= 3 {
-        // Controlla se ci sono caratteri speciali/accentati
+        // Check if there are special/accented characters
         let has_special_base = base.chars().any(|c| !c.is_ascii());
         let has_special_variant = variant.chars().any(|c| !c.is_ascii());
         if has_special_base || has_special_variant {
@@ -41,7 +41,7 @@ pub fn default_classify_pattern_type(
         }
     }
 
-    // Typo: edit distance molto piccolo
+    // Typo: very small edit distance
     if edit_distance <= 2 {
         return VariantPatternType::Typo;
     }
@@ -50,7 +50,7 @@ pub fn default_classify_pattern_type(
     VariantPatternType::Other
 }
 
-/// Calcola la confidence di un pattern basandosi su vari fattori
+/// Calculates the confidence of a pattern based on various factors
 pub fn default_confidence_function(
     base: &str,
     variant: &str,
@@ -59,42 +59,42 @@ pub fn default_confidence_function(
 ) -> f64 {
     let mut confidence = jaro_winkler_similarity;
 
-    // Bonus per pattern specifici
+    // Bonus for specific patterns
     match pattern_type {
         VariantPatternType::Abbreviation => {
-            // Abbreviazioni comuni hanno alta confidence se iniziali corrispondono
+            // Common abbreviations have high confidence if initials match
             if are_initials_matching(base, variant) {
                 confidence = (confidence + 0.2).min(1.0);
             }
         }
         VariantPatternType::Prefix | VariantPatternType::Suffix => {
-            // Prefix/Suffix hanno buona confidence
+            // Prefix/Suffix have good confidence
             confidence = (confidence + 0.1).min(1.0);
         }
         VariantPatternType::Typo => {
-            // Typo hanno confidence leggermente ridotta
+            // Typos have slightly reduced confidence
             confidence = (confidence - 0.05).max(0.0);
         }
         VariantPatternType::Transliteration => {
-            // Transliterazione ha alta confidence
+            // Transliteration has high confidence
             confidence = (confidence + 0.15).min(1.0);
         }
         VariantPatternType::Compound => {
-            // Compound sono abbastanza sicuri
+            // Compounds are fairly safe
             confidence = (confidence + 0.1).min(1.0);
         }
         VariantPatternType::Other => {
-            // Nessun adjustment
+            // No adjustment
         }
     }
 
-    // Penalità per edit distance troppo alto
+    // Penalty for edit distance too high
     let edit_dist = levenshtein(base, variant);
     if edit_dist > 5 {
         confidence = (confidence - 0.1).max(0.0);
     }
 
-    // Penalità per differenza lunghezza eccessiva
+    // Penalty for excessive length difference
     let len_diff_ratio =
         (base.len() as f64 - variant.len() as f64).abs() / base.len().max(1) as f64;
     if len_diff_ratio > 0.5 {
@@ -104,7 +104,7 @@ pub fn default_confidence_function(
     confidence.clamp(0.0, 1.0)
 }
 
-/// Verifica se le iniziali delle parole corrispondono (per abbreviazioni)
+/// Checks if word initials match (for abbreviations)
 fn are_initials_matching(full: &str, abbrev: &str) -> bool {
     let full_words: Vec<&str> = full.split_whitespace().collect();
     let abbrev_clean = abbrev.replace('.', "").replace(' ', "");
@@ -163,9 +163,9 @@ mod tests {
             &VariantPatternType::Abbreviation,
             0.8,
         );
-        // La confidence può scendere a causa della penalità per lunghezza differente
-        // che è > 50% (27 caratteri vs 15 caratteri)
-        assert!(conf > 0.6); // Verifica che sia ragionevole
+        // Confidence may drop due to length difference penalty
+        // which is > 50% (27 characters vs 15 characters)
+        assert!(conf > 0.6); // Check that it's reasonable
         assert!(conf <= 1.0);
     }
 
@@ -173,7 +173,7 @@ mod tests {
     fn test_confidence_typo_penalty() {
         let conf =
             default_confidence_function("Tolkien", "Tolkein", &VariantPatternType::Typo, 0.9);
-        assert!(conf < 0.9); // Penalità per typo
-        assert!(conf > 0.8); // Ma non troppo bassa
+        assert!(conf < 0.9); // Penalty for typo
+        assert!(conf > 0.8); // But not too low
     }
 }

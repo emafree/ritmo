@@ -92,6 +92,87 @@ for group in result.duplicate_groups {
 }
 ```
 
+## CLI Usage
+
+The ritmo CLI provides four commands for ML-based deduplication:
+
+### Command Overview
+
+```bash
+# Find duplicate authors (dry-run mode - safe preview)
+ritmo deduplicate-authors --dry-run
+
+# Find duplicate publishers
+ritmo deduplicate-publishers --dry-run
+
+# Find duplicate series
+ritmo deduplicate-series --dry-run
+
+# Run deduplication for all entity types
+ritmo deduplicate-all --dry-run
+```
+
+### Command Options
+
+All deduplication commands support these options:
+
+- `--threshold <VALUE>` - Minimum confidence threshold (0.0-1.0), default: 0.85
+- `--auto-merge` - Automatically merge high-confidence duplicates (requires `--no-dry-run`)
+- `--dry-run` - Preview mode, shows what would be merged without making changes (default: true)
+
+### Examples
+
+```bash
+# Preview duplicate authors with default threshold (0.85)
+cargo run -p ritmo_cli -- deduplicate-authors --dry-run
+
+# Find duplicate authors with higher confidence threshold
+cargo run -p ritmo_cli -- deduplicate-authors --threshold 0.90 --dry-run
+
+# Actually merge duplicate authors (CAUTION: modifies database!)
+cargo run -p ritmo_cli -- deduplicate-authors --threshold 0.90 --auto-merge
+
+# Find duplicates across all entity types
+cargo run -p ritmo_cli -- deduplicate-all --threshold 0.85 --dry-run
+
+# Merge all duplicates with high confidence
+cargo run -p ritmo_cli -- deduplicate-all --threshold 0.92 --auto-merge
+```
+
+### Output Format
+
+The commands provide detailed output:
+
+```
+📊 Deduplication Results for Authors:
+   Total entities processed: 150
+   Duplicate groups found: 8
+
+📋 Duplicate Groups:
+
+   Group 1 (confidence: 95.40%):
+     Primary: stephen king (ID: 1)
+     Duplicates:
+       1. Stephen King (ID: 42)
+       2. STEPHEN KING (ID: 89)
+
+   Group 2 (confidence: 88.20%):
+     Primary: j.k. rowling (ID: 5)
+     Duplicates:
+       1. J. K. Rowling (ID: 73)
+       2. Joanne Rowling (ID: 105)
+
+🔍 Dry-run mode: No changes were made to the database
+```
+
+### Safety Recommendations
+
+1. **Always use `--dry-run` first** to preview what would be merged
+2. **Review the duplicate groups** and their confidence scores carefully
+3. **Start with high threshold** (0.90+) for automatic merges
+4. **Back up your database** before running auto-merge operations
+5. **Test on a copy** of your library before running on production data
+
 ## Database Loaders
 
 Load entities from database with normalization:

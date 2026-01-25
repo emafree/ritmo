@@ -402,6 +402,66 @@ enum Commands {
         #[arg(long)]
         dry_run: bool,
     },
+
+    /// Find and merge duplicate authors using ML
+    DeduplicateAuthors {
+        /// Minimum confidence threshold (0.0-1.0)
+        #[arg(long, short = 't', default_value = "0.85")]
+        threshold: f64,
+
+        /// Automatically merge high-confidence duplicates
+        #[arg(long)]
+        auto_merge: bool,
+
+        /// Show what would be merged without making changes (default: true)
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Find and merge duplicate publishers using ML
+    DeduplicatePublishers {
+        /// Minimum confidence threshold (0.0-1.0)
+        #[arg(long, short = 't', default_value = "0.85")]
+        threshold: f64,
+
+        /// Automatically merge high-confidence duplicates
+        #[arg(long)]
+        auto_merge: bool,
+
+        /// Show what would be merged without making changes (default: true)
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Find and merge duplicate series using ML
+    DeduplicateSeries {
+        /// Minimum confidence threshold (0.0-1.0)
+        #[arg(long, short = 't', default_value = "0.85")]
+        threshold: f64,
+
+        /// Automatically merge high-confidence duplicates
+        #[arg(long)]
+        auto_merge: bool,
+
+        /// Show what would be merged without making changes (default: true)
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Find and merge all duplicate entities (authors, publishers, series) using ML
+    DeduplicateAll {
+        /// Minimum confidence threshold (0.0-1.0)
+        #[arg(long, short = 't', default_value = "0.85")]
+        threshold: f64,
+
+        /// Automatically merge high-confidence duplicates
+        #[arg(long)]
+        auto_merge: bool,
+
+        /// Show what would be merged without making changes (default: true)
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 
 #[tokio::main]
@@ -643,6 +703,44 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Commands::Cleanup { dry_run } => {
             cmd_cleanup(&cli.library, &app_settings, dry_run).await?;
+        }
+        Commands::DeduplicateAuthors {
+            threshold,
+            auto_merge,
+            dry_run,
+        } => {
+            cmd_deduplicate_authors(&cli.library, &app_settings, threshold, auto_merge, dry_run)
+                .await?;
+        }
+        Commands::DeduplicatePublishers {
+            threshold,
+            auto_merge,
+            dry_run,
+        } => {
+            cmd_deduplicate_publishers(
+                &cli.library,
+                &app_settings,
+                threshold,
+                auto_merge,
+                dry_run,
+            )
+            .await?;
+        }
+        Commands::DeduplicateSeries {
+            threshold,
+            auto_merge,
+            dry_run,
+        } => {
+            cmd_deduplicate_series(&cli.library, &app_settings, threshold, auto_merge, dry_run)
+                .await?;
+        }
+        Commands::DeduplicateAll {
+            threshold,
+            auto_merge,
+            dry_run,
+        } => {
+            cmd_deduplicate_all(&cli.library, &app_settings, threshold, auto_merge, dry_run)
+                .await?;
         }
     }
 

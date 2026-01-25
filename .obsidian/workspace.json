@@ -1,0 +1,218 @@
+{
+  "main": {
+    "id": "33772a5a77356950",
+    "type": "split",
+    "children": [
+      {
+        "id": "0ebb46a501b3708a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "6c37c8528be1f98a",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "cde751dfe7da2bd0",
+    "type": "split",
+    "children": [
+      {
+        "id": "a9715fa6bf991965",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "1bb4e5f0f004a8b8",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "1d2a221a70e93f21",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "bdea75ad7b541012",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "dee10f56b7783fb4",
+    "type": "split",
+    "children": [
+      {
+        "id": "710deb5432043374",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b05ed53641cfa6ab",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "docs/sessions/2025-12-sessions.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for 2025-12-sessions"
+            }
+          },
+          {
+            "id": "32deb215475eac81",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "docs/sessions/2025-12-sessions.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from 2025-12-sessions"
+            }
+          },
+          {
+            "id": "6e97dd2834f9f551",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "22295eada3db6b39",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "11ef5eff57b1f26f",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "docs/sessions/2025-12-sessions.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of 2025-12-sessions"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "6c37c8528be1f98a",
+  "lastOpenFiles": [
+    "docs/sessions/2025-01-sessions.md.tmp.83205.1769360298903",
+    "target/debug/deps/ritmo_cli-9947818fe34a123d",
+    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/work-products.bin",
+    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/query-cache.bin",
+    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/f48q4i5h48u02w1yoi9zofv2l.o",
+    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/f0pxem16sjp8ocogxnivmdwsv.o",
+    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/eyd6f9zxxdzhq7i2qroag2dvq.o",
+    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/exigt7habtot5pksdrtug2ctr.o",
+    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/ev38yp8ax1o9wn1in4i0ulk6e.o",
+    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/et0t8uoqi8mfegeihjmegmqo4.o",
+    "target/debug/incremental/ritmo_cli-19kd919o3iue3/s-hf6ot0fi4t-13pjh9l-2qjqqdui57vi6k4dcx0vubuav/en4t0slzfl2o1adaw8nj6787j.o",
+    "CONTRIBUTING.md",
+    "docs/workspace.md",
+    "docs/sessions.md",
+    "docs/preset-system-usage.md",
+    "docs/ml-system.md",
+    "docs/filters.md",
+    "docs/filter-system-usage.md",
+    "docs/development.md",
+    "docs/architecture decisions.md",
+    "docs/architecture.md",
+    "docs/sessions/README.md",
+    "docs/sessions/2025-12-sessions.md",
+    "docs/sessions/2025-12-17-session7-filter-refactoring.md",
+    "docs/sessions/2025-12-16-session6-relative-date-filters.md",
+    "docs/sessions/2025-12-16-session5-library-presets.md",
+    "docs/sessions/2025-12-14-session3-preset-system.md",
+    "docs/sessions/2025-12-14-session-summary.md",
+    "docs/sessions/2025-01-sessions.md",
+    "CLAUDE.md",
+    "README.md",
+    "sessions.md",
+    "Untitled.md"
+  ]
+}

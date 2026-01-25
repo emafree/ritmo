@@ -12,6 +12,7 @@ ritmo_db_core = { path = "../ritmo_db_core" }
 ritmo_core = { path = "../ritmo_core" }
 ritmo_config = { path = "../ritmo_config" }
 ritmo_errors = { path = "../ritmo_errors" }
+ritmo_ml = { path = "../ritmo_ml" }
 tokio = { workspace = true, features = ["full"] }
 chrono = { workspace = true }
 serde_json = { workspace = true }

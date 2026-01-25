@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR)
 
-Questo documento traccia le decisioni architetturali importanti per il progetto ritmo.
+This document tracks important architectural decisions for the ritmo project.
 
 ---
 
@@ -10,57 +10,57 @@ Questo documento traccia le decisioni architetturali importanti per il progetto 
 ✅ **ACCEPTED**
 
 ### Context
-Durante la discussione sull'implementazione di un sistema di analytics, è emersa la necessità di decidere se ritmo dovesse supportare multi-utente o rimanere single-user.
+During the discussion on implementing an analytics system, the need arose to decide whether ritmo should support multi-user or remain single-user.
 
 ### Decision
-**ritmo rimane un'applicazione single-user per la versione 1.0**
+**ritmo remains a single-user application for version 1.0**
 
 ### Rationale
 
 **Pro Single-User:**
-- ✅ Semplicità architetturale (SQLite locale, no authentication layer)
-- ✅ Velocità di sviluppo (no complessità multi-tenant)
-- ✅ Privacy by design (tutto locale, zero dipendenze cloud)
-- ✅ Portabilità perfetta (USB library funziona out-of-the-box)
-- ✅ Focus sulle feature core (filtri, ebook_parser, catalogazione)
+- ✅ Architectural simplicity (local SQLite, no authentication layer)
+- ✅ Development speed (no multi-tenant complexity)
+- ✅ Privacy by design (everything local, zero cloud dependencies)
+- ✅ Perfect portability (USB library works out-of-the-box)
+- ✅ Focus on core features (filters, ebook_parser, cataloging)
 
-**Contro Multi-User (se implementato ora):**
-- ❌ Complessità: +40-60% codebase (auth, user management, permissions)
-- ❌ Testing: +300% scenari (multi-user edge cases)
-- ❌ Deployment: richiede server setup, monitoring, security updates
-- ❌ Database: necessita PostgreSQL o SQLite multi-tenant con locking issues
+**Cons Multi-User (if implemented now):**
+- ❌ Complexity: +40-60% codebase (auth, user management, permissions)
+- ❌ Testing: +300% scenarios (multi-user edge cases)
+- ❌ Deployment: requires server setup, monitoring, security updates
+- ❌ Database: requires PostgreSQL or SQLite multi-tenant with locking issues
 - ❌ Privacy: GDPR compliance, user data management
 
-**Use Case Primario:**
-- Gestione libreria personale (12,000+ libri)
-- Uso desktop/laptop personale
-- Portabilità su USB per accesso multi-dispositivo
-- No necessità di condivisione con altri utenti al momento
+**Primary Use Case:**
+- Personal library management (12,000+ books)
+- Personal desktop/laptop use
+- USB portability for multi-device access
+- No need for sharing with other users at the moment
 
 ### Consequences
 
 **Positive:**
-- Architettura rimane semplice e manutenibile
-- SQLite locale sufficiente (no PostgreSQL)
-- No authentication/authorization layer necessario
-- Analytics (se implementato) sarà molto più semplice
-- Portable library funziona perfettamente
+- Architecture remains simple and maintainable
+- Local SQLite sufficient (no PostgreSQL)
+- No authentication/authorization layer needed
+- Analytics (if implemented) will be much simpler
+- Portable library works perfectly
 
 **Negative:**
-- Se in futuro serve multi-utente, richiederà refactoring significativo
-- Condivisione libreria tra persone richiede workaround (es: libreria shared su network drive)
+- If multi-user is needed in the future, will require significant refactoring
+- Library sharing between people requires workarounds (e.g., shared library on network drive)
 
 **Neutral:**
-- Multi-utente rimane possibile in v2.0 come breaking change
-- Database schema attuale non include user_id (corretto per single-user)
+- Multi-user remains possible in v2.0 as breaking change
+- Current database schema doesn't include user_id (correct for single-user)
 
 ### Future Considerations
-- **v2.0**: Se emerge necessità reale di multi-utente, rivalutare
-- Possibile scenario: famiglia/team vuole condividere libreria
-- A quel punto: complete database redesign con user_id, auth layer, permissions
+- **v2.0**: If real multi-user need emerges, re-evaluate
+- Possible scenario: family/team wants to share library
+- At that point: complete database redesign with user_id, auth layer, permissions
 
 ### Related Decisions
-- Vedi ADR-002 per analytics (correlato)
+- See ADR-002 for analytics (related)
 
 ---
 
@@ -70,102 +70,101 @@ Durante la discussione sull'implementazione di un sistema di analytics, è emers
 ✅ **ACCEPTED**
 
 ### Context
-Durante il refactoring del sistema filtri, è emerso che l'utente identifica il programma principalmente attraverso l'interfaccia di ricerca e filtri, non attraverso altre feature.
+During the filter system refactoring, it emerged that the user identifies the program primarily through the search and filter interface, not through other features.
 
 ### Decision
-**Il sistema di filtri è considerato il core del programma e deve essere architetturalmente isolato e facilmente evolvibile**
+**The filter system is considered the program's core and must be architecturally isolated and easily evolvable**
 
 ### Rationale
 
-**Osservazione Chiave:**
-- L'utente non pensa "uso ritmo", pensa "cerco i miei libri"
-- Il sistema di filtri è l'interfaccia principale, non una feature accessoria
-- La qualità dei filtri determina l'usabilità dell'intero programma
+**Key Observation:**
+- User doesn't think "I use ritmo", thinks "I search my books"
+- Filter system is the primary interface, not an accessory feature
+- Filter quality determines entire program usability
 
-**Implicazioni:**
+**Implications:**
 ```
       ┌─────────────┐
-      │   FILTRI    │  ← Core del sistema
+      │   FILTERS   │  ← System core
       └──────┬──────┘
              │
     ┌────────┼────────┐
     │        │        │
 ┌───▼───┐ ┌──▼──┐ ┌──▼──┐
-│  CLI  │ │ GUI │ │ API │  ← Interfacce che espongono filtri
+│  CLI  │ │ GUI │ │ API │  ← Interfaces exposing filters
 └───────┘ └─────┘ └─────┘
 ```
 
 ### Architecture Implementation
 
-**Modulo Isolato:**
+**Isolated Module:**
 ```
 ritmo_db_core/src/filters/
-├── mod.rs          # Public API stabile
+├── mod.rs          # Stable public API
 ├── types.rs        # BookFilters, ContentFilters, enums
-├── builder.rs      # Query SQL construction
+├── builder.rs      # SQL query construction
 ├── executor.rs     # Query execution
 ├── validator.rs    # Input validation
 └── tests.rs        # Comprehensive test suite
 ```
 
 **Design Principles:**
-1. **Isolamento**: Modifiche ai filtri non impattano il resto del sistema
-2. **API Stabile**: FilterEngine con interfaccia pubblica che non cambia
-3. **Testabilità**: Test indipendenti senza setup database complesso
-4. **Evolvibilità**: Facile aggiungere nuovi tipi di filtri
+1. **Isolation**: Filter changes don't impact rest of system
+2. **Stable API**: FilterEngine with public interface that doesn't change
+3. **Testability**: Independent tests without complex database setup
+4. **Evolvability**: Easy to add new filter types
 
 ### Consequences
 
 **Positive:**
-- Modifiche ai filtri sono locali e sicure
-- Testing isolato più semplice
-- Facile aggiungere feature (range filters, negation, fuzzy search, complex logic)
-- Performance tuning non impatta CLI/GUI
-- Backward compatibility mantenuta facilmente
+- Filter changes are local and safe
+- Isolated testing simpler
+- Easy to add features (range filters, negation, fuzzy search, complex logic)
+- Performance tuning doesn't impact CLI/GUI
+- Backward compatibility easily maintained
 
 **Technical Debt Avoided:**
-- Filtri sparsi in tutto il codebase
-- Logica SQL duplicata tra CLI e GUI
-- Testing difficile e accoppiato al resto del sistema
+- Filters scattered throughout codebase
+- SQL logic duplicated between CLI and GUI
+- Difficult testing coupled to rest of system
 
 ### Implementation Status
-🔄 **IN PROGRESS** - Refactoring in corso (Zed)
+🔄 **IN PROGRESS** - Refactoring in progress (Zed)
 
 ### Future Evolution Path
-1. **Phase 1** (current): OR logic per parametri multipli
+1. **Phase 1** (current): OR logic for multiple parameters
 2. **Phase 2**: Range filters, negation
 3. **Phase 3**: Full-text search integration
-4. **Phase 4**: Query DSL language (opzionale)
-5. **Phase 5**: AI-powered search (futuro lontano)
+4. **Phase 4**: Query DSL language (optional)
+5. **Phase 5**: AI-powered search (distant future)
 
 ---
 
 ## ADR-003: OR Logic for Repeated Parameters (2024-12-16)
 
 ### Status
-🔄 **IN PROGRESS** (Refactoring in corso)
+🔄 **IN PROGRESS** (Refactoring in progress)
 
 ### Context
-Il sistema di filtri attuale usa solo logica AND. Per ricerche più flessibili, serve supporto OR su parametri ripetuti.
+Current filter system only uses AND logic. For more flexible searches, OR support for repeated parameters is needed.
 
 ### Decision
-**Parametri ripetuti vengono combinati con OR logic, parametri diversi con AND logic**
+**Repeated parameters are combined with OR logic, different parameters with AND logic**
 
 ### Examples
-
 ```bash
-# OR implicito per parametri ripetuti
+# Implicit OR for repeated parameters
 ritmo list-books --author "King" --author "Tolkien"
 # SQL: WHERE (author LIKE '%King%' OR author LIKE '%Tolkien%')
 
 ritmo list-books --format epub --format pdf
 # SQL: WHERE (format = 'epub' OR format = 'pdf')
 
-# AND tra parametri diversi
+# AND between different parameters
 ritmo list-books --author "King" --format epub
 # SQL: WHERE author LIKE '%King%' AND format = 'epub'
 
-# Combinato (OR dentro gruppi, AND tra gruppi)
+# Combined (OR within groups, AND between groups)
 ritmo list-books --author "King" --author "Tolkien" --format epub --year 2024
 # SQL: WHERE (author LIKE '%King%' OR author LIKE '%Tolkien%')
 #       AND format = 'epub'
@@ -174,26 +173,25 @@ ritmo list-books --author "King" --author "Tolkien" --format epub --year 2024
 
 ### Rationale
 
-**Alternativa Considerata #1: Flag --or esplicito**
+**Alternative Considered #1: Explicit --or flag**
 ```bash
 ritmo list-books --or --author "King" --author "Tolkien"
 ```
-❌ Rifiutata: Sintassi più complessa, meno intuitiva
+❌ Rejected: More complex syntax, less intuitive
 
-**Alternativa Considerata #2: Sintassi con virgole**
+**Alternative Considered #2: Comma syntax**
 ```bash
 ritmo list-books --author "King,Tolkien"
 ```
-❌ Rifiutata: Problemi con nomi che contengono virgole, meno chiara
+❌ Rejected: Problems with names containing commas, less clear
 
-**Soluzione Scelta: OR implicito**
-✅ Più intuitiva: ripetere parametro = "questo O quello"
-✅ Clap già supporta parametri multipli
+**Chosen Solution: Implicit OR**
+✅ More intuitive: repeating parameter = "this OR that"
+✅ Clap already supports multiple parameters
 ✅ Backward compatible
-✅ Facile da implementare
+✅ Easy to implement
 
 ### Implementation
-
 ```rust
 // In BookFilters
 pub struct BookFilters {
@@ -218,18 +216,18 @@ if !filters.authors.is_empty() {
 ### Consequences
 
 **Positive:**
-- Ricerche più flessibili e potenti
-- Sintassi naturale e intuitiva
-- Supporta casi d'uso comuni (multiple authors, formats)
+- More flexible and powerful searches
+- Natural and intuitive syntax
+- Supports common use cases (multiple authors, formats)
 
 **Considerations:**
-- Possibile confusion su quando si usa OR vs AND (documentazione importante)
-- Performance: OR su molti valori può essere più lento (accettabile)
+- Possible confusion about when OR vs AND is used (documentation important)
+- Performance: OR on many values can be slower (acceptable)
 
 ### Testing
-- Test per OR logic su singolo parametro
-- Test per combinazione OR + AND
-- Test per injection prevention con parametri multipli
+- Tests for OR logic on single parameter
+- Tests for OR + AND combination
+- Tests for injection prevention with multiple parameters
 
 ---
 
@@ -239,39 +237,39 @@ if !filters.authors.is_empty() {
 ⏸️ **DEFERRED**
 
 ### Context
-Discussa l'implementazione di un sistema di analytics per tracciare query e generare insights. La decisione è stata rimandata per approfondimento.
+Discussed implementing an analytics system to track queries and generate insights. Decision was postponed for further consideration.
 
 ### Considerations Raised
 
 **Pro Analytics:**
-- Comprensione pattern di utilizzo
-- Suggerimenti preset automatici
-- Miglioramento continuo basato su dati reali
+- Understanding usage patterns
+- Automatic preset suggestions
+- Continuous improvement based on real data
 - Performance monitoring
 
 **Concerns:**
-- Complessità aggiunta
-- Privacy considerations (anche se tutto locale)
-- Rischio over-engineering in fase iniziale
-- Multi-user analytics richiederebbe auth (vedi ADR-001)
+- Added complexity
+- Privacy considerations (even if all local)
+- Risk of over-engineering in initial phase
+- Multi-user analytics would require auth (see ADR-001)
 
 ### Key Insight
-**Analytics nel contesto multi-user** richiederebbe:
+**Analytics in multi-user context** would require:
 - User authentication/authorization
 - Per-user analytics + global analytics
-- Permission model (chi vede cosa)
-- Privacy controls più sofisticati
+- Permission model (who sees what)
+- More sophisticated privacy controls
 
-**Decisione**: Posticipare analytics fino a:
-1. Sistema filtri completato e testato in produzione
-2. ebook_parser integrato (catalogazione automatica)
-3. Uso reale del programma con libreria completa
-4. Valutazione empirica: gli analytics servono davvero?
+**Decision**: Postpone analytics until:
+1. Filter system completed and tested in production
+2. ebook_parser integrated (automatic cataloging)
+3. Real usage of program with complete library
+4. Empirical evaluation: are analytics really needed?
 
 ### Next Steps
-- Completare feature core (filtri, ebook_parser, GUI)
-- Usare il programma per gestire libreria reale
-- Rivalutare analytics tra 3-6 mesi basandosi su necessità concrete
+- Complete core features (filters, ebook_parser, GUI)
+- Use program to manage real library
+- Re-evaluate analytics in 3-6 months based on concrete needs
 
 ### If Analytics is Implemented Later
 
@@ -290,14 +288,13 @@ Commands:
 
 **Design Principles:**
 - Opt-in (ask on first run)
-- Tutto locale (privacy by design)
-- Cancellazione facile
-- No complessità multi-user
+- Everything local (privacy by design)
+- Easy deletion
+- No multi-user complexity
 
 ---
 
-## Template per Future ADR
-
+## Template for Future ADR
 ```markdown
 ## ADR-XXX: [Title] (YYYY-MM-DD)
 
@@ -305,26 +302,26 @@ Commands:
 [PROPOSED | ACCEPTED | DEPRECATED | SUPERSEDED]
 
 ### Context
-[Problema o situazione che richiede una decisione]
+[Problem or situation requiring a decision]
 
 ### Decision
-[Decisione presa in modo chiaro e conciso]
+[Decision made clearly and concisely]
 
 ### Rationale
-[Perché questa decisione? Alternative considerate?]
+[Why this decision? Alternatives considered?]
 
 ### Consequences
 **Positive:**
-- [Pro]
+- [Pros]
 
 **Negative:**
-- [Contro]
+- [Cons]
 
 **Neutral:**
 - [Trade-offs]
 
 ### Related Decisions
-- [Link ad altri ADR correlati]
+- [Links to other related ADRs]
 ```
 
 ---
@@ -337,10 +334,10 @@ Commands:
 
 ## Notes
 
-Questo documento segue il pattern Architecture Decision Records (ADR) per tracciare decisioni importanti nel tempo. Ogni decisione ha:
-- **Context**: Perché serve una decisione
-- **Decision**: Cosa è stato deciso
-- **Rationale**: Perché questa scelta
-- **Consequences**: Impatto della decisione
+This document follows the Architecture Decision Records (ADR) pattern to track important decisions over time. Each decision has:
+- **Context**: Why a decision is needed
+- **Decision**: What was decided
+- **Rationale**: Why this choice
+- **Consequences**: Impact of the decision
 
-Le decisioni non sono immutabili - possono essere rivalutate (status SUPERSEDED) quando il contesto cambia.
+Decisions are not immutable - they can be re-evaluated (status SUPERSEDED) when context changes.

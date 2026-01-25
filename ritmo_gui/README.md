@@ -1,114 +1,114 @@
 # Ritmo GUI
 
-Interfaccia grafica moderna e minimalista per Ritmo, costruita con [Slint](https://slint.dev/).
+Modern and minimalist graphical interface for Ritmo, built with [Slint](https://slint.dev/).
 
-## Caratteristiche
+## Features
 
-- **Design Minimalista**: Interfaccia pulita e moderna con focus sulla semplicità
-- **Leggera**: Build nativo senza dipendenze pesanti, funziona completamente offline
-- **Cross-platform**: Funziona su Linux, Windows e macOS
-- **Async**: Integrazione completa con Tokio per operazioni database non bloccanti
+- **Minimalist Design**: Clean and modern interface focused on simplicity
+- **Lightweight**: Native build without heavy dependencies, works completely offline
+- **Cross-platform**: Works on Linux, Windows, and macOS
+- **Async**: Full integration with Tokio for non-blocking database operations
 
-## Struttura
+## Structure
 
 ```
 ritmo_gui/
 ├── src/
-│   └── main.rs          # Entry point e logica applicazione
+│   └── main.rs          # Entry point and application logic
 ├── ui/
-│   └── main_window.slint # Definizione UI in linguaggio Slint
-├── build.rs             # Build script per compilare file .slint
-└── Cargo.toml           # Dipendenze
+│   └── main_window.slint # UI definition in Slint language
+├── build.rs             # Build script to compile .slint files
+└── Cargo.toml           # Dependencies
 ```
 
-## Compilazione
+## Building
 
 ```bash
-# Build in modalità debug
+# Build in debug mode
 cargo build -p ritmo_gui
 
-# Build ottimizzata (release)
+# Optimized build (release)
 cargo build -p ritmo_gui --release
 ```
 
-## Esecuzione
+## Running
 
 ```bash
-# Esegui direttamente
+# Run directly
 cargo run -p ritmo_gui
 
-# Oppure esegui il binario compilato
+# Or run the compiled binary
 ./target/release/ritmo_gui
 ```
 
-## Interfaccia
+## Interface
 
 ### Sidebar
-- 📖 **Libri**: Vista principale con lista di tutti i libri
-- ✍️ **Autori**: Gestione autori (in sviluppo)
-- 🏢 **Editori**: Gestione editori (in sviluppo)
-- 📚 **Serie**: Gestione serie di libri (in sviluppo)
-- ⚙️ **Impostazioni**: Configurazione applicazione (in sviluppo)
+- 📖 **Books**: Main view with list of all books
+- ✍️ **Authors**: Author management (in development)
+- 🏢 **Publishers**: Publisher management (in development)
+- 📚 **Series**: Book series management (in development)
+- ⚙️ **Settings**: Application configuration (in development)
 
-### Area Principale
-- **Barra di ricerca**: Cerca libri, autori, editori in tempo reale
-- **Lista libri**: Vista cards dei libri con titolo, autore, editore, anno
-- **Pulsante Aggiungi**: Per aggiungere nuovi libri (in sviluppo)
-- **Messaggi di stato**: Feedback visivo per operazioni
+### Main Area
+- **Search bar**: Search books, authors, publishers in real-time
+- **Book list**: Card view of books with title, author, publisher, year
+- **Add button**: To add new books (in development)
+- **Status messages**: Visual feedback for operations
 
-## Inizializzazione
+## Initialization
 
-All'avvio, l'applicazione:
-1. Crea automaticamente la directory della libreria in `~/RitmoLibrary`
-2. Inizializza il database SQLite se non esiste
-3. Crea la struttura di directory necessaria (database, storage, config, bootstrap)
-4. Carica i libri dalla libreria (attualmente dati di esempio)
+On startup, the application:
+1. Automatically creates the library directory in `~/RitmoLibrary`
+2. Initializes the SQLite database if it doesn't exist
+3. Creates the necessary directory structure (database, storage, config, bootstrap)
+4. Loads books from the library (currently sample data)
 
-## Tecnologie
+## Technologies
 
-- **Slint 1.7.2**: Framework UI nativo e performante
-- **Tokio**: Runtime asincrono per operazioni I/O
-- **SQLx**: Database access layer asincrono
-- **Rust**: Linguaggio sicuro e performante
+- **Slint 1.7.2**: Native and performant UI framework
+- **Tokio**: Asynchronous runtime for I/O operations
+- **SQLx**: Asynchronous database access layer
+- **Rust**: Safe and performant language
 
-## Stato Attuale
+## Current Status
 
-✅ Interfaccia base implementata
-✅ Navigazione sidebar funzionante
-✅ Ricerca libri con filtro in tempo reale
-✅ Integrazione con LibraryConfig
-✅ Inizializzazione automatica libreria
+✅ Base interface implemented
+✅ Sidebar navigation working
+✅ Book search with real-time filtering
+✅ Integration with LibraryConfig
+✅ Automatic library initialization
 
-🚧 In sviluppo:
-- Integrazione vera con database (query SQL)
-- Dialog per aggiungere/modificare libri
-- Vista dettaglio libro
-- Gestione autori, editori, serie
-- Import di file EPUB
-- Gestione copertine
+🚧 In development:
+- Real database integration (SQL queries)
+- Dialogs to add/edit books
+- Book detail view
+- Author, publisher, series management
+- EPUB file import
+- Cover management
 
-## Dipendenze
+## Dependencies
 
-Le principali dipendenze sono:
-- `slint = "1.7.2"` - Framework UI
-- `slint-build = "1.7.2"` - Build script per file .slint
+Main dependencies are:
+- `slint = "1.7.2"` - UI framework
+- `slint-build = "1.7.2"` - Build script for .slint files
 - `tokio` - Async runtime
-- `dirs` - Per trovare directory home utente
-- `ritmo_db_core` - Gestione database e config
-- `ritmo_db` - Modelli database
-- `ritmo_core` - Logica business
+- `dirs` - To find user home directory
+- `ritmo_db_core` - Database and config management
+- `ritmo_db` - Database models
+- `ritmo_core` - Business logic
 
-## Note di Sviluppo
+## Development Notes
 
-### File .slint
-I file `.slint` definiscono l'interfaccia grafica usando un linguaggio dichiarativo simile a QML. Durante la build, `slint-build` compila questi file in codice Rust.
+### .slint Files
+`.slint` files define the graphical interface using a declarative language similar to QML. During build, `slint-build` compiles these files into Rust code.
 
 ### Async/Sync Bridge
-L'applicazione usa `tokio::runtime::Runtime` per gestire operazioni async dal thread UI sincrono. Le operazioni database vengono eseguite tramite `runtime.block_on()`.
+The application uses `tokio::runtime::Runtime` to handle async operations from the synchronous UI thread. Database operations are executed via `runtime.block_on()`.
 
 ### Callbacks
-I callback UI sono definiti in Slint e implementati in Rust:
-- `initialize-library`: Inizializza la libreria
-- `refresh-books`: Ricarica la lista libri
-- `search-books`: Filtra libri in base al testo di ricerca
-- `add-new-book`: Apre dialog per aggiungere libro (TODO)
+UI callbacks are defined in Slint and implemented in Rust:
+- `initialize-library`: Initialize the library
+- `refresh-books`: Reload the book list
+- `search-books`: Filter books based on search text
+- `add-new-book`: Open dialog to add book (TODO)

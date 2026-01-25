@@ -103,6 +103,24 @@ cargo run -p ritmo_cli -- delete-book 1 --delete-file
 cargo run -p ritmo_cli -- cleanup --dry-run
 ```
 
+### ML Deduplication Operations
+```bash
+# Find duplicate authors (dry-run by default)
+cargo run -p ritmo_cli -- deduplicate-authors --dry-run
+
+# Merge duplicate authors with custom threshold
+cargo run -p ritmo_cli -- deduplicate-authors --threshold 0.90 --auto-merge
+
+# Find duplicate publishers
+cargo run -p ritmo_cli -- deduplicate-publishers --dry-run
+
+# Find duplicate series
+cargo run -p ritmo_cli -- deduplicate-series --dry-run
+
+# Run deduplication for all entity types
+cargo run -p ritmo_cli -- deduplicate-all --threshold 0.85 --dry-run
+```
+
 For complete command reference, see [Development Guide](docs/development.md).
 
 ## Rust Version
@@ -112,6 +130,15 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 - Supports Slint GUI framework
 
 ## Recent Changes
+
+### 2026-01-25 - Session 12: ML CLI Integration - COMPLETED
+Integrated ritmo_ml deduplication system into CLI with 4 new commands.
+- `deduplicate-authors` - Find and merge duplicate authors using ML
+- `deduplicate-publishers` - Find and merge duplicate publishers
+- `deduplicate-series` - Find and merge duplicate series
+- `deduplicate-all` - Run deduplication for all entity types
+- Configurable threshold, auto-merge, and dry-run modes
+- User-friendly output with confidence scores and merge statistics
 
 ### 2026-01-25 - Session 11: ritmo_ml Test Coverage - COMPLETED
 Comprehensive test suite for ritmo_ml with 17 tests (previously 8 were empty/ignored).
@@ -143,7 +170,7 @@ For complete session history, see [docs/sessions/](docs/sessions/).
 
 ### High Priority
 1. **Portable Bootstrap**: Automatic binary copying to bootstrap/portable_app/
-2. **ML CLI Integration**: Commands for deduplication (`deduplicate-people`, etc.)
+2. **ebook_parser Integration**: Extract EPUB metadata automatically (goal: 95% automation)
 
 ### Medium Priority
 3. **Advanced Filters**: SQL-like query DSL for complex queries
@@ -152,7 +179,8 @@ For complete session history, see [docs/sessions/](docs/sessions/).
 
 ### Low Priority
 6. **GUI Integration**: Update `ritmo_gui` to use `ritmo_config`
-7. **Integrate ebook_parser**: Extract EPUB metadata automatically (goal: 95% automation)
+7. **ML GUI Integration**: Add deduplication features to GUI
+8. **Cover Management**: Extract and display book covers
 
 ## Quick Reference
 
