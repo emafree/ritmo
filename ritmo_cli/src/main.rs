@@ -390,10 +390,67 @@ enum Commands {
         pages: Option<i64>,
     },
 
+    /// Crea un nuovo contenuto
+    AddContent {
+        /// Titolo del contenuto (richiesto)
+        #[arg(long, short = 't')]
+        title: String,
+
+        /// Titolo originale
+        #[arg(long)]
+        original_title: Option<String>,
+
+        /// Autore del contenuto
+        #[arg(long, short = 'a')]
+        author: Option<String>,
+
+        /// Tipo di contenuto (Romanzo, Racconto, Saggio, etc.)
+        #[arg(long)]
+        content_type: Option<String>,
+
+        /// Anno di pubblicazione
+        #[arg(long, short = 'y')]
+        year: Option<i32>,
+
+        /// Numero di pagine
+        #[arg(long)]
+        pages: Option<i64>,
+
+        /// Note
+        #[arg(long, short = 'n')]
+        notes: Option<String>,
+
+        /// ID del libro a cui associare il contenuto (opzionale)
+        #[arg(long, short = 'b')]
+        book_id: Option<i64>,
+    },
+
     /// Elimina un contenuto dal database
     DeleteContent {
         /// ID del contenuto da eliminare
         id: i64,
+    },
+
+    /// Associa un contenuto a un libro
+    LinkContent {
+        /// ID del contenuto
+        #[arg(long, short = 'c')]
+        content_id: i64,
+
+        /// ID del libro
+        #[arg(long, short = 'b')]
+        book_id: i64,
+    },
+
+    /// Rimuovi l'associazione tra un contenuto e un libro
+    UnlinkContent {
+        /// ID del contenuto
+        #[arg(long, short = 'c')]
+        content_id: i64,
+
+        /// ID del libro
+        #[arg(long, short = 'b')]
+        book_id: i64,
     },
 
     /// Pulisci entità orfane (autori, editori, serie non referenziati)
@@ -689,6 +746,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         } => {
             cmd_delete_book(&cli.library, &app_settings, id, delete_file, force).await?;
         }
+        Commands::AddContent {
+            title,
+            original_title,
+            author,
+            content_type,
+            year,
+            pages,
+            notes,
+            book_id,
+        } => {
+            cmd_add_content(
+                &cli.library,
+                &app_settings,
+                title,
+                original_title,
+                author,
+                content_type,
+                year,
+                pages,
+                notes,
+                book_id,
+            )
+            .await?;
+        }
         Commands::UpdateContent {
             id,
             title,
@@ -715,6 +796,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Commands::DeleteContent { id } => {
             cmd_delete_content(&cli.library, &app_settings, id).await?;
+        }
+        Commands::LinkContent {
+            content_id,
+            book_id,
+        } => {
+            cmd_link_content(&cli.library, &app_settings, content_id, book_id).await?;
+        }
+        Commands::UnlinkContent {
+            content_id,
+            book_id,
+        } => {
+            cmd_unlink_content(&cli.library, &app_settings, content_id, book_id).await?;
         }
         Commands::Cleanup { dry_run } => {
             cmd_cleanup(&cli.library, &app_settings, dry_run).await?;

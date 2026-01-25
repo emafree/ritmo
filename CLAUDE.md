@@ -103,6 +103,26 @@ cargo run -p ritmo_cli -- delete-book 1 --delete-file
 cargo run -p ritmo_cli -- cleanup --dry-run
 ```
 
+### Content Operations
+```bash
+# Create new content
+cargo run -p ritmo_cli -- add-content --title "Story Title" --author "Author Name"
+cargo run -p ritmo_cli -- add-content --title "Novel" --content-type "Romanzo" --year 2024
+
+# Create content and associate to book
+cargo run -p ritmo_cli -- add-content --title "Novel" --author "Author" --book-id 1
+
+# Update content
+cargo run -p ritmo_cli -- update-content 1 --title "New Title" --year 2024
+
+# Delete content
+cargo run -p ritmo_cli -- delete-content 1
+
+# Associate/unassociate content and book
+cargo run -p ritmo_cli -- link-content --content-id 1 --book-id 1
+cargo run -p ritmo_cli -- unlink-content --content-id 1 --book-id 1
+```
+
 ### ML Deduplication Operations
 ```bash
 # Find duplicate authors (dry-run by default)
@@ -133,6 +153,15 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 - Supports Slint GUI framework
 
 ## Recent Changes
+
+### 2026-01-26 - Session 13: Complete CRUD for Contents - COMPLETED
+Implemented full CRUD operations for Contents with 3 new CLI commands.
+- `add-content` - Create new contents with metadata (title, author, type, year, etc.)
+- `link-content` - Associate existing content to a book
+- `unlink-content` - Remove content-book association
+- New service: `content_create_service.rs` with validation and entity management
+- Contents can be created standalone or directly associated to books
+- Full test coverage and documentation updates
 
 ### 2026-01-25 - Session 12: ML CLI Integration - COMPLETED
 Integrated ritmo_ml deduplication system into CLI with 4 new commands.

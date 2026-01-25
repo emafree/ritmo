@@ -137,12 +137,25 @@ For more filter options, see [Filter System Documentation](filters.md).
 
 #### Content Management
 ```bash
+# Create new content
+cargo run -p ritmo_cli -- add-content --title "Content Title" --author "Author Name"
+cargo run -p ritmo_cli -- add-content --title "Short Story" --author "Author" --content-type "Racconto" --year 2024
+
+# Create content and associate to a book
+cargo run -p ritmo_cli -- add-content --title "Novel" --author "Author" --book-id 1
+
 # Update content metadata
 cargo run -p ritmo_cli -- update-content 1 --title "New Title" --author "New Author"
 cargo run -p ritmo_cli -- update-content 1 --content-type "Romanzo" --year 2024
 
 # Delete content
 cargo run -p ritmo_cli -- delete-content 1
+
+# Associate content to book
+cargo run -p ritmo_cli -- link-content --content-id 1 --book-id 1
+
+# Remove content-book association
+cargo run -p ritmo_cli -- unlink-content --content-id 1 --book-id 1
 ```
 
 #### Cleanup

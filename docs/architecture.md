@@ -48,8 +48,11 @@ The project is organized as a Rust workspace with the following crates:
   - `ritmo delete-preset books|contents NAME`: Delete preset
   - `ritmo update-book <id>`: Update book metadata
   - `ritmo delete-book <id>`: Delete book with optional file deletion
+  - `ritmo add-content --title "..." [options]`: Create new content
   - `ritmo update-content <id>`: Update content metadata
   - `ritmo delete-content <id>`: Delete content from database
+  - `ritmo link-content --content-id <id> --book-id <id>`: Associate content to book
+  - `ritmo unlink-content --content-id <id> --book-id <id>`: Remove content-book association
   - `ritmo cleanup`: Remove orphaned entities
   - Global option: `--library PATH` to use specific library temporarily
 - Integrates with `ritmo_config` for global settings management

@@ -3,7 +3,10 @@
 use crate::formatter::{format_contents, OutputFormat};
 use crate::helpers::get_library_path;
 use ritmo_config::AppSettings;
-use ritmo_core::service::{delete_content, update_content, ContentUpdateMetadata};
+use ritmo_core::service::{
+    create_content, delete_content, link_content_to_book, unlink_content_from_book,
+    update_content, ContentCreateMetadata, ContentUpdateMetadata,
+};
 use ritmo_db_core::{execute_contents_query, ContentFilters, ContentSortField, LibraryConfig};
 use ritmo_errors::reporter::SilentReporter;
 use std::path::PathBuf;
@@ -141,6 +144,56 @@ pub async fn cmd_update_content(
     Ok(())
 }
 
+/// Comando: add-content - Crea un nuovo contenuto
+#[allow(clippy::too_many_arguments)]
+pub async fn cmd_add_content(
+    cli_library: &Option<PathBuf>,
+    app_settings: &AppSettings,
+    title: String,
+    original_title: Option<String>,
+    author: Option<String>,
+    content_type: Option<String>,
+    year: Option<i32>,
+    pages: Option<i64>,
+    notes: Option<String>,
+    book_id: Option<i64>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let library_path = get_library_path(cli_library, app_settings)?;
+
+    let config = LibraryConfig::new(&library_path);
+    if !config.exists() {
+        return Err(format!("La libreria non esiste: {}", library_path.display()).into());
+    }
+
+    let mut reporter = SilentReporter;
+    let pool = config.create_pool(&mut reporter).await?;
+
+    println!("Creazione nuovo contenuto...");
+
+    let metadata = ContentCreateMetadata {
+        title,
+        original_title,
+        author,
+        content_type,
+        year,
+        pages,
+        notes,
+        book_id,
+    };
+
+    match create_content(&pool, metadata).await {
+        Ok(content_id) => {
+            println!("✓ Contenuto creato con successo! ID: {}", content_id);
+        }
+        Err(e) => {
+            println!("✗ Errore durante la creazione: {}", e);
+            return Err(e.into());
+        }
+    }
+
+    Ok(())
+}
+
 /// Comando: delete-content - Elimina un contenuto dal database
 pub async fn cmd_delete_content(
     cli_library: &Option<PathBuf>,
@@ -165,6 +218,76 @@ pub async fn cmd_delete_content(
         }
         Err(e) => {
             println!("✗ Errore durante l'eliminazione: {}", e);
+            return Err(e.into());
+        }
+    }
+
+    Ok(())
+}
+
+/// Comando: link-content - Associa un contenuto a un libro
+pub async fn cmd_link_content(
+    cli_library: &Option<PathBuf>,
+    app_settings: &AppSettings,
+    content_id: i64,
+    book_id: i64,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let library_path = get_library_path(cli_library, app_settings)?;
+
+    let config = LibraryConfig::new(&library_path);
+    if !config.exists() {
+        return Err(format!("La libreria non esiste: {}", library_path.display()).into());
+    }
+
+    let mut reporter = SilentReporter;
+    let pool = config.create_pool(&mut reporter).await?;
+
+    println!(
+        "Associazione contenuto {} al libro {}...",
+        content_id, book_id
+    );
+
+    match link_content_to_book(&pool, content_id, book_id).await {
+        Ok(_) => {
+            println!("✓ Contenuto associato con successo!");
+        }
+        Err(e) => {
+            println!("✗ Errore durante l'associazione: {}", e);
+            return Err(e.into());
+        }
+    }
+
+    Ok(())
+}
+
+/// Comando: unlink-content - Rimuovi l'associazione tra un contenuto e un libro
+pub async fn cmd_unlink_content(
+    cli_library: &Option<PathBuf>,
+    app_settings: &AppSettings,
+    content_id: i64,
+    book_id: i64,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let library_path = get_library_path(cli_library, app_settings)?;
+
+    let config = LibraryConfig::new(&library_path);
+    if !config.exists() {
+        return Err(format!("La libreria non esiste: {}", library_path.display()).into());
+    }
+
+    let mut reporter = SilentReporter;
+    let pool = config.create_pool(&mut reporter).await?;
+
+    println!(
+        "Rimozione associazione tra contenuto {} e libro {}...",
+        content_id, book_id
+    );
+
+    match unlink_content_from_book(&pool, content_id, book_id).await {
+        Ok(_) => {
+            println!("✓ Associazione rimossa con successo!");
+        }
+        Err(e) => {
+            println!("✗ Errore durante la rimozione: {}", e);
             return Err(e.into());
         }
     }
