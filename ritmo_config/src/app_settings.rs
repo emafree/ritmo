@@ -134,6 +134,16 @@ impl AppSettings {
         // 2. Usa last_library_path se presente
         self.last_library_path.clone()
     }
+
+    /// Update the UI language preference
+    pub fn set_language(&mut self, language: String) {
+        self.preferences.ui_language = language;
+    }
+
+    /// Get the current UI language preference
+    pub fn get_language(&self) -> &str {
+        &self.preferences.ui_language
+    }
 }
 
 #[cfg(test)]

@@ -55,6 +55,61 @@ pub fn detect_locale() -> &'static str {
     DEFAULT_LOCALE
 }
 
+/// Detect the best locale considering saved preferences
+///
+/// Priority order:
+/// 1. RITMO_LANG env var (e.g., "it", "en") - temporary override
+/// 2. Saved preference from config file
+/// 3. LANG env var (e.g., "it_IT.UTF-8" -> "it") - system default
+/// 4. Fallback to DEFAULT_LOCALE ("en")
+///
+/// # Arguments
+///
+/// * `saved_preference` - Optional saved language preference from config
+///
+/// # Examples
+///
+/// ```
+/// use ritmo_db::i18n_utils::detect_locale_with_preference;
+///
+/// let locale = detect_locale_with_preference(Some("it"));
+/// assert_eq!(locale, "it");
+/// ```
+pub fn detect_locale_with_preference(saved_preference: Option<&str>) -> &'static str {
+    // 1. Check RITMO_LANG environment variable (temporary override)
+    if let Ok(ritmo_lang) = env::var("RITMO_LANG") {
+        let locale = ritmo_lang.to_lowercase();
+        for &supported in SUPPORTED_LOCALES {
+            if locale.starts_with(supported) {
+                return supported;
+            }
+        }
+    }
+
+    // 2. Check saved preference
+    if let Some(pref) = saved_preference {
+        let locale = pref.to_lowercase();
+        for &supported in SUPPORTED_LOCALES {
+            if locale.starts_with(supported) {
+                return supported;
+            }
+        }
+    }
+
+    // 3. Check LANG environment variable (system default)
+    if let Ok(lang) = env::var("LANG") {
+        let locale = lang.to_lowercase();
+        for &supported in SUPPORTED_LOCALES {
+            if locale.starts_with(supported) {
+                return supported;
+            }
+        }
+    }
+
+    // 4. Fallback to default
+    DEFAULT_LOCALE
+}
+
 /// Set the application locale
 ///
 /// This sets the rust-i18n locale for the current thread.
@@ -104,6 +159,37 @@ pub fn get_locale() -> String {
 /// ```
 pub fn init_i18n() {
     let locale = detect_locale();
+    set_locale(locale);
+}
+
+/// Initialize i18n system considering saved preference
+///
+/// This should be called early in the application startup.
+/// It detects the best locale (considering saved preference) and sets it as the active locale.
+///
+/// Priority order:
+/// 1. RITMO_LANG env var (temporary override)
+/// 2. Saved preference from config file
+/// 3. LANG env var (system default)
+/// 4. Default ("en")
+///
+/// # Arguments
+///
+/// * `saved_preference` - Optional saved language preference from config
+///
+/// # Examples
+///
+/// ```
+/// use ritmo_db::i18n_utils::init_i18n_with_preference;
+///
+/// // With saved preference
+/// init_i18n_with_preference(Some("it"));
+///
+/// // Without saved preference (falls back to env vars)
+/// init_i18n_with_preference(None);
+/// ```
+pub fn init_i18n_with_preference(saved_preference: Option<&str>) {
+    let locale = detect_locale_with_preference(saved_preference);
     set_locale(locale);
 }
 

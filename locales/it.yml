@@ -99,6 +99,15 @@ cli:
     not_exist: "✗ La libreria non esiste: %{path}"
     use_init: "  Usa 'ritmo init %{path}' per crearla"
 
+  # Comando Language
+  language:
+    unsupported: "✗ Lingua non supportata: %{language}. Lingue supportate: %{supported}"
+    set_success: "✓ Preferenza lingua salvata: %{language}"
+    saved_preference: "Preferenza salvata: %{language}"
+    active_language: "Lingua attiva: %{language}"
+    env_override: "  (sovrascritta dalla variabile d'ambiente RITMO_LANG)"
+    available: "Lingue disponibili:"
+
 # ============================================================================
 # ERRORS - Messaggi di Errore
 # ============================================================================

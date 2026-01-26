@@ -585,18 +585,27 @@ enum Commands {
         #[arg(long)]
         dry_run: bool,
     },
+
+    /// Set the preferred language for the application
+    SetLanguage {
+        /// Language code (e.g., "en", "it")
+        language: String,
+    },
+
+    /// Get the current language preference
+    GetLanguage,
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize i18n system (reads RITMO_LANG environment variable)
-    i18n_utils::init_i18n();
-
     let cli = Cli::parse();
 
     // Carica o crea AppSettings
     let settings_path = settings_file()?;
     let mut app_settings = AppSettings::load_or_create(&settings_path)?;
+
+    // Initialize i18n system (priority: RITMO_LANG env var > saved preference > LANG env var > default)
+    i18n_utils::init_i18n_with_preference(Some(app_settings.get_language()));
 
     match cli.command {
         Commands::Init { path } => {
@@ -935,6 +944,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         } => {
             cmd_deduplicate_all(&cli.library, &app_settings, threshold, auto_merge, dry_run)
                 .await?;
+        }
+        Commands::SetLanguage { language } => {
+            cmd_set_language(language, &mut app_settings, &settings_path)?;
+        }
+        Commands::GetLanguage => {
+            cmd_get_language(&app_settings);
         }
     }
 

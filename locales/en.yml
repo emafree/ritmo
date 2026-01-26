@@ -99,6 +99,14 @@ cli:
     not_exist: "✗ Library does not exist: %{path}"
     use_init: "  Use 'ritmo init %{path}' to create it"
 
+  language:
+    unsupported: "✗ Unsupported language: %{language}. Supported languages: %{supported}"
+    set_success: "✓ Language preference saved: %{language}"
+    saved_preference: "Saved preference: %{language}"
+    active_language: "Active language: %{language}"
+    env_override: "  (overridden by RITMO_LANG environment variable)"
+    available: "Available languages:"
+
 # ============================================================================
 # ERRORS - Error Messages
 # ============================================================================
