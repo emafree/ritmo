@@ -103,11 +103,13 @@ pub async fn cmd_update_content(
     content_id: i64,
     title: Option<String>,
     original_title: Option<String>,
-    author: Option<String>,
+    people: Vec<String>,
     content_type: Option<String>,
     year: Option<i32>,
     notes: Option<String>,
     pages: Option<i64>,
+    tags: Vec<String>,
+    languages: Vec<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let library_path = get_library_path(cli_library, app_settings)?;
 
@@ -121,14 +123,71 @@ pub async fn cmd_update_content(
 
     println!("Aggiornamento contenuto ID {}...", content_id);
 
+    // Parse people from format "Nome:Ruolo"
+    let parsed_people = if !people.is_empty() {
+        let mut result = Vec::new();
+        for person_str in people {
+            let parts: Vec<&str> = person_str.split(':').collect();
+            if parts.len() != 2 {
+                println!(
+                    "⚠ Formato persona non valido: '{}'. Formato richiesto: 'Nome:Ruolo'",
+                    person_str
+                );
+                continue;
+            }
+            result.push((parts[0].to_string(), parts[1].to_string()));
+        }
+        if result.is_empty() {
+            None
+        } else {
+            Some(result)
+        }
+    } else {
+        None
+    };
+
+    // Parse languages from format "Name:iso2:iso3:role"
+    let parsed_languages = if !languages.is_empty() {
+        let mut result = Vec::new();
+        for lang_str in languages {
+            let parts: Vec<&str> = lang_str.split(':').collect();
+            if parts.len() != 4 {
+                println!(
+                    "⚠ Formato lingua non valido: '{}'. Formato richiesto: 'Nome:iso2:iso3:role'",
+                    lang_str
+                );
+                continue;
+            }
+            result.push((
+                parts[0].to_string(),
+                parts[1].to_string(),
+                parts[2].to_string(),
+                parts[3].to_string(),
+            ));
+        }
+        if result.is_empty() {
+            None
+        } else {
+            Some(result)
+        }
+    } else {
+        None
+    };
+
     let metadata = ContentUpdateMetadata {
         title,
         original_title,
-        author,
+        people: parsed_people,
         content_type,
         year,
         notes,
         pages,
+        tags: if tags.is_empty() {
+            None
+        } else {
+            Some(tags)
+        },
+        languages: parsed_languages,
     };
 
     match update_content(&pool, content_id, metadata).await {
@@ -151,12 +210,14 @@ pub async fn cmd_add_content(
     app_settings: &AppSettings,
     title: String,
     original_title: Option<String>,
-    author: Option<String>,
+    people: Vec<String>,
     content_type: Option<String>,
     year: Option<i32>,
     pages: Option<i64>,
     notes: Option<String>,
     book_id: Option<i64>,
+    tags: Vec<String>,
+    languages: Vec<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let library_path = get_library_path(cli_library, app_settings)?;
 
@@ -170,15 +231,72 @@ pub async fn cmd_add_content(
 
     println!("Creazione nuovo contenuto...");
 
+    // Parse people from format "Nome:Ruolo"
+    let parsed_people = if !people.is_empty() {
+        let mut result = Vec::new();
+        for person_str in people {
+            let parts: Vec<&str> = person_str.split(':').collect();
+            if parts.len() != 2 {
+                println!(
+                    "⚠ Formato persona non valido: '{}'. Formato richiesto: 'Nome:Ruolo'",
+                    person_str
+                );
+                continue;
+            }
+            result.push((parts[0].to_string(), parts[1].to_string()));
+        }
+        if result.is_empty() {
+            None
+        } else {
+            Some(result)
+        }
+    } else {
+        None
+    };
+
+    // Parse languages from format "Name:iso2:iso3:role"
+    let parsed_languages = if !languages.is_empty() {
+        let mut result = Vec::new();
+        for lang_str in languages {
+            let parts: Vec<&str> = lang_str.split(':').collect();
+            if parts.len() != 4 {
+                println!(
+                    "⚠ Formato lingua non valido: '{}'. Formato richiesto: 'Nome:iso2:iso3:role'",
+                    lang_str
+                );
+                continue;
+            }
+            result.push((
+                parts[0].to_string(),
+                parts[1].to_string(),
+                parts[2].to_string(),
+                parts[3].to_string(),
+            ));
+        }
+        if result.is_empty() {
+            None
+        } else {
+            Some(result)
+        }
+    } else {
+        None
+    };
+
     let metadata = ContentCreateMetadata {
         title,
         original_title,
-        author,
+        people: parsed_people,
         content_type,
         year,
         pages,
         notes,
         book_id,
+        tags: if tags.is_empty() {
+            None
+        } else {
+            Some(tags)
+        },
+        languages: parsed_languages,
     };
 
     match create_content(&pool, metadata).await {

@@ -531,6 +531,158 @@ async fn delete_tags(tx: &mut Transaction<'_, Sqlite>, ids: &[i64]) -> RitmoResu
     Ok(())
 }
 
+// ============================================================================
+// Merge roles
+// ============================================================================
+
+/// Merge duplicate roles into a single primary record
+///
+/// This function:
+/// 1. Validates that all IDs exist
+/// 2. Updates all references in junction tables to point to primary_id
+/// 3. Deletes duplicate role records
+/// 4. Returns statistics about the merge
+///
+/// # Safety
+/// This operation is executed within a transaction. If any step fails,
+/// all changes are rolled back.
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+/// * `primary_id` - ID of the role to keep (primary record)
+/// * `duplicate_ids` - IDs of roles to merge into primary (will be deleted)
+pub async fn merge_roles(
+    pool: &SqlitePool,
+    primary_id: i64,
+    duplicate_ids: &[i64],
+) -> RitmoResult<MergeStats> {
+    if duplicate_ids.is_empty() {
+        return Err(RitmoErr::Generic("No duplicate IDs provided".to_string()));
+    }
+
+    if duplicate_ids.contains(&primary_id) {
+        return Err(RitmoErr::Generic(
+            "Primary ID cannot be in duplicate IDs list".to_string(),
+        ));
+    }
+
+    let mut tx = pool.begin().await?;
+
+    // Step 1: Validate that all role IDs exist
+    validate_roles_exist(&mut tx, primary_id, duplicate_ids).await?;
+
+    // Step 2: Update x_books_people_roles to point to primary_id
+    let books_updated = update_books_people_roles_role(&mut tx, primary_id, duplicate_ids).await?;
+
+    // Step 3: Update x_contents_people_roles to point to primary_id
+    let contents_updated = update_contents_people_roles_role(&mut tx, primary_id, duplicate_ids).await?;
+
+    // Step 4: Delete duplicate role records
+    delete_roles(&mut tx, duplicate_ids).await?;
+
+    // Commit transaction
+    tx.commit().await?;
+
+    Ok(MergeStats {
+        primary_id,
+        merged_ids: duplicate_ids.to_vec(),
+        books_updated,
+        contents_updated,
+    })
+}
+
+// ============================================================================
+// Helper functions for role merging
+// ============================================================================
+
+async fn validate_roles_exist(
+    tx: &mut Transaction<'_, Sqlite>,
+    primary_id: i64,
+    duplicate_ids: &[i64],
+) -> RitmoResult<()> {
+    // Check primary exists
+    let primary_exists = sqlx::query!("SELECT id FROM roles WHERE id = ?", primary_id)
+        .fetch_optional(&mut **tx)
+        .await?;
+
+    if primary_exists.is_none() {
+        return Err(RitmoErr::Generic(format!(
+            "Primary role ID {} not found",
+            primary_id
+        )));
+    }
+
+    // Check all duplicates exist
+    for &dup_id in duplicate_ids {
+        let exists = sqlx::query!("SELECT id FROM roles WHERE id = ?", dup_id)
+            .fetch_optional(&mut **tx)
+            .await?;
+
+        if exists.is_none() {
+            return Err(RitmoErr::Generic(format!(
+                "Duplicate role ID {} not found",
+                dup_id
+            )));
+        }
+    }
+
+    Ok(())
+}
+
+async fn update_books_people_roles_role(
+    tx: &mut Transaction<'_, Sqlite>,
+    primary_id: i64,
+    duplicate_ids: &[i64],
+) -> RitmoResult<usize> {
+    let mut total_updated = 0;
+
+    for &dup_id in duplicate_ids {
+        let result = sqlx::query!(
+            "UPDATE x_books_people_roles SET role_id = ? WHERE role_id = ?",
+            primary_id,
+            dup_id
+        )
+        .execute(&mut **tx)
+        .await?;
+
+        total_updated += result.rows_affected() as usize;
+    }
+
+    Ok(total_updated)
+}
+
+async fn update_contents_people_roles_role(
+    tx: &mut Transaction<'_, Sqlite>,
+    primary_id: i64,
+    duplicate_ids: &[i64],
+) -> RitmoResult<usize> {
+    let mut total_updated = 0;
+
+    for &dup_id in duplicate_ids {
+        let result = sqlx::query!(
+            "UPDATE x_contents_people_roles SET role_id = ? WHERE role_id = ?",
+            primary_id,
+            dup_id
+        )
+        .execute(&mut **tx)
+        .await?;
+
+        total_updated += result.rows_affected() as usize;
+    }
+
+    Ok(total_updated)
+}
+
+async fn delete_roles(tx: &mut Transaction<'_, Sqlite>, ids: &[i64]) -> RitmoResult<()> {
+    for &id in ids {
+        sqlx::query!("DELETE FROM roles WHERE id = ?", id)
+            .execute(&mut **tx)
+            .await?;
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -686,5 +838,84 @@ mod tests {
         // Test non-existent ID
         let result = merge_people(&pool, 1, &[999]).await;
         assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_merge_roles() {
+        // Create test database with roles
+        let pool = create_test_db().await.unwrap();
+        populate_test_roles(&pool).await.unwrap();
+        populate_test_people(&pool).await.unwrap();
+
+        // Create test book with people-role relationships
+        sqlx::query("INSERT INTO books (id, name) VALUES (1, 'Test Book')")
+            .execute(&pool)
+            .await
+            .unwrap();
+
+        // Add book-people-role relationships using different role variants
+        // ID 1 = 'Autore', ID 2 = 'Author', ID 3 = 'Scrittore'
+        sqlx::query(
+            "INSERT INTO x_books_people_roles (book_id, person_id, role_id)
+             VALUES (1, 1, 2), (1, 2, 3)",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        // Create test content with people-role relationships
+        sqlx::query("INSERT INTO contents (id, name) VALUES (1, 'Test Content')")
+            .execute(&pool)
+            .await
+            .unwrap();
+
+        sqlx::query(
+            "INSERT INTO x_contents_people_roles (content_id, person_id, role_id)
+             VALUES (1, 1, 2), (1, 2, 3)",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        // Verify initial state: 8 roles
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM roles")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 8);
+
+        // Merge Author/Scrittore variants (IDs 2, 3) into Autore (ID 1)
+        let stats = merge_roles(&pool, 1, &[2, 3]).await.unwrap();
+
+        // Verify merge stats
+        assert_eq!(stats.primary_id, 1);
+        assert_eq!(stats.merged_ids, vec![2, 3]);
+        assert_eq!(stats.books_updated, 2);
+        assert_eq!(stats.contents_updated, 2);
+
+        // Verify role count reduced by 2
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM roles")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 6);
+
+        // Verify all book relationships now point to primary ID (1)
+        let role_ids: Vec<i64> = sqlx::query_scalar(
+            "SELECT role_id FROM x_books_people_roles WHERE book_id = 1 ORDER BY person_id",
+        )
+        .fetch_all(&pool)
+        .await
+        .unwrap();
+        assert_eq!(role_ids, vec![1, 1]);
+
+        // Verify all content relationships now point to primary ID (1)
+        let role_ids: Vec<i64> = sqlx::query_scalar(
+            "SELECT role_id FROM x_contents_people_roles WHERE content_id = 1 ORDER BY person_id",
+        )
+        .fetch_all(&pool)
+        .await
+        .unwrap();
+        assert_eq!(role_ids, vec![1, 1]);
     }
 }

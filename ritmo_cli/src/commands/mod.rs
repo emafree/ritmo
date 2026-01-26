@@ -21,7 +21,7 @@ pub use contents::{
 };
 pub use deduplication::{
     cmd_deduplicate_all, cmd_deduplicate_authors, cmd_deduplicate_publishers,
-    cmd_deduplicate_series, cmd_deduplicate_tags,
+    cmd_deduplicate_roles, cmd_deduplicate_series, cmd_deduplicate_tags,
 };
 pub use init::cmd_init;
 pub use libraries::{cmd_info, cmd_list_libraries, cmd_set_library};

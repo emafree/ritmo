@@ -259,9 +259,13 @@ enum Commands {
         #[arg(long, short = 't')]
         title: String,
 
-        /// Autore del libro
-        #[arg(long, short = 'a')]
-        author: Option<String>,
+        /// Titolo originale
+        #[arg(long)]
+        original_title: Option<String>,
+
+        /// Persone con ruoli (formato: "Nome:Ruolo", es. "Stephen King:Autore", può essere specificato più volte)
+        #[arg(long)]
+        people: Vec<String>,
 
         /// Editore
         #[arg(long, short = 'p')]
@@ -287,9 +291,17 @@ enum Commands {
         #[arg(long)]
         series_index: Option<i64>,
 
+        /// Numero di pagine
+        #[arg(long)]
+        pages: Option<i64>,
+
         /// Note
         #[arg(long, short = 'n')]
         notes: Option<String>,
+
+        /// Tags (può essere specificato più volte)
+        #[arg(long)]
+        tags: Vec<String>,
     },
 
     /// Aggiorna metadati di un libro esistente
@@ -305,9 +317,9 @@ enum Commands {
         #[arg(long)]
         original_title: Option<String>,
 
-        /// Nuovo autore
+        /// Nuove persone con ruoli (formato: "Nome:Ruolo", sostituisce tutte le persone esistenti)
         #[arg(long)]
-        author: Option<String>,
+        people: Vec<String>,
 
         /// Nuovo editore
         #[arg(long)]
@@ -340,6 +352,10 @@ enum Commands {
         /// Numero di pagine
         #[arg(long)]
         pages: Option<i64>,
+
+        /// Nuovi tags (sostituiscono tutti i tags esistenti, può essere specificato più volte)
+        #[arg(long)]
+        tags: Vec<String>,
     },
 
     /// Elimina un libro dal database
@@ -369,9 +385,9 @@ enum Commands {
         #[arg(long)]
         original_title: Option<String>,
 
-        /// Nuovo autore
+        /// Nuove persone con ruoli (formato: "Nome:Ruolo", sostituisce tutte le persone esistenti)
         #[arg(long)]
-        author: Option<String>,
+        people: Vec<String>,
 
         /// Nuovo tipo di contenuto
         #[arg(long)]
@@ -388,6 +404,14 @@ enum Commands {
         /// Numero di pagine
         #[arg(long)]
         pages: Option<i64>,
+
+        /// Nuovi tags (sostituiscono tutti i tags esistenti, può essere specificato più volte)
+        #[arg(long)]
+        tags: Vec<String>,
+
+        /// Nuove languages (sostituiscono tutte le lingue esistenti, formato: "Nome:iso2:iso3:role")
+        #[arg(long)]
+        languages: Vec<String>,
     },
 
     /// Crea un nuovo contenuto
@@ -400,9 +424,9 @@ enum Commands {
         #[arg(long)]
         original_title: Option<String>,
 
-        /// Autore del contenuto
-        #[arg(long, short = 'a')]
-        author: Option<String>,
+        /// Persone con ruoli (formato: "Nome:Ruolo", es. "Stephen King:Autore", può essere specificato più volte)
+        #[arg(long)]
+        people: Vec<String>,
 
         /// Tipo di contenuto (Romanzo, Racconto, Saggio, etc.)
         #[arg(long)]
@@ -423,6 +447,14 @@ enum Commands {
         /// ID del libro a cui associare il contenuto (opzionale)
         #[arg(long, short = 'b')]
         book_id: Option<i64>,
+
+        /// Tags (può essere specificato più volte)
+        #[arg(long)]
+        tags: Vec<String>,
+
+        /// Languages (formato: "Nome:iso2:iso3:role", es. "Italian:it:ita:Original")
+        #[arg(long)]
+        languages: Vec<String>,
     },
 
     /// Elimina un contenuto dal database
@@ -520,7 +552,22 @@ enum Commands {
         dry_run: bool,
     },
 
-    /// Find and merge all duplicate entities (authors, publishers, series, tags) using ML
+    /// Find and merge duplicate roles using ML
+    DeduplicateRoles {
+        /// Minimum confidence threshold (0.0-1.0)
+        #[arg(long, short = 't', default_value = "0.85")]
+        threshold: f64,
+
+        /// Automatically merge high-confidence duplicates
+        #[arg(long)]
+        auto_merge: bool,
+
+        /// Show what would be merged without making changes (default: true)
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Find and merge all duplicate entities (authors, publishers, series, tags, roles) using ML
     DeduplicateAll {
         /// Minimum confidence threshold (0.0-1.0)
         #[arg(long, short = 't', default_value = "0.85")]
@@ -682,28 +729,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Add {
             file,
             title,
-            author,
+            original_title,
+            people,
             publisher,
             year,
             isbn,
             format,
             series,
             series_index,
+            pages,
             notes,
+            tags,
         } => {
             cmd_add(
                 &cli.library,
                 &app_settings,
                 file,
                 title,
-                author,
+                original_title,
+                people,
                 publisher,
                 year,
                 isbn,
                 format,
                 series,
                 series_index,
+                pages,
                 notes,
+                tags,
             )
             .await?;
         }
@@ -711,7 +764,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             id,
             title,
             original_title,
-            author,
+            people,
             publisher,
             year,
             isbn,
@@ -720,6 +773,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             series_index,
             notes,
             pages,
+            tags,
         } => {
             cmd_update_book(
                 &cli.library,
@@ -727,7 +781,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 id,
                 title,
                 original_title,
-                author,
+                people,
                 publisher,
                 year,
                 isbn,
@@ -736,6 +790,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 series_index,
                 notes,
                 pages,
+                tags,
             )
             .await?;
         }
@@ -749,24 +804,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::AddContent {
             title,
             original_title,
-            author,
+            people,
             content_type,
             year,
             pages,
             notes,
             book_id,
+            tags,
+            languages,
         } => {
             cmd_add_content(
                 &cli.library,
                 &app_settings,
                 title,
                 original_title,
-                author,
+                people,
                 content_type,
                 year,
                 pages,
                 notes,
                 book_id,
+                tags,
+                languages,
             )
             .await?;
         }
@@ -774,11 +833,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             id,
             title,
             original_title,
-            author,
+            people,
             content_type,
             year,
             notes,
             pages,
+            tags,
+            languages,
         } => {
             cmd_update_content(
                 &cli.library,
@@ -786,11 +847,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 id,
                 title,
                 original_title,
-                author,
+                people,
                 content_type,
                 year,
                 notes,
                 pages,
+                tags,
+                languages,
             )
             .await?;
         }
@@ -848,6 +911,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             dry_run,
         } => {
             cmd_deduplicate_tags(&cli.library, &app_settings, threshold, auto_merge, dry_run)
+                .await?;
+        }
+        Commands::DeduplicateRoles {
+            threshold,
+            auto_merge,
+            dry_run,
+        } => {
+            cmd_deduplicate_roles(&cli.library, &app_settings, threshold, auto_merge, dry_run)
                 .await?;
         }
         Commands::DeduplicateAll {

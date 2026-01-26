@@ -3,9 +3,9 @@
 //! This module provides high-level functions that combine ML detection
 //! with database operations to identify and optionally merge duplicates.
 
-use crate::db_loaders::{load_people_from_db, load_publishers_from_db, load_series_from_db, load_tags_from_db};
+use crate::db_loaders::{load_people_from_db, load_publishers_from_db, load_roles_from_db, load_series_from_db, load_tags_from_db};
 use crate::entity_learner::MLEntityLearner;
-use crate::merge::{merge_people, merge_publishers, merge_series, merge_tags, MergeStats};
+use crate::merge::{merge_people, merge_publishers, merge_roles, merge_series, merge_tags, MergeStats};
 use crate::traits::MLProcessable;
 use ritmo_errors::RitmoResult;
 use sqlx::SqlitePool;
@@ -247,6 +247,55 @@ pub async fn deduplicate_tags(
     })
 }
 
+/// Find and optionally merge duplicate roles
+///
+/// This function:
+/// 1. Loads all roles from database
+/// 2. Uses ML clustering to identify duplicates
+/// 3. Optionally merges duplicates based on config
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+/// * `config` - Deduplication configuration
+pub async fn deduplicate_roles(
+    pool: &SqlitePool,
+    config: &DeduplicationConfig,
+) -> RitmoResult<DeduplicationResult> {
+    let roles = load_roles_from_db(pool).await?;
+    let total_entities = roles.len();
+
+    if roles.is_empty() {
+        return Ok(DeduplicationResult {
+            total_entities: 0,
+            duplicate_groups: Vec::new(),
+            merged_groups: Vec::new(),
+            skipped_low_confidence: 0,
+        });
+    }
+
+    let canonical_keys: Vec<String> = roles.iter().map(|r| r.canonical_key()).collect();
+
+    let mut learner = MLEntityLearner::new();
+    learner.minimum_confidence = config.min_confidence;
+    learner.minimum_frequency = config.min_frequency;
+    learner.create_clusters(&canonical_keys);
+
+    let duplicate_groups = clusters_to_duplicate_groups(&learner, &roles);
+
+    let (merged_groups, skipped) = if !config.dry_run && config.auto_merge {
+        merge_duplicate_roles(pool, &duplicate_groups, config).await?
+    } else {
+        (Vec::new(), 0)
+    };
+
+    Ok(DeduplicationResult {
+        total_entities,
+        duplicate_groups,
+        merged_groups,
+        skipped_low_confidence: skipped,
+    })
+}
+
 // ============================================================================
 // Helper functions
 // ============================================================================
@@ -428,6 +477,35 @@ async fn merge_duplicate_tags(
     Ok((merged, skipped))
 }
 
+async fn merge_duplicate_roles(
+    pool: &SqlitePool,
+    groups: &[DuplicateGroup],
+    config: &DeduplicationConfig,
+) -> RitmoResult<(Vec<MergeStats>, usize)> {
+    let mut merged = Vec::new();
+    let mut skipped = 0;
+
+    for group in groups {
+        if group.confidence < config.min_confidence {
+            skipped += 1;
+            continue;
+        }
+
+        match merge_roles(pool, group.primary_id, &group.duplicate_ids).await {
+            Ok(stats) => merged.push(stats),
+            Err(e) => {
+                eprintln!(
+                    "Warning: failed to merge roles group (primary={}, duplicates={:?}): {}",
+                    group.primary_id, group.duplicate_ids, e
+                );
+                skipped += 1;
+            }
+        }
+    }
+
+    Ok((merged, skipped))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -529,5 +607,61 @@ mod tests {
             assert!(merged.primary_id > 0);
             assert!(!merged.merged_ids.is_empty());
         }
+    }
+
+    #[tokio::test]
+    async fn test_deduplicate_roles() {
+        use crate::test_helpers::*;
+
+        // Create test database with duplicate roles
+        let pool = create_test_db().await.unwrap();
+        populate_test_roles(&pool).await.unwrap();
+        populate_test_people(&pool).await.unwrap();
+
+        // Create test book with role relationships
+        sqlx::query("INSERT INTO books (id, name) VALUES (1, 'Test Book')")
+            .execute(&pool)
+            .await
+            .unwrap();
+
+        sqlx::query(
+            "INSERT INTO x_books_people_roles (book_id, person_id, role_id)
+             VALUES (1, 1, 2), (1, 2, 3)",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        // Configure deduplication with low confidence threshold
+        let config = DeduplicationConfig {
+            min_confidence: 0.70,
+            min_frequency: 2,
+            auto_merge: false, // Dry run only
+            dry_run: true,
+        };
+
+        // Run deduplication
+        let result = deduplicate_roles(&pool, &config).await.unwrap();
+
+        // Verify we found duplicates
+        assert_eq!(result.total_entities, 8);
+        assert!(!result.duplicate_groups.is_empty(), "Should find duplicate role groups");
+
+        // Verify duplicate groups structure
+        for group in &result.duplicate_groups {
+            assert!(group.duplicate_ids.len() >= 1, "Each group should have at least 1 duplicate");
+            assert!(group.confidence >= config.min_confidence);
+            assert!(!group.primary_name.is_empty());
+        }
+
+        // Since dry_run is true, no merges should have happened
+        assert_eq!(result.merged_groups.len(), 0);
+
+        // Verify database is unchanged (still 8 roles)
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM roles")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 8);
     }
 }

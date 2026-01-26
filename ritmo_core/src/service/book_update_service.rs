@@ -1,4 +1,4 @@
-use ritmo_db::{Book, Format, Person, Publisher, Role, Series};
+use ritmo_db::{Book, Format, Person, Publisher, Role, Series, Tag};
 use ritmo_errors::{RitmoErr, RitmoResult};
 
 /// Metadati opzionali per l'aggiornamento di un libro
@@ -7,7 +7,7 @@ use ritmo_errors::{RitmoErr, RitmoResult};
 pub struct BookUpdateMetadata {
     pub title: Option<String>,
     pub original_title: Option<String>,
-    pub author: Option<String>,
+    pub people: Option<Vec<(String, String)>>, // (name, role)
     pub publisher: Option<String>,
     pub year: Option<i32>,
     pub isbn: Option<String>,
@@ -16,6 +16,7 @@ pub struct BookUpdateMetadata {
     pub series_index: Option<i64>,
     pub notes: Option<String>,
     pub pages: Option<i64>,
+    pub tags: Option<Vec<String>>,
 }
 
 /// Aggiorna un libro esistente nel database
@@ -94,30 +95,47 @@ pub async fn update_book(
         )));
     }
 
-    // 5. Gestisci aggiornamento autore se specificato
-    if let Some(author_name) = metadata.author {
-        // Rimuovi tutte le relazioni autore esistenti
-        sqlx::query!(
-            "DELETE FROM x_books_people_roles
-             WHERE book_id = ?
-             AND role_id = (SELECT id FROM roles WHERE name = 'Autore')",
-            book_id
-        )
-        .execute(pool)
-        .await?;
+    // 5. Gestisci aggiornamento persone e ruoli se specificato
+    if let Some(people) = metadata.people {
+        // Rimuovi tutte le relazioni persone-ruoli esistenti
+        sqlx::query!("DELETE FROM x_books_people_roles WHERE book_id = ?", book_id)
+            .execute(pool)
+            .await?;
 
-        // Aggiungi il nuovo autore
-        let person_id = Person::get_or_create_by_name(pool, &author_name).await?;
-        let author_role_id = Role::get_or_create_by_name(pool, "Autore").await?;
+        // Aggiungi le nuove persone con i loro ruoli
+        for (person_name, role_name) in people {
+            let person_id = Person::get_or_create_by_name(pool, &person_name).await?;
+            let role_id = Role::get_or_create_by_name(pool, &role_name).await?;
 
-        sqlx::query!(
-            "INSERT INTO x_books_people_roles (book_id, person_id, role_id) VALUES (?, ?, ?)",
-            book_id,
-            person_id,
-            author_role_id
-        )
-        .execute(pool)
-        .await?;
+            sqlx::query!(
+                "INSERT INTO x_books_people_roles (book_id, person_id, role_id) VALUES (?, ?, ?)",
+                book_id,
+                person_id,
+                role_id
+            )
+            .execute(pool)
+            .await?;
+        }
+    }
+
+    // 6. Gestisci aggiornamento tags se specificato
+    if let Some(tags) = metadata.tags {
+        // Rimuovi tutti i tags esistenti
+        sqlx::query!("DELETE FROM x_books_tags WHERE book_id = ?", book_id)
+            .execute(pool)
+            .await?;
+
+        // Aggiungi i nuovi tags
+        for tag_name in tags {
+            let tag_id = Tag::get_or_create_by_name(pool, &tag_name).await?;
+            sqlx::query!(
+                "INSERT INTO x_books_tags (book_id, tag_id) VALUES (?, ?)",
+                book_id,
+                tag_id
+            )
+            .execute(pool)
+            .await?;
+        }
     }
 
     Ok(())

@@ -1,4 +1,4 @@
-use ritmo_db::{Content, Person, Role, Type};
+use ritmo_db::{Content, Person, Role, RunningLanguages, Tag, Type};
 use ritmo_errors::{RitmoErr, RitmoResult};
 
 /// Metadati per la creazione di un nuovo contenuto
@@ -6,12 +6,14 @@ use ritmo_errors::{RitmoErr, RitmoResult};
 pub struct ContentCreateMetadata {
     pub title: String,
     pub original_title: Option<String>,
-    pub author: Option<String>,
+    pub people: Option<Vec<(String, String)>>, // (name, role)
     pub content_type: Option<String>,
     pub year: Option<i32>,
     pub pages: Option<i64>,
     pub notes: Option<String>,
     pub book_id: Option<i64>, // Opzionale: associa il content a un book
+    pub tags: Option<Vec<String>>,
+    pub languages: Option<Vec<(String, String, String, String)>>, // (name, iso2, iso3, role)
 }
 
 /// Crea un nuovo contenuto nel database
@@ -67,19 +69,21 @@ pub async fn create_content(
     // 5. Salva nel database
     let content_id = content.save(pool).await?;
 
-    // 6. Associa autore se specificato
-    if let Some(author_name) = metadata.author {
-        let person_id = Person::get_or_create_by_name(pool, &author_name).await?;
-        let author_role_id = Role::get_or_create_by_name(pool, "Autore").await?;
+    // 6. Associa persone con i loro ruoli se specificato
+    if let Some(people) = metadata.people {
+        for (person_name, role_name) in people {
+            let person_id = Person::get_or_create_by_name(pool, &person_name).await?;
+            let role_id = Role::get_or_create_by_name(pool, &role_name).await?;
 
-        sqlx::query!(
-            "INSERT INTO x_contents_people_roles (content_id, person_id, role_id) VALUES (?, ?, ?)",
-            content_id,
-            person_id,
-            author_role_id
-        )
-        .execute(pool)
-        .await?;
+            sqlx::query!(
+                "INSERT INTO x_contents_people_roles (content_id, person_id, role_id) VALUES (?, ?, ?)",
+                content_id,
+                person_id,
+                role_id
+            )
+            .execute(pool)
+            .await?;
+        }
     }
 
     // 7. Associa a un book se specificato
@@ -104,6 +108,41 @@ pub async fn create_content(
         )
         .execute(pool)
         .await?;
+    }
+
+    // 8. Crea e collega tags
+    if let Some(tags) = metadata.tags {
+        for tag_name in tags {
+            let tag_id = Tag::get_or_create_by_name(pool, &tag_name).await?;
+            sqlx::query!(
+                "INSERT INTO x_contents_tags (content_id, tag_id) VALUES (?, ?)",
+                content_id,
+                tag_id
+            )
+            .execute(pool)
+            .await?;
+        }
+    }
+
+    // 9. Crea e collega languages
+    if let Some(languages) = metadata.languages {
+        for (official_name, iso2, iso3, role) in languages {
+            let lang_id = RunningLanguages::get_or_create_by_iso_and_role(
+                pool,
+                &official_name,
+                &iso2,
+                &iso3,
+                &role,
+            )
+            .await?;
+            sqlx::query!(
+                "INSERT INTO x_contents_languages (content_id, language_id) VALUES (?, ?)",
+                content_id,
+                lang_id
+            )
+            .execute(pool)
+            .await?;
+        }
     }
 
     Ok(content_id)

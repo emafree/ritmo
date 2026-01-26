@@ -5,6 +5,7 @@
 
 use crate::people::record::PersonRecord;
 use crate::publishers::record::PublisherRecord;
+use crate::roles::record::RoleRecord;
 use crate::series::record::SeriesRecord;
 use crate::tags::record::TagRecord;
 use crate::utils::MLStringUtils;
@@ -158,6 +159,40 @@ pub async fn load_tags_from_db(pool: &SqlitePool) -> RitmoResult<Vec<TagRecord>>
     Ok(records)
 }
 
+/// Load all roles from the database
+///
+/// Returns a vector of RoleRecord with normalized names ready for ML processing.
+pub async fn load_roles_from_db(pool: &SqlitePool) -> RitmoResult<Vec<RoleRecord>> {
+    let normalizer = MLStringUtils::default();
+
+    let rows = sqlx::query!(
+        r#"
+        SELECT id, name
+        FROM roles
+        ORDER BY id
+        "#
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let records = rows
+        .into_iter()
+        .map(|row| {
+            let id = row.id;
+            let name = row.name;
+            let normalized_name = normalizer.normalize_string(&name);
+
+            RoleRecord {
+                id,
+                name,
+                normalized_name,
+            }
+        })
+        .collect();
+
+    Ok(records)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -258,6 +293,30 @@ mod tests {
             assert!(tag.id > 0);
             assert!(!tag.label.is_empty());
             assert!(!tag.normalized_label.is_empty());
+        }
+    }
+
+    #[tokio::test]
+    async fn test_load_roles_from_db() {
+        // Create test database with roles data
+        let pool = create_test_db().await.unwrap();
+        populate_test_roles(&pool).await.unwrap();
+
+        // Load roles from database
+        let roles = load_roles_from_db(&pool).await.unwrap();
+
+        // Verify we loaded all 8 roles
+        assert_eq!(roles.len(), 8);
+
+        // Verify first role
+        assert_eq!(roles[0].id, 1);
+        assert_eq!(roles[0].name, "Autore");
+
+        // Verify all records have valid data
+        for role in &roles {
+            assert!(role.id > 0);
+            assert!(!role.name.is_empty());
+            assert!(!role.normalized_name.is_empty());
         }
     }
 }

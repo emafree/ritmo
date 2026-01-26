@@ -9,6 +9,7 @@ pub mod merge;
 pub mod pattern_functions;
 pub mod people;
 pub mod publishers;
+pub mod roles;
 pub mod series;
 pub mod tags;
 pub mod traits;

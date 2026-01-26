@@ -65,6 +65,12 @@ pub async fn create_test_db() -> RitmoResult<SqlitePool> {
             "created_at" INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
         );
 
+        CREATE TABLE IF NOT EXISTS "roles" (
+            "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "name" TEXT NOT NULL UNIQUE,
+            "created_at" INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        );
+
         CREATE TABLE IF NOT EXISTS "books" (
             "id" INTEGER PRIMARY KEY AUTOINCREMENT,
             "name" TEXT NOT NULL,
@@ -87,7 +93,8 @@ pub async fn create_test_db() -> RitmoResult<SqlitePool> {
             "role_id" INTEGER NOT NULL,
             PRIMARY KEY("book_id", "person_id", "role_id"),
             FOREIGN KEY("book_id") REFERENCES "books"("id") ON DELETE CASCADE,
-            FOREIGN KEY("person_id") REFERENCES "people"("id") ON DELETE CASCADE
+            FOREIGN KEY("person_id") REFERENCES "people"("id") ON DELETE CASCADE,
+            FOREIGN KEY("role_id") REFERENCES "roles"("id") ON DELETE CASCADE
         );
 
         CREATE TABLE IF NOT EXISTS "x_contents_people_roles" (
@@ -96,7 +103,8 @@ pub async fn create_test_db() -> RitmoResult<SqlitePool> {
             "role_id" INTEGER NOT NULL,
             PRIMARY KEY("content_id", "person_id", "role_id"),
             FOREIGN KEY("content_id") REFERENCES "contents"("id") ON DELETE CASCADE,
-            FOREIGN KEY("person_id") REFERENCES "people"("id") ON DELETE CASCADE
+            FOREIGN KEY("person_id") REFERENCES "people"("id") ON DELETE CASCADE,
+            FOREIGN KEY("role_id") REFERENCES "roles"("id") ON DELETE CASCADE
         );
         "#,
     )
@@ -195,6 +203,27 @@ pub async fn populate_test_tags(pool: &SqlitePool) -> RitmoResult<()> {
     Ok(())
 }
 
+/// Populate test database with sample roles including duplicates
+pub async fn populate_test_roles(pool: &SqlitePool) -> RitmoResult<()> {
+    sqlx::query(
+        r#"
+        INSERT INTO roles (id, name) VALUES
+        (1, 'Autore'),
+        (2, 'Author'),
+        (3, 'Scrittore'),
+        (4, 'Traduttore'),
+        (5, 'Translator'),
+        (6, 'Illustratore'),
+        (7, 'Illustrator'),
+        (8, 'Editore')
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
 /// Create a fully populated test database with all entity types
 pub async fn create_full_test_db() -> RitmoResult<SqlitePool> {
     let pool = create_test_db().await?;
@@ -202,11 +231,15 @@ pub async fn create_full_test_db() -> RitmoResult<SqlitePool> {
     populate_test_publishers(&pool).await?;
     populate_test_series(&pool).await?;
     populate_test_tags(&pool).await?;
+    populate_test_roles(&pool).await?;
     Ok(pool)
 }
 
 /// Create test books linked to people (for merge testing)
 pub async fn populate_test_books_with_people(pool: &SqlitePool) -> RitmoResult<()> {
+    // Ensure roles exist (role_id 1 will be "Autore")
+    populate_test_roles(pool).await?;
+
     // Create some test books
     sqlx::query(
         r#"
@@ -219,7 +252,7 @@ pub async fn populate_test_books_with_people(pool: &SqlitePool) -> RitmoResult<(
     .execute(pool)
     .await?;
 
-    // Link books to people (role_id 1 is assumed to be "Author")
+    // Link books to people (role_id 1 is "Autore")
     sqlx::query(
         r#"
         INSERT INTO x_books_people_roles (book_id, person_id, role_id) VALUES

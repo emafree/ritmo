@@ -31,6 +31,30 @@ impl Tag {
         Ok(result)
     }
 
+    pub async fn get_by_name(pool: &sqlx::SqlitePool, name: &str) -> Result<Option<Tag>, sqlx::Error> {
+        let result = sqlx::query_as!(
+            Tag,
+            "SELECT id, name, created_at FROM tags WHERE name = ? LIMIT 1",
+            name
+        )
+        .fetch_optional(pool)
+        .await?;
+        Ok(result)
+    }
+
+    /// Get or create a tag by name, returning the tag ID
+    pub async fn get_or_create_by_name(pool: &sqlx::SqlitePool, name: &str) -> Result<i64, sqlx::Error> {
+        if let Some(tag) = Self::get_by_name(pool, name).await? {
+            return Ok(tag.id.unwrap_or(0));
+        }
+        let tag = Tag {
+            id: None,
+            name: name.to_string(),
+            created_at: None,
+        };
+        tag.save(pool).await
+    }
+
     pub async fn update(pool: &sqlx::SqlitePool, id: i64, name: &str) -> Result<(), sqlx::Error> {
         sqlx::query!("UPDATE tags SET name = ? WHERE id = ?", name, id)
             .execute(pool)

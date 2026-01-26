@@ -155,7 +155,7 @@ pub async fn cmd_update_book(
     book_id: i64,
     title: Option<String>,
     original_title: Option<String>,
-    author: Option<String>,
+    people: Vec<String>,
     publisher: Option<String>,
     year: Option<i32>,
     isbn: Option<String>,
@@ -164,6 +164,7 @@ pub async fn cmd_update_book(
     series_index: Option<i64>,
     notes: Option<String>,
     pages: Option<i64>,
+    tags: Vec<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let library_path = get_library_path(cli_library, app_settings)?;
 
@@ -177,10 +178,33 @@ pub async fn cmd_update_book(
 
     println!("Aggiornamento libro ID {}...", book_id);
 
+    // Parse people from format "Nome:Ruolo"
+    let parsed_people = if !people.is_empty() {
+        let mut result = Vec::new();
+        for person_str in people {
+            let parts: Vec<&str> = person_str.split(':').collect();
+            if parts.len() != 2 {
+                println!(
+                    "⚠ Formato persona non valido: '{}'. Formato richiesto: 'Nome:Ruolo'",
+                    person_str
+                );
+                continue;
+            }
+            result.push((parts[0].to_string(), parts[1].to_string()));
+        }
+        if result.is_empty() {
+            None
+        } else {
+            Some(result)
+        }
+    } else {
+        None
+    };
+
     let metadata = BookUpdateMetadata {
         title,
         original_title,
-        author,
+        people: parsed_people,
         publisher,
         year,
         isbn,
@@ -189,6 +213,11 @@ pub async fn cmd_update_book(
         series_index,
         notes,
         pages,
+        tags: if tags.is_empty() {
+            None
+        } else {
+            Some(tags)
+        },
     };
 
     match update_book(&pool, book_id, metadata).await {
@@ -249,14 +278,17 @@ pub async fn cmd_add(
     app_settings: &AppSettings,
     file: PathBuf,
     title: String,
-    author: Option<String>,
+    original_title: Option<String>,
+    people: Vec<String>,
     publisher: Option<String>,
     year: Option<i32>,
     isbn: Option<String>,
     format: Option<String>,
     series: Option<String>,
     series_index: Option<i64>,
+    pages: Option<i64>,
     notes: Option<String>,
+    tags: Vec<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Determina quale libreria usare
     let library_path = if let Some(path) = cli_library {
@@ -279,9 +311,6 @@ pub async fn cmd_add(
 
     println!("Importazione libro: {}", file.display());
     println!("  Titolo: {}", title);
-    if let Some(ref a) = author {
-        println!("  Autore: {}", a);
-    }
     if let Some(ref p) = publisher {
         println!("  Editore: {}", p);
     }
@@ -294,17 +323,47 @@ pub async fn cmd_add(
     let mut reporter = SilentReporter;
     let pool = config.create_pool(&mut reporter).await?;
 
+    // Parse people from format "Nome:Ruolo"
+    let parsed_people = if !people.is_empty() {
+        let mut result = Vec::new();
+        for person_str in people {
+            let parts: Vec<&str> = person_str.split(':').collect();
+            if parts.len() != 2 {
+                println!(
+                    "⚠ Formato persona non valido: '{}'. Formato richiesto: 'Nome:Ruolo'",
+                    person_str
+                );
+                continue;
+            }
+            result.push((parts[0].to_string(), parts[1].to_string()));
+        }
+        if result.is_empty() {
+            None
+        } else {
+            Some(result)
+        }
+    } else {
+        None
+    };
+
     // Prepara metadati
     let metadata = BookImportMetadata {
         title,
-        author,
+        original_title,
+        people: parsed_people,
         publisher,
         year,
         isbn,
         format,
         series,
         series_index,
+        pages,
         notes,
+        tags: if tags.is_empty() {
+            None
+        } else {
+            Some(tags)
+        },
     };
 
     // Importa il libro

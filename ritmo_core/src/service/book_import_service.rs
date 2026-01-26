@@ -1,4 +1,4 @@
-use ritmo_db::{Book, Format, Person, Publisher, Role, Series};
+use ritmo_db::{Book, Format, Person, Publisher, Role, Series, Tag};
 use ritmo_db_core::LibraryConfig;
 use ritmo_errors::{RitmoErr, RitmoResult};
 use sha2::{Digest, Sha256};
@@ -9,14 +9,17 @@ use std::path::Path;
 #[derive(Debug, Clone)]
 pub struct BookImportMetadata {
     pub title: String,
-    pub author: Option<String>,
+    pub original_title: Option<String>,
+    pub people: Option<Vec<(String, String)>>, // (name, role)
     pub publisher: Option<String>,
     pub year: Option<i32>,
     pub isbn: Option<String>,
     pub format: Option<String>,
     pub series: Option<String>,
     pub series_index: Option<i64>,
+    pub pages: Option<i64>,
     pub notes: Option<String>,
+    pub tags: Option<Vec<String>>,
 }
 
 /// Importa un libro da file con metadati forniti
@@ -108,7 +111,7 @@ pub async fn import_book(
     let book = Book {
         id: None,
         name: metadata.title.clone(),
-        original_title: None,
+        original_title: metadata.original_title,
         publisher_id,
         format_id,
         series_id,
@@ -116,7 +119,7 @@ pub async fn import_book(
         publication_date,
         last_modified_date: now,
         isbn: metadata.isbn,
-        pages: None,
+        pages: metadata.pages,
         notes: metadata.notes,
         has_cover: 0,
         has_paper: 0,
@@ -136,19 +139,35 @@ pub async fn import_book(
     }
     fs::copy(file_path, &storage_path)?;
 
-    // 9. Crea autore e collegamento usando i metodi dei modelli
-    if let Some(author_name) = metadata.author {
-        let person_id = Person::get_or_create_by_name(pool, &author_name).await?;
-        let author_role_id = Role::get_or_create_by_name(pool, "Autore").await?;
+    // 9. Crea persone e collegamento con i loro ruoli
+    if let Some(people) = metadata.people {
+        for (person_name, role_name) in people {
+            let person_id = Person::get_or_create_by_name(pool, &person_name).await?;
+            let role_id = Role::get_or_create_by_name(pool, &role_name).await?;
 
-        sqlx::query!(
-            "INSERT INTO x_books_people_roles (book_id, person_id, role_id) VALUES (?, ?, ?)",
-            book_id,
-            person_id,
-            author_role_id
-        )
-        .execute(pool)
-        .await?;
+            sqlx::query!(
+                "INSERT INTO x_books_people_roles (book_id, person_id, role_id) VALUES (?, ?, ?)",
+                book_id,
+                person_id,
+                role_id
+            )
+            .execute(pool)
+            .await?;
+        }
+    }
+
+    // 10. Crea e collega tags
+    if let Some(tags) = metadata.tags {
+        for tag_name in tags {
+            let tag_id = Tag::get_or_create_by_name(pool, &tag_name).await?;
+            sqlx::query!(
+                "INSERT INTO x_books_tags (book_id, tag_id) VALUES (?, ?)",
+                book_id,
+                tag_id
+            )
+            .execute(pool)
+            .await?;
+        }
     }
 
     Ok(book_id)

@@ -1,4 +1,4 @@
-use ritmo_db::{Content, Person, Role, Type};
+use ritmo_db::{Content, Person, Role, RunningLanguages, Tag, Type};
 use ritmo_errors::{RitmoErr, RitmoResult};
 
 /// Metadati opzionali per l'aggiornamento di un contenuto
@@ -7,11 +7,13 @@ use ritmo_errors::{RitmoErr, RitmoResult};
 pub struct ContentUpdateMetadata {
     pub title: Option<String>,
     pub original_title: Option<String>,
-    pub author: Option<String>,
+    pub people: Option<Vec<(String, String)>>, // (name, role)
     pub content_type: Option<String>,
     pub year: Option<i32>,
     pub notes: Option<String>,
     pub pages: Option<i64>,
+    pub tags: Option<Vec<String>>,
+    pub languages: Option<Vec<(String, String, String, String)>>, // (name, iso2, iso3, role)
 }
 
 /// Aggiorna un contenuto esistente nel database
@@ -74,30 +76,80 @@ pub async fn update_content(
         )));
     }
 
-    // 5. Gestisci aggiornamento autore se specificato
-    if let Some(author_name) = metadata.author {
-        // Rimuovi tutte le relazioni autore esistenti
+    // 5. Gestisci aggiornamento persone e ruoli se specificato
+    if let Some(people) = metadata.people {
+        // Rimuovi tutte le relazioni persone-ruoli esistenti
         sqlx::query!(
-            "DELETE FROM x_contents_people_roles
-             WHERE content_id = ?
-             AND role_id = (SELECT id FROM roles WHERE name = 'Autore')",
+            "DELETE FROM x_contents_people_roles WHERE content_id = ?",
             content_id
         )
         .execute(pool)
         .await?;
 
-        // Aggiungi il nuovo autore
-        let person_id = Person::get_or_create_by_name(pool, &author_name).await?;
-        let author_role_id = Role::get_or_create_by_name(pool, "Autore").await?;
+        // Aggiungi le nuove persone con i loro ruoli
+        for (person_name, role_name) in people {
+            let person_id = Person::get_or_create_by_name(pool, &person_name).await?;
+            let role_id = Role::get_or_create_by_name(pool, &role_name).await?;
 
+            sqlx::query!(
+                "INSERT INTO x_contents_people_roles (content_id, person_id, role_id) VALUES (?, ?, ?)",
+                content_id,
+                person_id,
+                role_id
+            )
+            .execute(pool)
+            .await?;
+        }
+    }
+
+    // 6. Gestisci aggiornamento tags se specificato
+    if let Some(tags) = metadata.tags {
+        // Rimuovi tutti i tags esistenti
+        sqlx::query!("DELETE FROM x_contents_tags WHERE content_id = ?", content_id)
+            .execute(pool)
+            .await?;
+
+        // Aggiungi i nuovi tags
+        for tag_name in tags {
+            let tag_id = Tag::get_or_create_by_name(pool, &tag_name).await?;
+            sqlx::query!(
+                "INSERT INTO x_contents_tags (content_id, tag_id) VALUES (?, ?)",
+                content_id,
+                tag_id
+            )
+            .execute(pool)
+            .await?;
+        }
+    }
+
+    // 7. Gestisci aggiornamento languages se specificato
+    if let Some(languages) = metadata.languages {
+        // Rimuovi tutte le lingue esistenti
         sqlx::query!(
-            "INSERT INTO x_contents_people_roles (content_id, person_id, role_id) VALUES (?, ?, ?)",
-            content_id,
-            person_id,
-            author_role_id
+            "DELETE FROM x_contents_languages WHERE content_id = ?",
+            content_id
         )
         .execute(pool)
         .await?;
+
+        // Aggiungi le nuove lingue
+        for (official_name, iso2, iso3, role) in languages {
+            let lang_id = RunningLanguages::get_or_create_by_iso_and_role(
+                pool,
+                &official_name,
+                &iso2,
+                &iso3,
+                &role,
+            )
+            .await?;
+            sqlx::query!(
+                "INSERT INTO x_contents_languages (content_id, language_id) VALUES (?, ?)",
+                content_id,
+                lang_id
+            )
+            .execute(pool)
+            .await?;
+        }
     }
 
     Ok(())
