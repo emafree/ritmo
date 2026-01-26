@@ -154,6 +154,37 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 
 ## Recent Changes
 
+### 2026-01-27 - Session 19: I18n Phase 4 - CLI Runtime Messages - COMPLETED
+Implemented i18n for CLI runtime messages (success, info, warnings), allowing CLI to display messages in English or Italian based on RITMO_LANG environment variable.
+- **Scope**: Runtime messages only (not help text, following standard CLI conventions)
+- **Translation Keys**: Added ~40 CLI message keys for 4 core commands (init, info, list-libraries, set-library)
+- **Implementation**: Added rust-i18n to ritmo_cli, initialized i18n system in main.rs, converted println! to t!() macro
+- **Testing**: All 4 commands tested with both English and Italian
+- **Total Coverage**: 152 translation keys (DB models + errors + CLI core commands)
+
+### 2026-01-26 - Session 18: I18n Phase 3 - Error Messages - COMPLETED
+Implemented full i18n support for all error messages in ritmo_errors crate through new LocalizableError trait.
+- **Translation Keys**: Added 48 error translation keys organized by category (database, file, import/export, config, ML, validation, search, record, generic)
+- **LocalizableError Trait**: Generic trait with localize() method for error translation
+- **Implementation**: All RitmoErr variants now implement LocalizableError for consistent error messages
+- **Testing**: 48 tests verify error translation in both English and Italian
+
+### 2026-01-26 - Session 17: I18n Phase 2 - Type and Format Models - COMPLETED
+Converted Type and Format models to use canonical i18n keys instead of translated strings.
+- **Schema Changes**: Changed types.name → types.key, formats.name → formats.key
+- **Models**: Implemented I18nDisplayable trait for both Type and Format models
+- **New Methods**: get_by_key(), get_or_create_by_key() for both models
+- **Services Updated**: 4 service files updated to use new key-based methods
+- **Deprecated**: Old name-based methods kept for backward compatibility
+- **Total Coverage**: 64 translation keys (roles, language_role, types, formats)
+
+### 2026-01-26 - Session 16: I18nDisplayable Trait Implementation - COMPLETED
+Created I18nDisplayable trait to eliminate duplicate translation code across models.
+- **Trait**: Generic trait with i18n_key(), i18n_namespace(), translate() methods
+- **Implementation**: Applied to Role and RunningLanguages models
+- **Benefits**: Reduced code duplication, improved maintainability, enabled generic functions
+- **Code Reduction**: 10+ lines per model → 3 lines of trait implementation
+
 ### 2026-01-26 - Session 15: i18n Infrastructure Implementation (Phase 1) - COMPLETED
 Implemented complete i18n infrastructure with rust-i18n framework, translation files, and locale detection.
 - **Framework**: Added rust-i18n v3 with YAML translation files (locales/en.yml, locales/it.yml)
