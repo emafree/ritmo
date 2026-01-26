@@ -37,21 +37,21 @@ All translation keys follow this pattern:
 ```yaml
 cli.app.description: "Ritmo - Library Management System"
 db.role.author: "Author"
-error.book.not_found: "Book with ID {id} not found"
+error.book.not_found: "Book with ID %{id} not found"
 gui.sidebar.books: "Books"
-validation.date_format: "Invalid date format: '{input}'. Use YYYY-MM-DD"
+validation.date_format: "Invalid date format: '%{input}'. Use YYYY-MM-DD"
 ```
 
 ## Variable Substitution
 
-Translation strings can include variables using `{variable_name}`:
+Translation strings can include variables using `%{variable_name}` (rust-i18n v3 syntax):
 
 ```yaml
 # English
-error.book.not_found: "Book with ID {id} not found"
+error.book.not_found: "Book with ID %{id} not found"
 
 # Italian
-error.book.not_found: "Libro con ID {id} non trovato"
+error.book.not_found: "Libro con ID %{id} non trovato"
 ```
 
 Usage in code:
@@ -64,12 +64,15 @@ let message = t!("error.book.not_found", id = 42);
 // Italian: "Libro con ID 42 non trovato"
 ```
 
+**Important**: rust-i18n v3 uses `%{variable}` syntax (not `{variable}`).
+
 ## Adding New Translations
 
 1. Add the key to **all** language files (en.yml, it.yml)
 2. Follow the naming convention
 3. Use descriptive keys (not abbreviated)
 4. Keep translations consistent across files
+5. Use `%{variable}` syntax for variable substitution
 
 ### Example - Adding a new error message
 
@@ -77,12 +80,12 @@ let message = t!("error.book.not_found", id = 42);
 # en.yml
 error:
   import:
-    failed: "Import failed: {reason}"
+    failed: "Import failed: %{reason}"
 
 # it.yml
 error:
   import:
-    failed: "Importazione fallita: {reason}"
+    failed: "Importazione fallita: %{reason}"
 ```
 
 ## Best Practices
@@ -122,14 +125,31 @@ To add a new language:
 
 ## Current Translation Coverage
 
-| Namespace | Keys | Status |
-|-----------|------|--------|
-| db.* | 17 | ✅ Complete |
-| cli.app.* | 2 | ✅ Complete |
-| cli.common.* | 4 | ✅ Complete |
-| error.* | 15 | ⚠️ Partial |
-| gui.* | 13 | ✅ Complete |
-| validation.* | 3 | ✅ Complete |
+| Namespace | Keys | Status | Phase |
+|-----------|------|--------|-------|
+| db.role.* | 6 | ✅ Complete | Phase 1 |
+| db.language_role.* | 3 | ✅ Complete | Phase 1 |
+| db.type.* | 5 | ✅ Complete | Phase 2 |
+| db.format.* | 5 | ✅ Complete | Phase 2 |
+| cli.app.* | 2 | ✅ Complete | Phase 1 |
+| cli.common.* | 4 | ✅ Complete | Phase 1 |
+| error.database.* | 17 | ✅ Complete | Phase 3 |
+| error.book.* | 3 | ✅ Complete | Phase 1 |
+| error.content.* | 3 | ✅ Complete | Phase 1 |
+| error.file.* | 3 | ✅ Complete | Phase 3 |
+| error.import.* | 2 | ✅ Complete | Phase 3 |
+| error.export.* | 2 | ✅ Complete | Phase 3 |
+| error.config.* | 2 | ✅ Complete | Phase 3 |
+| error.ml.* | 3 | ✅ Complete | Phase 3 |
+| error.validation.* | 4 | ✅ Complete | Phase 3 |
+| error.search.* | 2 | ✅ Complete | Phase 3 |
+| error.record.* | 2 | ✅ Complete | Phase 3 |
+| error.generic.* | 5 | ✅ Complete | Phase 3 |
+| gui.* | 13 | ✅ Complete | Phase 1 |
 
-**Total**: ~54 translation keys (initial foundation)
-**Remaining**: ~500 keys to be added progressively
+**Phase 1**: 54 keys (Infrastructure, Role, RunningLanguages)
+**Phase 2**: 10 keys (Type, Format models)
+**Phase 3**: 48 keys (Error messages - all RitmoErr variants)
+
+**Total**: 112 translation keys
+**Remaining**: ~350 keys (CLI commands, help text, service messages)

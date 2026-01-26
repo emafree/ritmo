@@ -73,7 +73,7 @@ pub async fn import_book(
 
     // 5. Ottieni/crea IDs per entità correlate usando i metodi dei modelli
     let format_id = if let Some(fmt) = format_name {
-        Some(Format::get_or_create_by_name(pool, &fmt).await?)
+        Some(Format::get_or_create_by_key(pool, &fmt).await?)
     } else {
         None
     };

@@ -45,7 +45,7 @@ db:
 cli:
   app:
     description: "Ritmo - Library Management System"
-    version: "Version {version}"
+    version: "Version %{version}"
 
   # Common messages
   common:
@@ -59,28 +59,76 @@ cli:
 # ============================================================================
 error:
   database:
-    creation_failed: "Database creation failed: {error}"
-    connection_failed: "Database connection failed: {error}"
-    not_found: "Database not found: {path}"
-    query_failed: "Database query failed: {error}"
+    creation: "Database creation error: %{error}"
+    creation_failed: "Database creation failed: %{error}"
+    connection: "Database connection error: %{error}"
+    connection_failed: "Database connection failed: %{error}"
+    not_found: "Database not found: %{path}"
+    query: "Database query error: %{error}"
+    query_failed: "Database query failed: %{error}"
+    migration: "Database migration error: %{error}"
+    migration_failed: "Database migration failed: %{error}"
+    insert_failed: "Database insert failed: %{error}"
+    delete_failed: "Database delete failed: %{error}"
+    error: "Database error: %{error}"
+    transaction_error: "Database transaction failed: %{error}"
+    integrity_error: "Database integrity error: %{error}"
+    invalid_table: "Invalid table name: %{name}"
+    invalid_column: "Invalid column name: %{name}"
+    commit_failed: "Transaction commit failed: %{error}"
 
   book:
-    not_found: "Book with ID {id} not found"
-    already_exists: "File already imported: {path} (ID: {id})"
-    no_changes: "No changes applied to book with ID {id}"
+    not_found: "Book with ID %{id} not found"
+    already_exists: "File already imported: %{path} (ID: %{id})"
+    no_changes: "No changes applied to book with ID %{id}"
 
   content:
-    not_found: "Content with ID {id} not found"
+    not_found: "Content with ID %{id} not found"
     title_required: "Content title is required"
-    no_changes: "No changes applied to content with ID {id}"
+    no_changes: "No changes applied to content with ID %{id}"
 
   file:
-    not_found: "File not found: {path}"
+    not_found: "File not found: %{path}"
+    access_error: "File access error: %{error}"
+    io_error: "I/O error: %{error}"
+
+  import:
+    error: "Import error: %{error}"
+    failed: "Import operation failed: %{error}"
+
+  export:
+    error: "Export error: %{error}"
+    failed: "Export operation failed: %{error}"
+
+  config:
+    dir_not_found: "Configuration directory not found"
+    parse_error: "Configuration parsing error: %{error}"
+
+  ml:
+    error: "Machine Learning error: %{error}"
+    name_parsing: "Name parsing error: %{error}"
+    merge_error: "Name merging error: %{error}"
 
   validation:
-    person_format: "Invalid person format: '{input}'. Required format: 'Name:Role'"
-    language_format: "Invalid language format: '{input}'. Required format: 'Name:ISO2:ISO3:Role'"
-    date_format: "Invalid date format: '{input}'. Use YYYY-MM-DD"
+    person_format: "Invalid person format: '%{input}'. Required format: 'Name:Role'"
+    language_format: "Invalid language format: '%{input}'. Required format: 'Name:ISO2:ISO3:Role'"
+    date_format: "Invalid date format: '%{input}'. Use YYYY-MM-DD"
+    invalid_input: "Invalid input: %{error}"
+
+  search:
+    failed: "Search and add operation failed: %{error}"
+    no_results: "No results found: %{query}"
+
+  record:
+    not_found: "Record not found"
+    not_found_with_id: "Record with ID %{id} not found"
+
+  generic:
+    error: "Generic error: %{error}"
+    unknown: "Unknown error: %{error}"
+    other: "Other error: %{error}"
+    path_error: "Path error: %{error}"
+    sqlx_error: "SQLx error: %{error}"
 
 # ============================================================================
 # GUI - User Interface
@@ -94,8 +142,8 @@ gui:
     contents: "Contents"
     with_contents: "with contents"
     with_books: "with books"
-    books_count: "{count} books"
-    contents_count: "{count} contents"
+    books_count: "%{count} books"
+    contents_count: "%{count} contents"
 
   search:
     placeholder: "Search..."

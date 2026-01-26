@@ -13,9 +13,11 @@ The project is organized as a Rust workspace with the following crates:
 - Database schema in `schema/schema.sql` - comprehensive schema with audit logging, stats caching, and metadata tables
 - **i18n System**: Internationalization infrastructure with rust-i18n
   - `i18n_trait`: `I18nDisplayable` trait for consistent translation interface
+  - `error_i18n`: `LocalizableError` trait for error message localization
   - `i18n_utils`: Locale detection and management utilities
   - Translation files in `locales/` directory (YAML format)
   - Models implement `I18nDisplayable` trait for translating display names
+  - Errors implement `LocalizableError` trait for localized messages
   - See [i18n Guide](i18n.md) for details
 
 ### ritmo_db_core
@@ -166,10 +168,17 @@ library_root/
 - **Usage**: `t!()` macro for translations throughout codebase
 - **Key Convention**: `{namespace}.{category}.{subcategory}.{key}`
 - **Model Integration**:
-  - `I18nDisplayable` trait provides consistent translation interface
+  - `I18nDisplayable` trait provides consistent translation interface for models
   - `Role::display_name()` translates role keys (e.g., "role.author" → "Author"/"Autore")
   - `RunningLanguages::display_role()` translates language role keys
-  - Both models delegate to the `translate()` method from `I18nDisplayable` trait
+  - `Type::display_name()` translates type keys (e.g., "type.novel" → "Novel"/"Romanzo")
+  - `Format::display_name()` translates format keys (e.g., "format.epub" → "EPUB (ebook)")
+  - All models delegate to the `translate()` method from `I18nDisplayable` trait
+- **Error Localization**:
+  - `LocalizableError` trait provides error message localization
+  - `RitmoErr::localized_message()` returns translated error messages
+  - 48 error translation keys covering all 40 RitmoErr variants
+  - Keeps `ritmo_errors` crate independent, adds i18n in `ritmo_db`
 - **Current Coverage**: ~54 initial keys (db.*, cli.*, error.*, gui.*, validation.*)
 - **See**: [i18n Guide](i18n.md) for complete documentation
 

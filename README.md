@@ -81,6 +81,8 @@ Comprehensive documentation is available in the `docs/` directory:
 - Runtime language switching
 - All user-facing strings translatable
 - `I18nDisplayable` trait for consistent translation interface
+- `LocalizableError` trait for error message localization
+- 112+ translation keys (database models, error messages)
 - Generic functions work with any translatable model
 
 ## Architecture

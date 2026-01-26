@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS "stats_cache" (
 );
 CREATE TABLE IF NOT EXISTS "formats" (
 	"id"	INTEGER,
-	"name"	TEXT NOT NULL UNIQUE,
+	"key"	TEXT NOT NULL UNIQUE,
 	"description"	TEXT,
 	"created_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
 	PRIMARY KEY("id" AUTOINCREMENT)
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS "tags" (
 );
 CREATE TABLE IF NOT EXISTS "types" (
 	"id"	INTEGER,
-	"name"	TEXT NOT NULL UNIQUE,
+	"key"	TEXT NOT NULL UNIQUE,
 	"description"	TEXT,
 	"created_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
 	PRIMARY KEY("id" AUTOINCREMENT)

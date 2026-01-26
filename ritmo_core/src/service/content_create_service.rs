@@ -37,7 +37,7 @@ pub async fn create_content(
 
     // 2. Ottieni/crea tipo contenuto se specificato
     let type_id = if let Some(type_name) = &metadata.content_type {
-        Some(Type::get_or_create_by_name(pool, type_name).await?)
+        Some(Type::get_or_create_by_key(pool, type_name).await?)
     } else {
         None
     };

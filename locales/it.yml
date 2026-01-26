@@ -45,7 +45,7 @@ db:
 cli:
   app:
     description: "Ritmo - Sistema di Gestione Librerie"
-    version: "Versione {version}"
+    version: "Versione %{version}"
 
   # Messaggi comuni
   common:
@@ -59,28 +59,76 @@ cli:
 # ============================================================================
 error:
   database:
-    creation_failed: "Creazione database fallita: {error}"
-    connection_failed: "Connessione al database fallita: {error}"
-    not_found: "Database non trovato: {path}"
-    query_failed: "Query al database fallita: {error}"
+    creation: "Errore durante la creazione del database: %{error}"
+    creation_failed: "Creazione database fallita: %{error}"
+    connection: "Errore di connessione al database: %{error}"
+    connection_failed: "Connessione al database fallita: %{error}"
+    not_found: "Database non trovato: %{path}"
+    query: "Errore nella query al database: %{error}"
+    query_failed: "Query al database fallita: %{error}"
+    migration: "Errore nella migrazione del database: %{error}"
+    migration_failed: "Migrazione database fallita: %{error}"
+    insert_failed: "Inserimento nel database fallito: %{error}"
+    delete_failed: "Cancellazione dal database fallita: %{error}"
+    error: "Errore database: %{error}"
+    transaction_error: "Errore nella transazione del database: %{error}"
+    integrity_error: "Errore di integrità del database: %{error}"
+    invalid_table: "Nome tabella non valido: %{name}"
+    invalid_column: "Nome colonna non valido: %{name}"
+    commit_failed: "Commit della transazione fallito: %{error}"
 
   book:
-    not_found: "Libro con ID {id} non trovato"
-    already_exists: "File già importato: {path} (ID: {id})"
-    no_changes: "Nessuna modifica applicata al libro con ID {id}"
+    not_found: "Libro con ID %{id} non trovato"
+    already_exists: "File già importato: %{path} (ID: %{id})"
+    no_changes: "Nessuna modifica applicata al libro con ID %{id}"
 
   content:
-    not_found: "Contenuto con ID {id} non trovato"
+    not_found: "Contenuto con ID %{id} non trovato"
     title_required: "Il titolo del contenuto è obbligatorio"
-    no_changes: "Nessuna modifica applicata al contenuto con ID {id}"
+    no_changes: "Nessuna modifica applicata al contenuto con ID %{id}"
 
   file:
-    not_found: "File non trovato: {path}"
+    not_found: "File non trovato: %{path}"
+    access_error: "Errore di accesso al file: %{error}"
+    io_error: "Errore I/O: %{error}"
+
+  import:
+    error: "Errore di importazione: %{error}"
+    failed: "Operazione di importazione fallita: %{error}"
+
+  export:
+    error: "Errore di esportazione: %{error}"
+    failed: "Operazione di esportazione fallita: %{error}"
+
+  config:
+    dir_not_found: "Directory di configurazione non trovata"
+    parse_error: "Errore di parsing della configurazione: %{error}"
+
+  ml:
+    error: "Errore di Machine Learning: %{error}"
+    name_parsing: "Errore di parsing del nome: %{error}"
+    merge_error: "Errore di unione dei nomi: %{error}"
 
   validation:
-    person_format: "Formato persona non valido: '{input}'. Formato richiesto: 'Nome:Ruolo'"
-    language_format: "Formato lingua non valido: '{input}'. Formato richiesto: 'Nome:ISO2:ISO3:Ruolo'"
-    date_format: "Formato data non valido: '{input}'. Usa YYYY-MM-DD"
+    person_format: "Formato persona non valido: '%{input}'. Formato richiesto: 'Nome:Ruolo'"
+    language_format: "Formato lingua non valido: '%{input}'. Formato richiesto: 'Nome:ISO2:ISO3:Ruolo'"
+    date_format: "Formato data non valido: '%{input}'. Usa YYYY-MM-DD"
+    invalid_input: "Input non valido: %{error}"
+
+  search:
+    failed: "Operazione di ricerca e aggiunta fallita: %{error}"
+    no_results: "Nessun risultato trovato: %{query}"
+
+  record:
+    not_found: "Record non trovato"
+    not_found_with_id: "Record con ID %{id} non trovato"
+
+  generic:
+    error: "Errore generico: %{error}"
+    unknown: "Errore sconosciuto: %{error}"
+    other: "Altro errore: %{error}"
+    path_error: "Errore di percorso: %{error}"
+    sqlx_error: "Errore SQLx: %{error}"
 
 # ============================================================================
 # GUI - Interfaccia Utente
@@ -94,8 +142,8 @@ gui:
     contents: "Contenuti"
     with_contents: "con contenuti"
     with_books: "con libri"
-    books_count: "{count} libri"
-    contents_count: "{count} contenuti"
+    books_count: "%{count} libri"
+    contents_count: "%{count} contenuti"
 
   search:
     placeholder: "Cerca..."

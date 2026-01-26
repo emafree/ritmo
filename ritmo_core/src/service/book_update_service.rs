@@ -70,7 +70,7 @@ pub async fn update_book(
 
     // 3. Aggiorna relazioni foreign key
     if let Some(format_name) = metadata.format {
-        book.format_id = Some(Format::get_or_create_by_name(pool, &format_name).await?);
+        book.format_id = Some(Format::get_or_create_by_key(pool, &format_name).await?);
     }
 
     if let Some(publisher_name) = metadata.publisher {

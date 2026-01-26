@@ -63,7 +63,7 @@ pub async fn update_content(
 
     // 3. Aggiorna tipo contenuto
     if let Some(type_name) = metadata.content_type {
-        content.type_id = Some(Type::get_or_create_by_name(pool, &type_name).await?);
+        content.type_id = Some(Type::get_or_create_by_key(pool, &type_name).await?);
     }
 
     // 4. Salva modifiche nel database
