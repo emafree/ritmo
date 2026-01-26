@@ -80,6 +80,8 @@ Comprehensive documentation is available in the `docs/` directory:
 - Automatic locale detection from environment
 - Runtime language switching
 - All user-facing strings translatable
+- `I18nDisplayable` trait for consistent translation interface
+- Generic functions work with any translatable model
 
 ## Architecture
 

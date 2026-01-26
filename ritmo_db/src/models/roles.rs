@@ -1,3 +1,4 @@
+use crate::i18n_trait::I18nDisplayable;
 use ritmo_errors::RitmoResult;
 use sqlx::FromRow;
 
@@ -10,16 +11,18 @@ pub struct Role {
     pub created_at: i64,
 }
 
+impl I18nDisplayable for Role {
+    fn i18n_key(&self) -> &str {
+        &self.key
+    }
+}
+
 impl Role {
     /// Get the display name for this role in the current UI language
     /// Uses the i18n system to translate role keys (e.g., "role.author" -> "Author"/"Autore")
     pub fn display_name(&self) -> String {
-        use rust_i18n::t;
-
-        // Map role key to translation key
-        // "role.author" -> "db.role.author"
-        let translation_key = format!("db.{}", self.key);
-        t!(&translation_key).to_string()
+        // Delegate to I18nDisplayable trait
+        self.translate()
     }
 
     pub async fn save(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {

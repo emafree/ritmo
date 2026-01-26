@@ -3,7 +3,7 @@
 //! Tests that Role and RunningLanguages models correctly translate
 //! their display names based on the current locale.
 
-use ritmo_db::i18n_utils::{get_locale, set_locale};
+use ritmo_db::i18n_utils::set_locale;
 use ritmo_db::{Role, RunningLanguages};
 
 #[test]

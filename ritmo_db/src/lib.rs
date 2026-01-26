@@ -3,6 +3,7 @@
 // Initialize i18n
 rust_i18n::i18n!("../locales", fallback = "en");
 
+pub mod i18n_trait;
 pub mod i18n_utils;
 pub mod models;
 

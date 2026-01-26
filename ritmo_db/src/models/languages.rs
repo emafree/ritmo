@@ -1,3 +1,4 @@
+use crate::i18n_trait::I18nDisplayable;
 use ritmo_errors::RitmoResult;
 use sqlx::FromRow;
 
@@ -22,6 +23,12 @@ pub struct RunningLanguages {
     pub updated_at: Option<i64>,
 }
 
+impl I18nDisplayable for RunningLanguages {
+    fn i18n_key(&self) -> &str {
+        &self.role
+    }
+}
+
 impl RunningLanguages {
     pub fn new() -> Self {
         Self {
@@ -38,12 +45,8 @@ impl RunningLanguages {
     /// Get the display name for this language role in the current UI language
     /// Uses the i18n system to translate role keys (e.g., "language_role.original" -> "Original Language")
     pub fn display_role(&self) -> String {
-        use rust_i18n::t;
-
-        // Map language_role key to translation key
-        // "language_role.original" -> "db.language_role.original"
-        let translation_key = format!("db.{}", self.role);
-        t!(&translation_key).to_string()
+        // Delegate to I18nDisplayable trait
+        self.translate()
     }
 
     pub async fn save(&self, pool: &sqlx::SqlitePool) -> RitmoResult<i64> {

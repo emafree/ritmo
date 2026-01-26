@@ -12,9 +12,10 @@ The project is organized as a Rust workspace with the following crates:
 - Junction tables for many-to-many relationships: x_books_contents, x_books_people_roles, x_books_tags, x_contents_languages, x_contents_people_roles
 - Database schema in `schema/schema.sql` - comprehensive schema with audit logging, stats caching, and metadata tables
 - **i18n System**: Internationalization infrastructure with rust-i18n
+  - `i18n_trait`: `I18nDisplayable` trait for consistent translation interface
   - `i18n_utils`: Locale detection and management utilities
   - Translation files in `locales/` directory (YAML format)
-  - Models use `t!()` macro for translating display names
+  - Models implement `I18nDisplayable` trait for translating display names
   - See [i18n Guide](i18n.md) for details
 
 ### ritmo_db_core
@@ -165,8 +166,10 @@ library_root/
 - **Usage**: `t!()` macro for translations throughout codebase
 - **Key Convention**: `{namespace}.{category}.{subcategory}.{key}`
 - **Model Integration**:
+  - `I18nDisplayable` trait provides consistent translation interface
   - `Role::display_name()` translates role keys (e.g., "role.author" → "Author"/"Autore")
   - `RunningLanguages::display_role()` translates language role keys
+  - Both models delegate to the `translate()` method from `I18nDisplayable` trait
 - **Current Coverage**: ~54 initial keys (db.*, cli.*, error.*, gui.*, validation.*)
 - **See**: [i18n Guide](i18n.md) for complete documentation
 
