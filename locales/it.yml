@@ -53,6 +53,51 @@ cli:
     error: "✗ Errore"
     warning: "⚠ Attenzione"
     info: "ℹ Informazione"
+    no_library_configured: "✗ Nessuna libreria configurata"
+    use_init: "  Usa 'ritmo init' per inizializzare una libreria"
+    library_not_exist: "✗ La libreria non esiste"
+    portable_mode_detected: "ℹ Modalità portabile rilevata"
+
+  # Comando Init
+  init:
+    initializing: "Inizializzazione libreria: %{path}"
+    directories_created: "✓ Directory create"
+    database_initialized: "✓ Database inizializzato"
+    validation_completed: "✓ Validazione completata"
+    validation_issues: "⚠ Problemi nella validazione"
+    issues_detected: "⚠ Problemi rilevati:"
+    config_saved: "✓ Configurazione salvata"
+    presets_created: "✓ Preset di esempio creati (epub_only, pdf_only, novels)"
+    library_set_current: "✓ Libreria impostata come corrente"
+    success: "\n✓ Libreria inizializzata con successo!"
+    path_label: "  Path: %{path}"
+    use_list_presets: "\nUsa 'ritmo list-presets' per vedere i preset disponibili."
+
+  # Comando Info
+  info:
+    current_library: "Libreria corrente: %{path}"
+    structure_label: "Struttura:"
+    database_label: "  Database:  %{path}"
+    storage_label: "  Storage:   %{path}"
+    config_label: "  Config:    %{path}"
+    bootstrap_label: "  Bootstrap: %{path}"
+    structure_valid: "✓ Struttura valida"
+    structure_invalid: "✗ Struttura non valida"
+    no_issues: "✓ Nessun problema rilevato"
+    issues_detected: "⚠ Problemi rilevati:"
+    use_init_to_create: "  Usa 'ritmo init %{path}' per crearla"
+
+  # Comando List Libraries
+  list_libraries:
+    recent_libraries: "Librerie recenti:"
+    no_recent: "Nessuna libreria recente trovata"
+    portable_mode: "\nℹ Modalità portabile: %{path}"
+
+  # Comando Set Library
+  set_library:
+    success: "✓ Libreria impostata come corrente: %{path}"
+    not_exist: "✗ La libreria non esiste: %{path}"
+    use_init: "  Usa 'ritmo init %{path}' per crearla"
 
 # ============================================================================
 # ERRORS - Messaggi di Errore

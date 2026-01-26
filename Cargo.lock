@@ -4500,6 +4500,7 @@ dependencies = [
  "ritmo_db_core",
  "ritmo_errors",
  "ritmo_ml",
+ "rust-i18n",
  "serde_json",
  "tokio",
 ]

@@ -1,3 +1,6 @@
+// Initialize rust-i18n with translation files
+rust_i18n::i18n!("../locales", fallback = "en");
+
 mod commands;
 mod formatter;
 mod helpers;
@@ -5,6 +8,7 @@ mod helpers;
 use clap::{Parser, Subcommand};
 use commands::*;
 use ritmo_config::{settings_file, AppSettings};
+use ritmo_db::i18n_utils;
 use ritmo_errors::reporter::RitmoReporter;
 use std::path::PathBuf;
 
@@ -585,6 +589,9 @@ enum Commands {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize i18n system (reads RITMO_LANG environment variable)
+    i18n_utils::init_i18n();
+
     let cli = Cli::parse();
 
     // Carica o crea AppSettings

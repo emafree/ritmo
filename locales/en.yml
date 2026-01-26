@@ -53,6 +53,51 @@ cli:
     error: "✗ Error"
     warning: "⚠ Warning"
     info: "ℹ Info"
+    no_library_configured: "✗ No library configured"
+    use_init: "  Use 'ritmo init' to initialize a library"
+    library_not_exist: "✗ Library does not exist"
+    portable_mode_detected: "ℹ Portable mode detected"
+
+  # Init command
+  init:
+    initializing: "Initializing library: %{path}"
+    directories_created: "✓ Directories created"
+    database_initialized: "✓ Database initialized"
+    validation_completed: "✓ Validation completed"
+    validation_issues: "⚠ Validation issues"
+    issues_detected: "⚠ Issues detected:"
+    config_saved: "✓ Configuration saved"
+    presets_created: "✓ Example presets created (epub_only, pdf_only, novels)"
+    library_set_current: "✓ Library set as current"
+    success: "\n✓ Library initialized successfully!"
+    path_label: "  Path: %{path}"
+    use_list_presets: "\nUse 'ritmo list-presets' to see available presets."
+
+  # Info command
+  info:
+    current_library: "Current library: %{path}"
+    structure_label: "Structure:"
+    database_label: "  Database:  %{path}"
+    storage_label: "  Storage:   %{path}"
+    config_label: "  Config:    %{path}"
+    bootstrap_label: "  Bootstrap: %{path}"
+    structure_valid: "✓ Valid structure"
+    structure_invalid: "✗ Invalid structure"
+    no_issues: "✓ No issues detected"
+    issues_detected: "⚠ Issues detected:"
+    use_init_to_create: "  Use 'ritmo init %{path}' to create it"
+
+  # List Libraries command
+  list_libraries:
+    recent_libraries: "Recent libraries:"
+    no_recent: "No recent libraries found"
+    portable_mode: "\nℹ Portable mode: %{path}"
+
+  # Set Library command
+  set_library:
+    success: "✓ Library set as current: %{path}"
+    not_exist: "✗ Library does not exist: %{path}"
+    use_init: "  Use 'ritmo init %{path}' to create it"
 
 # ============================================================================
 # ERRORS - Error Messages
