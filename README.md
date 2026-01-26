@@ -13,6 +13,7 @@ A Rust-based library management system inspired by Calibre, focused solely on ca
 - **Complete CRUD operations** for books and metadata
 - **Advanced filter system** with OR logic and presets
 - **ML-powered deduplication** for cleaning up duplicate entities
+- **Internationalization (i18n)** - English and Italian support with easy extensibility
 - **SQLite database** - no external server required
 - **CLI and GUI interfaces** - choose your preferred workflow
 
@@ -43,6 +44,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[Development Guide](docs/development.md)** - Build, test, and run commands
 - **[Filter System](docs/filters.md)** - Filter types, presets, and usage
 - **[ML System](docs/ml-system.md)** - Entity deduplication documentation
+- **[i18n Guide](docs/i18n.md)** - Internationalization system and translation guide
 - **[Session History](docs/sessions/)** - Development changelog
 
 ## Features
@@ -71,6 +73,13 @@ Comprehensive documentation is available in the `docs/` directory:
 - Safe database merging with transactions
 - Configurable confidence thresholds
 - Dry-run mode for preview
+
+### Internationalization (i18n)
+- Multi-language support (English, Italian)
+- Easy to add new languages (YAML translation files)
+- Automatic locale detection from environment
+- Runtime language switching
+- All user-facing strings translatable
 
 ## Architecture
 
@@ -135,6 +144,20 @@ cargo run -p ritmo_cli -- deduplicate-tags --dry-run
 # Run deduplication for all entity types (authors, publishers, series, tags)
 cargo run -p ritmo_cli -- deduplicate-all --threshold 0.85 --dry-run
 ```
+
+### Internationalization
+```bash
+# Use English (default)
+cargo run -p ritmo_cli -- list-books
+
+# Use Italian
+RITMO_LANG=it cargo run -p ritmo_cli -- list-books
+
+# Use system locale
+LANG=it_IT.UTF-8 cargo run -p ritmo_cli -- list-books
+```
+
+For more i18n information, see the [i18n Guide](docs/i18n.md).
 
 ## Development
 

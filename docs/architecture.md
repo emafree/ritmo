@@ -11,6 +11,11 @@ The project is organized as a Rust workspace with the following crates:
 - Located in `src/models/`: books, people, publishers, series, tags, languages, formats, roles, types, aliases, contents
 - Junction tables for many-to-many relationships: x_books_contents, x_books_people_roles, x_books_tags, x_contents_languages, x_contents_people_roles
 - Database schema in `schema/schema.sql` - comprehensive schema with audit logging, stats caching, and metadata tables
+- **i18n System**: Internationalization infrastructure with rust-i18n
+  - `i18n_utils`: Locale detection and management utilities
+  - Translation files in `locales/` directory (YAML format)
+  - Models use `t!()` macro for translating display names
+  - See [i18n Guide](i18n.md) for details
 
 ### ritmo_db_core
 - Low-level database infrastructure layer
@@ -146,6 +151,25 @@ library_root/
 - Async operations via SQLx with Tokio runtime
 - Connection pooling for concurrent access
 
+## Internationalization (i18n) Architecture
+
+- **Framework**: rust-i18n v3 with YAML translation files
+- **Translation Files**: `locales/en.yml` (English), `locales/it.yml` (Italian)
+- **Locale Detection**: Priority order - RITMO_LANG env var → LANG env var → "en" default
+- **Initialization**: `rust_i18n::i18n!()` macro in `ritmo_db/src/lib.rs`
+- **Utilities**: `ritmo_db::i18n_utils` module
+  - `detect_locale()` - Auto-detect best locale
+  - `set_locale()` - Manually set locale
+  - `get_locale()` - Get current locale
+  - `init_i18n()` - Initialize with auto-detection
+- **Usage**: `t!()` macro for translations throughout codebase
+- **Key Convention**: `{namespace}.{category}.{subcategory}.{key}`
+- **Model Integration**:
+  - `Role::display_name()` translates role keys (e.g., "role.author" → "Author"/"Autore")
+  - `RunningLanguages::display_role()` translates language role keys
+- **Current Coverage**: ~54 initial keys (db.*, cli.*, error.*, gui.*, validation.*)
+- **See**: [i18n Guide](i18n.md) for complete documentation
+
 ## Key Patterns
 
 ### Application Configuration Pattern
@@ -176,12 +200,20 @@ Common dependencies (serde, sqlx, tokio, chrono, toml) are defined in workspace 
 
 ## Environment Variables
 
+### Development Variables
 Copy `.env.example` to `.env` for local development:
 - `DATABASE_URL`: SQLite database path (e.g., `sqlite://./data/ritmo.db`)
 - `RITMO_PORT`: HTTP backend port (default: 8080)
 - `RITMO_LOG_LEVEL`: Logging level (debug, info, warn, error)
 
 **Never commit `.env` files** - use `.env.example` for templates.
+
+### i18n Variables
+Control application language:
+- `RITMO_LANG`: Override language (e.g., `RITMO_LANG=it` for Italian)
+- `LANG`: System locale (e.g., `LANG=it_IT.UTF-8`, auto-extracted to "it")
+
+Priority: `RITMO_LANG` > `LANG` > default ("en")
 
 ## Rust Version
 
