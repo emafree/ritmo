@@ -154,6 +154,17 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 
 ## Recent Changes
 
+### 2026-01-26 - Session 15: i18n Infrastructure Implementation (Phase 1) - COMPLETED
+Implemented complete i18n infrastructure with rust-i18n framework, translation files, and locale detection.
+- **Framework**: Added rust-i18n v3 with YAML translation files (locales/en.yml, locales/it.yml)
+- **Initial Coverage**: ~54 translation keys (db.*, cli.*, error.*, gui.*, validation.*)
+- **Utilities**: Created i18n_utils module with detect_locale(), set_locale(), get_locale(), init_i18n()
+- **Locale Detection**: Priority order - RITMO_LANG env var → LANG env var → "en" default
+- **Models Updated**: Role::display_name() and RunningLanguages::display_role() now use t!() macro
+- **Testing**: 7 integration tests verify translations work in both English and Italian
+- **Documentation**: Complete developer guide (docs/i18n.md) and translator guide (locales/README.md)
+- Foundation ready for Phase 2-5 (progressive translation of ~500 remaining strings)
+
 ### 2026-01-26 - Session 14: Roles & Language Roles i18n Integration - COMPLETED
 Refactored roles and language_role systems to use canonical i18n keys instead of translated strings.
 - **Roles**: Changed `roles` table schema `name` → `key` (e.g., "role.author")
