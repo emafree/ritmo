@@ -154,6 +154,15 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 
 ## Recent Changes
 
+### 2026-01-27 - Session 20: Language Preference Management (i18n Phase 5) - COMPLETED
+Implemented persistent language preference management with two new CLI commands.
+- **Commands**: `set-language` (save preference), `get-language` (show current settings)
+- **Priority**: RITMO_LANG env → saved preference → LANG env → default ("en")
+- **Implementation**: Enhanced i18n_utils with preference-aware functions, added language commands
+- **Translation Keys**: 6 new keys for language management messages
+- **Testing**: Full workflow tested (set, get, env override, validation)
+- **Total Coverage**: 158 translation keys (DB models + errors + CLI + language management)
+
 ### 2026-01-27 - Session 19: I18n Phase 4 - CLI Runtime Messages - COMPLETED
 Implemented i18n for CLI runtime messages (success, info, warnings), allowing CLI to display messages in English or Italian based on RITMO_LANG environment variable.
 - **Scope**: Runtime messages only (not help text, following standard CLI conventions)
