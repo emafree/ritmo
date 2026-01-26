@@ -154,6 +154,16 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 
 ## Recent Changes
 
+### 2026-01-26 - Session 14: Roles i18n Integration with ML Support - COMPLETED
+Refactored roles system to use canonical i18n keys instead of translated strings, integrating with ML deduplication.
+- Changed `roles` table schema: `name` → `key` (canonical i18n keys like "role.author")
+- Updated Role model with new methods: `display_name()`, `get_all()`, `get_by_key()`, `get_or_create_by_key()`
+- Deprecated `get_by_name()` and `get_or_create_by_name()` for backward compatibility
+- Updated 4 services in ritmo_core to use new methods
+- Updated ritmo_ml to support roles deduplication with new schema
+- All 20 ML tests passing, full workspace build successful
+- Foundation ready for future i18n implementation
+
 ### 2026-01-26 - Session 13: Complete CRUD for Contents - COMPLETED
 Implemented full CRUD operations for Contents with 3 new CLI commands.
 - `add-content` - Create new contents with metadata (title, author, type, year, etc.)
