@@ -36,30 +36,14 @@ impl RunningLanguages {
     }
 
     /// Get the display name for this language role in the current UI language
-    /// Note: This requires the i18n system to be implemented
-    /// For now, returns a human-readable fallback
+    /// Uses the i18n system to translate role keys (e.g., "language_role.original" -> "Original Language")
     pub fn display_role(&self) -> String {
-        // TODO: Implement when i18n system is ready
-        // crate::i18n::t!(&self.role)
-        // For now, return a human-readable fallback
-        match self.role.as_str() {
-            "language_role.original" => "Original".to_string(),
-            "language_role.source" => "Source".to_string(),
-            "language_role.actual" => "Actual".to_string(),
-            _ => self.role
-                .strip_prefix("language_role.")
-                .unwrap_or(&self.role)
-                .chars()
-                .next()
-                .map(|c| c.to_uppercase().to_string())
-                .unwrap_or_default()
-                + &self.role
-                    .strip_prefix("language_role.")
-                    .unwrap_or(&self.role)
-                    .chars()
-                    .skip(1)
-                    .collect::<String>(),
-        }
+        use rust_i18n::t;
+
+        // Map language_role key to translation key
+        // "language_role.original" -> "db.language_role.original"
+        let translation_key = format!("db.{}", self.role);
+        t!(&translation_key).to_string()
     }
 
     pub async fn save(&self, pool: &sqlx::SqlitePool) -> RitmoResult<i64> {

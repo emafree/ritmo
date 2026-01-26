@@ -13,6 +13,7 @@ ritmo_errors = { path = "../ritmo_errors" }
 sha2 = "0.10"
 hex = "0.4"
 toml = { workspace = true }
+rust-i18n = { workspace = true }
 
 [dev-dependencies]
 tempfile = "3"

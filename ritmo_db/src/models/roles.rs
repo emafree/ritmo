@@ -12,27 +12,14 @@ pub struct Role {
 
 impl Role {
     /// Get the display name for this role in the current UI language
-    /// Note: This requires the i18n system to be implemented
-    /// For now, returns the key itself as fallback
+    /// Uses the i18n system to translate role keys (e.g., "role.author" -> "Author"/"Autore")
     pub fn display_name(&self) -> String {
-        // TODO: Implement when i18n system is ready
-        // crate::i18n::t!(&self.key)
-        // For now, return a human-readable fallback
-        self.key
-            .strip_prefix("role.")
-            .unwrap_or(&self.key)
-            .replace('_', " ")
-            .chars()
-            .next()
-            .map(|c| c.to_uppercase().to_string())
-            .unwrap_or_default()
-            + &self.key
-                .strip_prefix("role.")
-                .unwrap_or(&self.key)
-                .replace('_', " ")
-                .chars()
-                .skip(1)
-                .collect::<String>()
+        use rust_i18n::t;
+
+        // Map role key to translation key
+        // "role.author" -> "db.role.author"
+        let translation_key = format!("db.{}", self.key);
+        t!(&translation_key).to_string()
     }
 
     pub async fn save(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {

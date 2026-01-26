@@ -1,0 +1,106 @@
+---
+# Traduzioni italiane per Ritmo
+#
+# Convenzione chiavi: {namespace}.{category}.{subcategory}.{key}
+# - cli.*: Stringhe interfaccia command-line
+# - db.*: Stringhe di sistema database (ruoli, tipi, formati, ecc.)
+# - error.*: Messaggi di errore
+# - gui.*: Stringhe interfaccia grafica
+# - validation.*: Messaggi di validazione input
+
+# ============================================================================
+# DATABASE - Stringhe di Sistema
+# ============================================================================
+db:
+  role:
+    author: "Autore"
+    editor: "Editore"
+    translator: "Traduttore"
+    illustrator: "Illustratore"
+    contributor: "Collaboratore"
+    narrator: "Narratore"
+
+  language_role:
+    original: "Lingua Originale"
+    source: "Lingua di Partenza"
+    actual: "Lingua di Traduzione"
+
+  type:
+    novel: "Romanzo"
+    short_story: "Racconto"
+    essay: "Saggio"
+    poetry: "Poesia"
+    article: "Articolo"
+
+  format:
+    epub: "EPUB (ebook)"
+    pdf: "Documento PDF"
+    mobi: "MOBI (Kindle)"
+    azw3: "AZW3 (Kindle)"
+    txt: "File di Testo"
+
+# ============================================================================
+# CLI - Informazioni Applicazione
+# ============================================================================
+cli:
+  app:
+    description: "Ritmo - Sistema di Gestione Librerie"
+    version: "Versione {version}"
+
+  # Messaggi comuni
+  common:
+    success: "✓ Operazione completata con successo"
+    error: "✗ Errore"
+    warning: "⚠ Attenzione"
+    info: "ℹ Informazione"
+
+# ============================================================================
+# ERRORS - Messaggi di Errore
+# ============================================================================
+error:
+  database:
+    creation_failed: "Creazione database fallita: {error}"
+    connection_failed: "Connessione al database fallita: {error}"
+    not_found: "Database non trovato: {path}"
+    query_failed: "Query al database fallita: {error}"
+
+  book:
+    not_found: "Libro con ID {id} non trovato"
+    already_exists: "File già importato: {path} (ID: {id})"
+    no_changes: "Nessuna modifica applicata al libro con ID {id}"
+
+  content:
+    not_found: "Contenuto con ID {id} non trovato"
+    title_required: "Il titolo del contenuto è obbligatorio"
+    no_changes: "Nessuna modifica applicata al contenuto con ID {id}"
+
+  file:
+    not_found: "File non trovato: {path}"
+
+  validation:
+    person_format: "Formato persona non valido: '{input}'. Formato richiesto: 'Nome:Ruolo'"
+    language_format: "Formato lingua non valido: '{input}'. Formato richiesto: 'Nome:ISO2:ISO3:Ruolo'"
+    date_format: "Formato data non valido: '{input}'. Usa YYYY-MM-DD"
+
+# ============================================================================
+# GUI - Interfaccia Utente
+# ============================================================================
+gui:
+  sidebar:
+    title: "Ritmo"
+    subtitle: "Gestore Librerie"
+    view_label: "VISUALIZZAZIONE"
+    books: "Libri"
+    contents: "Contenuti"
+    with_contents: "con contenuti"
+    with_books: "con libri"
+    books_count: "{count} libri"
+    contents_count: "{count} contenuti"
+
+  search:
+    placeholder: "Cerca..."
+    add_button: "Aggiungi"
+
+  empty:
+    title: "Nessun elemento"
+    no_content: "Nessun contenuto associato"

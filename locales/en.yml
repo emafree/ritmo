@@ -1,0 +1,106 @@
+---
+# English translations for Ritmo
+#
+# Key naming convention: {namespace}.{category}.{subcategory}.{key}
+# - cli.*: Command-line interface strings
+# - db.*: Database system strings (roles, types, formats, etc.)
+# - error.*: Error messages
+# - gui.*: GUI interface strings
+# - validation.*: Input validation messages
+
+# ============================================================================
+# DATABASE - System Strings
+# ============================================================================
+db:
+  role:
+    author: "Author"
+    editor: "Editor"
+    translator: "Translator"
+    illustrator: "Illustrator"
+    contributor: "Contributor"
+    narrator: "Narrator"
+
+  language_role:
+    original: "Original Language"
+    source: "Source Language"
+    actual: "Translation Language"
+
+  type:
+    novel: "Novel"
+    short_story: "Short Story"
+    essay: "Essay"
+    poetry: "Poetry"
+    article: "Article"
+
+  format:
+    epub: "EPUB (ebook)"
+    pdf: "PDF Document"
+    mobi: "MOBI (Kindle)"
+    azw3: "AZW3 (Kindle)"
+    txt: "Text File"
+
+# ============================================================================
+# CLI - Application Info
+# ============================================================================
+cli:
+  app:
+    description: "Ritmo - Library Management System"
+    version: "Version {version}"
+
+  # Common messages
+  common:
+    success: "✓ Operation completed successfully"
+    error: "✗ Error"
+    warning: "⚠ Warning"
+    info: "ℹ Info"
+
+# ============================================================================
+# ERRORS - Error Messages
+# ============================================================================
+error:
+  database:
+    creation_failed: "Database creation failed: {error}"
+    connection_failed: "Database connection failed: {error}"
+    not_found: "Database not found: {path}"
+    query_failed: "Database query failed: {error}"
+
+  book:
+    not_found: "Book with ID {id} not found"
+    already_exists: "File already imported: {path} (ID: {id})"
+    no_changes: "No changes applied to book with ID {id}"
+
+  content:
+    not_found: "Content with ID {id} not found"
+    title_required: "Content title is required"
+    no_changes: "No changes applied to content with ID {id}"
+
+  file:
+    not_found: "File not found: {path}"
+
+  validation:
+    person_format: "Invalid person format: '{input}'. Required format: 'Name:Role'"
+    language_format: "Invalid language format: '{input}'. Required format: 'Name:ISO2:ISO3:Role'"
+    date_format: "Invalid date format: '{input}'. Use YYYY-MM-DD"
+
+# ============================================================================
+# GUI - User Interface
+# ============================================================================
+gui:
+  sidebar:
+    title: "Ritmo"
+    subtitle: "Library Manager"
+    view_label: "VIEW"
+    books: "Books"
+    contents: "Contents"
+    with_contents: "with contents"
+    with_books: "with books"
+    books_count: "{count} books"
+    contents_count: "{count} contents"
+
+  search:
+    placeholder: "Search..."
+    add_button: "Add"
+
+  empty:
+    title: "No items"
+    no_content: "No content associated"
