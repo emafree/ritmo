@@ -4,10 +4,12 @@ This document contains all development sessions from January 2026.
 
 ---
 
-## 2026-01-26 - Session 14: Roles i18n Integration with ML Support
+## 2026-01-26 - Session 14: Roles & Language Roles i18n Integration
 
 **Context**
-The `roles` model used a `name` field containing translated strings (e.g., "Autore", "Author"), which prevented internationalization (i18n) and made ML deduplication difficult. This session refactored the roles system to use canonical i18n keys (e.g., "role.author") instead of translated strings, preparing the foundation for future i18n support while integrating roles into the ML deduplication system.
+The `roles` model and `language_role` field in `running_languages` used plain text strings (e.g., "Autore", "Author" for roles; "Original", "Source", "Actual" for language roles), which prevented internationalization (i18n) and made ML deduplication difficult for roles. This session refactored both systems to use canonical i18n keys instead of translated strings, preparing the foundation for future i18n support while integrating roles into the ML deduplication system.
+
+Language roles are fixed system values (only 3 possible values) and don't require ML deduplication, but still benefit from i18n support for display purposes.
 
 **Database Schema Changes**
 ✅ Updated `roles` table in `ritmo_db_core/assets/template.db`:
@@ -83,23 +85,49 @@ The changes are **breaking** for existing databases:
 3. **Backward Compatibility**: Deprecated methods allow gradual migration of calling code
 4. **Display Flexibility**: `display_name()` method provides abstraction for future i18n implementation
 
+**Language Roles Integration**
+✅ Updated `ritmo_db/schema/schema.sql`:
+  - Changed CHECK constraint in `running_languages` table:
+    - Old: `CHECK("language_role" IN ('Original', 'Source', 'Actual'))`
+    - New: `CHECK("language_role" IN ('language_role.original', 'language_role.source', 'language_role.actual'))`
+  - No need for ML deduplication (only 3 fixed system values)
+
+✅ Updated `ritmo_db/src/models/languages.rs`:
+  - Added `language_role` constants module:
+    - `language_role::ORIGINAL = "language_role.original"`
+    - `language_role::SOURCE = "language_role.source"`
+    - `language_role::ACTUAL = "language_role.actual"`
+  - Added `display_role()` method to RunningLanguages struct:
+    - Returns human-readable fallback for now ("Original", "Source", "Actual")
+    - Ready for future i18n integration with `t!(&self.role)` macro
+  - No changes needed to existing methods (`get_or_create_by_iso_and_role()` etc.)
+  - Service layer continues to work as-is (receives role string from CLI/GUI)
+
+✅ Regenerated template database:
+  - Updated `ritmo_db_core/assets/template.db` from schema.sql
+  - Both `roles` and `running_languages` tables updated simultaneously
+  - Empty database (no pre-populated data for language roles - created on demand)
+
 **Files Modified**
+- Modified: `ritmo_db/schema/schema.sql` (2 tables: roles + running_languages)
 - Modified: `ritmo_db/src/models/roles.rs` (115 lines changed: +68/-47)
+- Modified: `ritmo_db/src/models/languages.rs` (37 lines added: constants + display_role())
 - Modified: `ritmo_core/src/service/book_import_service.rs` (1 line)
 - Modified: `ritmo_core/src/service/book_update_service.rs` (1 line)
 - Modified: `ritmo_core/src/service/content_create_service.rs` (1 line)
 - Modified: `ritmo_core/src/service/content_update_service.rs` (1 line)
 - Modified: `ritmo_ml/src/db_loaders.rs` (6 lines)
 - Modified: `ritmo_ml/src/test_helpers.rs` (20 lines)
-- Modified: `ritmo_db_core/assets/template.db` (binary, schema change)
+- Modified: `ritmo_db_core/assets/template.db` (binary, schema changes)
 
 **Impact**
-The roles system now:
-- Uses canonical i18n keys instead of translated strings
-- Is ready for future internationalization
-- Integrates seamlessly with ML deduplication
-- Maintains backward compatibility through deprecated methods
-- Has comprehensive test coverage (all 20 ML tests passing)
+Both roles and language_role systems now:
+- Use canonical i18n keys instead of translated strings
+- Are ready for future internationalization
+- Roles integrate seamlessly with ML deduplication
+- Language roles are system-only values (no ML needed, no user input)
+- Roles maintain backward compatibility through deprecated methods
+- All tests passing (20 ML tests + workspace build successful)
 
 **Next Steps (Future Considerations)**
 - Implement actual i18n system with translation files

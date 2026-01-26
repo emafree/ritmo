@@ -55,8 +55,7 @@ CREATE TABLE IF NOT EXISTS "series" (
 );
 CREATE TABLE IF NOT EXISTS "roles" (
 	"id"	INTEGER,
-	"name"	TEXT NOT NULL UNIQUE,
-	"description"	TEXT,
+	"key"	TEXT NOT NULL UNIQUE,
 	"created_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
@@ -119,7 +118,7 @@ CREATE TABLE IF NOT EXISTS "running_languages" (
 	"iso_code_2char"	TEXT NOT NULL,
 	"iso_code_3char"	TEXT NOT NULL,
 	"official_name"	TEXT NOT NULL,
-	"language_role"	TEXT NOT NULL CHECK("language_role" IN ('Original', 'Source', 'Actual')),
+	"language_role"	TEXT NOT NULL CHECK("language_role" IN ('language_role.original', 'language_role.source', 'language_role.actual')),
 	"created_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
 	"updated_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
 	PRIMARY KEY("id" AUTOINCREMENT),

@@ -154,14 +154,18 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 
 ## Recent Changes
 
-### 2026-01-26 - Session 14: Roles i18n Integration with ML Support - COMPLETED
-Refactored roles system to use canonical i18n keys instead of translated strings, integrating with ML deduplication.
-- Changed `roles` table schema: `name` → `key` (canonical i18n keys like "role.author")
-- Updated Role model with new methods: `display_name()`, `get_all()`, `get_by_key()`, `get_or_create_by_key()`
-- Deprecated `get_by_name()` and `get_or_create_by_name()` for backward compatibility
-- Updated 4 services in ritmo_core to use new methods
-- Updated ritmo_ml to support roles deduplication with new schema
-- All 20 ML tests passing, full workspace build successful
+### 2026-01-26 - Session 14: Roles & Language Roles i18n Integration - COMPLETED
+Refactored roles and language_role systems to use canonical i18n keys instead of translated strings.
+- **Roles**: Changed `roles` table schema `name` → `key` (e.g., "role.author")
+  - Updated Role model with `display_name()`, `get_all()`, `get_by_key()`, `get_or_create_by_key()`
+  - Deprecated `get_by_name()` and `get_or_create_by_name()` for backward compatibility
+  - Updated 4 services in ritmo_core and ritmo_ml integration
+- **Language Roles**: Changed `running_languages` CHECK constraint to use i18n keys
+  - Values: "language_role.original", "language_role.source", "language_role.actual"
+  - Added `language_role` constants module in languages.rs
+  - Added `display_role()` method to RunningLanguages model
+- Updated schema.sql and regenerated template.db
+- All tests passing, full workspace build successful
 - Foundation ready for future i18n implementation
 
 ### 2026-01-26 - Session 13: Complete CRUD for Contents - COMPLETED
