@@ -167,7 +167,7 @@ pub async fn load_roles_from_db(pool: &SqlitePool) -> RitmoResult<Vec<RoleRecord
 
     let rows = sqlx::query!(
         r#"
-        SELECT id, name
+        SELECT id, key
         FROM roles
         ORDER BY id
         "#
@@ -179,7 +179,7 @@ pub async fn load_roles_from_db(pool: &SqlitePool) -> RitmoResult<Vec<RoleRecord
         .into_iter()
         .map(|row| {
             let id = row.id;
-            let name = row.name;
+            let name = row.key;
             let normalized_name = normalizer.normalize_string(&name);
 
             RoleRecord {
@@ -310,7 +310,7 @@ mod tests {
 
         // Verify first role
         assert_eq!(roles[0].id, 1);
-        assert_eq!(roles[0].name, "Autore");
+        assert_eq!(roles[0].name, "role.author");
 
         // Verify all records have valid data
         for role in &roles {

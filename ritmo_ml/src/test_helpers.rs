@@ -67,7 +67,7 @@ pub async fn create_test_db() -> RitmoResult<SqlitePool> {
 
         CREATE TABLE IF NOT EXISTS "roles" (
             "id" INTEGER PRIMARY KEY AUTOINCREMENT,
-            "name" TEXT NOT NULL UNIQUE,
+            "key" TEXT NOT NULL UNIQUE,
             "created_at" INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
         );
 
@@ -207,15 +207,15 @@ pub async fn populate_test_tags(pool: &SqlitePool) -> RitmoResult<()> {
 pub async fn populate_test_roles(pool: &SqlitePool) -> RitmoResult<()> {
     sqlx::query(
         r#"
-        INSERT INTO roles (id, name) VALUES
-        (1, 'Autore'),
-        (2, 'Author'),
-        (3, 'Scrittore'),
-        (4, 'Traduttore'),
-        (5, 'Translator'),
-        (6, 'Illustratore'),
-        (7, 'Illustrator'),
-        (8, 'Editore')
+        INSERT INTO roles (id, key, created_at) VALUES
+        (1, 'role.author', 1640000000),
+        (2, 'role.autor', 1640000001),
+        (3, 'role.writer', 1640000002),
+        (4, 'role.translator', 1640000003),
+        (5, 'role.traduttore', 1640000004),
+        (6, 'role.illustrator', 1640000005),
+        (7, 'role.ilustrator', 1640000006),
+        (8, 'role.editor', 1640000007)
         "#,
     )
     .execute(pool)

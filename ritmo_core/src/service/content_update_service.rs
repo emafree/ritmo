@@ -89,7 +89,7 @@ pub async fn update_content(
         // Aggiungi le nuove persone con i loro ruoli
         for (person_name, role_name) in people {
             let person_id = Person::get_or_create_by_name(pool, &person_name).await?;
-            let role_id = Role::get_or_create_by_name(pool, &role_name).await?;
+            let role_id = Role::get_or_create_by_key(pool, &role_name).await?;
 
             sqlx::query!(
                 "INSERT INTO x_contents_people_roles (content_id, person_id, role_id) VALUES (?, ?, ?)",
