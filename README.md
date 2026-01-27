@@ -64,17 +64,32 @@ Comprehensive documentation is available in the `docs/` directory:
 ### Book Import Levels
 Progressive automation with integrated workflow:
 - **Level 1 (Implemented)**: Manual single-book import with CLI arguments
-- **Level 2 (Planned)**: Batch import from JSON metadata file (stdin or file)
+- **Level 2 (Implemented)**: Batch import from JSON metadata file (stdin or file) ✅
 - **Level 3 (Planned)**: Automatic EPUB metadata extraction to JSON format (95% automation goal)
 
 **Integrated Workflow**: Level 3 extracts metadata to JSON → Review/edit → Level 2 imports batch
 ```bash
-ritmo extract-metadata ~/books/*.epub --output metadata.json  # Level 3
+# Level 3 (planned)
+ritmo extract-metadata ~/books/*.epub --output metadata.json
+
 # Review and edit metadata.json
-ritmo add-batch --input metadata.json  # Level 2
+
+# Level 2 (implemented)
+ritmo add-batch --input metadata.json
+ritmo add-batch --input metadata.json --dry-run        # Validation only
+ritmo add-batch --input metadata.json --continue-on-error
+cat metadata.json | ritmo add-batch                    # Via stdin
 ```
 
-See [Architecture](docs/architecture.md#book-import-levels) for detailed design, JSON format specification, and implementation plans.
+**Level 2 Features**:
+- Full import: books + contents + relationships (people, languages, tags, series)
+- Validation: 16 rules with detailed error messages
+- Duplicate detection via SHA256 hash
+- Error handling: stop-on-error (default) or continue-on-error
+- Dry-run mode for validation without importing
+- Progress reporting and detailed summary
+
+See [Architecture](docs/architecture.md#book-import-levels) for detailed design, JSON format specification, and implementation details.
 
 ### Filter System
 - Multiple filter types: author, publisher, series, format, year, ISBN, dates
@@ -128,8 +143,13 @@ cargo run -p ritmo_cli -- set-library PATH      # Set current library
 
 ### Book Operations
 ```bash
-# Add book
+# Add single book (Level 1)
 cargo run -p ritmo_cli -- add book.epub --title "Title" --author "Author"
+
+# Add books in batch (Level 2)
+cargo run -p ritmo_cli -- add-batch --input books.json
+cargo run -p ritmo_cli -- add-batch --input books.json --dry-run
+cat books.json | cargo run -p ritmo_cli -- add-batch
 
 # List books with filters
 cargo run -p ritmo_cli -- list-books --author "King" --format epub
@@ -217,8 +237,7 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 
 ### High Priority
 1. **Portable Bootstrap**: Automatic binary copying to bootstrap/portable_app/
-2. **Book Import Level 2**: Batch import via pipe (file/stdin) for bulk operations
-3. **Book Import Level 3**: ebook_parser integration for automatic metadata extraction (95% automation goal)
+2. **Book Import Level 3**: ebook_parser integration for automatic metadata extraction (95% automation goal)
 
 ### Medium Priority
 3. **Advanced Filters**: SQL-like query DSL for complex queries

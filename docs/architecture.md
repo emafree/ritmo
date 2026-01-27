@@ -132,27 +132,37 @@ The book import system is designed with progressive automation levels:
 cargo run -p ritmo_cli -- add book.epub --title "Title" --author "Author"
 ```
 
-### Level 2 - Batch Import via Pipe (PLANNED)
-**Status**: Not yet implemented
+### Level 2 - Batch Import via Pipe (IMPLEMENTED)
+**Status**: Fully implemented and tested ✅
 
-**Design Goals**:
+**Implementation**:
+- **Location**:
+  - Service: `ritmo_core/src/service/batch_import_service.rs`
+  - DTOs: `ritmo_core/src/dto/batch_import_dto.rs`
+  - CLI: `ritmo_cli/src/commands/books.rs` - `cmd_add_batch()`
+- **Testing**: Comprehensive tests with single/multi-book imports, validation, duplicates, stdin
+- **Session**: Session 21 (2026-01-27)
+
+**Design Goals** (Achieved):
 - Accept JSON metadata file from stdin or file input
 - Use same JSON format as Level 3 ebook_parser output for seamless integration
 - Enable review/edit workflow: extract → review → import
 - Support per-book metadata with optional shared defaults
 - Maintain same validation and duplicate detection as Level 1
 
-**Planned Features**:
-- Read metadata from file: `--input books_metadata.json`
-- Read from stdin pipe: `cat books_metadata.json | ritmo add-batch`
-- Integration with Level 3: `ritmo extract-metadata *.epub | ritmo add-batch`
-- Progress reporting for batch operations (N/M books imported)
-- Error handling modes:
-  - `--stop-on-error`: abort on first failure (default)
-  - `--continue-on-error`: skip failed books, report at end
-  - `--dry-run`: validate metadata without importing
-- Duplicate detection: skip books with existing SHA256 hash
-- Summary report: success/failure counts, skipped duplicates, errors
+**Implemented Features**:
+- ✅ Read metadata from file: `--input books_metadata.json`
+- ✅ Read from stdin pipe: `cat books_metadata.json | ritmo add-batch`
+- ✅ Ready for Level 3 integration: `ritmo extract-metadata *.epub | ritmo add-batch`
+- ✅ Progress reporting for batch operations (N/M books imported)
+- ✅ Error handling modes:
+  - `--stop-on-error`: abort on first failure (default, implemented as default behavior)
+  - `--continue-on-error`: skip failed books, report at end (flag implemented)
+  - `--dry-run`: validate metadata without importing (flag implemented)
+- ✅ Duplicate detection: skip books with existing SHA256 hash
+- ✅ Summary report: success/failure counts, skipped duplicates, errors
+- ✅ Full import: books + contents + relationships (people, languages, tags, series)
+- ✅ Comprehensive validation: 16 validation rules with detailed error messages
 
 **JSON Input Format**:
 The batch import uses a JSON array of import objects, where each object represents a physical book file and its associated contents. This structure reflects ritmo's database architecture with Books and Contents as separate entities. See [book_metadata_format.json](book_metadata_format.json) for a complete example file.
@@ -274,7 +284,7 @@ ritmo extract-metadata ~/books/*.epub --min-confidence 0.85 | ritmo add-batch
 - Manual editing step allows correction before database import
 - One-step pipeline available for trusted sources
 
-**Implementation Considerations**:
+**Implementation Details**:
 - New CLI command: `add-batch` (separate from `add` for clarity)
 - Parser: Use `serde_json` to deserialize JSON array of import objects
 - Validation: Check required fields before processing:

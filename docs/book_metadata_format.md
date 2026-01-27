@@ -9,10 +9,15 @@ The format is a JSON array of import objects, where each object represents a phy
 - **Contents**: Literary works contained in the book (novels, stories, essays, etc.)
 - **People**: Contributors associated with either books (editors, preface writers) or contents (authors, translators)
 
-This allows:
-- **Level 3** (ebook_parser): Extract metadata from EPUBs and output to this format
-- **Level 2** (batch import): Read this format and import multiple books with their contents
-- **Workflow**: Extract → Review/Edit → Import
+This format is used by:
+- **Level 2** (batch import): **✅ IMPLEMENTED** - Read this format and import multiple books with their contents
+- **Level 3** (ebook_parser): **Planned** - Extract metadata from EPUBs and output to this format
+
+**Workflow**: Extract (Level 3) → Review/Edit → Import (Level 2)
+
+**Implementation Status**:
+- Level 2 batch import is fully functional with validation, error handling, and comprehensive testing
+- Level 3 ebook_parser extraction is planned for future implementation
 
 ## Format Specification
 
@@ -146,19 +151,19 @@ See [book_metadata_format.json](book_metadata_format.json) for a complete exampl
 
 ## Usage Examples
 
-### Level 3: Extract Metadata
+### Level 3: Extract Metadata (Planned)
 ```bash
-# Extract metadata from EPUBs to JSON file
+# Extract metadata from EPUBs to JSON file (PLANNED)
 ritmo extract-metadata ~/books/*.epub --output metadata.json
 
-# Extract and filter by confidence threshold
+# Extract and filter by confidence threshold (PLANNED)
 ritmo extract-metadata ~/books/*.epub --min-confidence 0.80 --output metadata.json
 
-# Extract to stdout (for piping)
+# Extract to stdout (for piping) (PLANNED)
 ritmo extract-metadata ~/books/*.epub
 ```
 
-### Level 2: Batch Import
+### Level 2: Batch Import (✅ Implemented)
 ```bash
 # Import from JSON file
 ritmo add-batch --input metadata.json
@@ -175,7 +180,7 @@ ritmo add-batch --input metadata.json --continue-on-error
 
 ### Integrated Workflow
 ```bash
-# Step 1: Extract metadata
+# Step 1: Extract metadata (Level 3 - PLANNED)
 ritmo extract-metadata ~/books/*.epub --output metadata.json
 
 # Step 2: Review and edit metadata.json
@@ -184,9 +189,14 @@ ritmo extract-metadata ~/books/*.epub --output metadata.json
 # - Add missing metadata
 # - Remove unwanted books
 
-# Step 3: Batch import
+# Step 3: Batch import (Level 2 - ✅ IMPLEMENTED)
 ritmo add-batch --input metadata.json
+ritmo add-batch --input metadata.json --dry-run           # Validation only
+ritmo add-batch --input metadata.json --continue-on-error # Continue on errors
+cat metadata.json | ritmo add-batch                       # Via stdin
 ```
+
+**Current Status**: Level 2 is fully implemented and tested. You can manually create JSON files following this format and use `ritmo add-batch` to import them. Level 3 (automatic extraction) will be implemented in the future.
 
 ## Field Validation
 

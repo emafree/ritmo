@@ -1,3 +1,4 @@
+pub mod batch_import_service;
 pub mod book_import_service;
 pub mod book_update_service;
 pub mod content_create_service;
@@ -5,6 +6,7 @@ pub mod content_update_service;
 pub mod delete_service;
 pub mod storage_service;
 
+pub use batch_import_service::{batch_import, BatchImportSummary, ImportResult};
 pub use book_import_service::{import_book, BookImportMetadata};
 pub use book_update_service::{update_book, BookUpdateMetadata};
 pub use content_create_service::{

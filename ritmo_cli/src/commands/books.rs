@@ -6,8 +6,10 @@ use crate::helpers::{
 };
 use ritmo_config::{detect_portable_library, AppSettings};
 use ritmo_core::service::{
-    delete_book, import_book, update_book, BookImportMetadata, BookUpdateMetadata, DeleteOptions,
+    batch_import, delete_book, import_book, update_book, BookImportMetadata, BookUpdateMetadata,
+    DeleteOptions,
 };
+use ritmo_core::dto::BatchImportInput;
 use ritmo_db_core::{execute_books_query, BookFilters, BookSortField, LibraryConfig};
 use ritmo_errors::reporter::SilentReporter;
 use std::path::PathBuf;
@@ -375,6 +377,154 @@ pub async fn cmd_add(
         Err(e) => {
             println!("✗ Errore durante l'importazione: {}", e);
         }
+    }
+
+    Ok(())
+}
+
+/// Comando: add-batch - Importa libri in batch da file JSON
+pub async fn cmd_add_batch(
+    cli_library: &Option<PathBuf>,
+    app_settings: &AppSettings,
+    input: Option<PathBuf>,
+    continue_on_error: bool,
+    dry_run: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // Determina quale libreria usare
+    let library_path = if let Some(path) = cli_library {
+        path.clone()
+    } else if let Some(portable) = detect_portable_library() {
+        portable
+    } else if let Some(path) = &app_settings.last_library_path {
+        path.clone()
+    } else {
+        println!("✗ Nessuna libreria configurata");
+        println!("  Usa 'ritmo init' per inizializzare una libreria");
+        return Ok(());
+    };
+
+    // Carica la configurazione della libreria
+    let config = LibraryConfig::new(&library_path);
+    if let Err(e) = config.validate() {
+        println!("✗ Libreria non valida: {}", e);
+        return Ok(());
+    }
+
+    // Crea il pool di connessioni
+    let mut reporter = SilentReporter;
+    let pool = config.create_pool(&mut reporter).await?;
+
+    // Leggi JSON da file o stdin
+    let json_content = if let Some(input_path) = input {
+        // Leggi da file
+        if !input_path.exists() {
+            println!("✗ File non trovato: {}", input_path.display());
+            return Ok(());
+        }
+        println!("Lettura metadata da file: {}", input_path.display());
+        std::fs::read_to_string(&input_path)?
+    } else {
+        // Leggi da stdin
+        println!("Lettura metadata da stdin...");
+        use std::io::Read;
+        let mut buffer = String::new();
+        std::io::stdin().read_to_string(&mut buffer)?;
+        buffer
+    };
+
+    // Deserializza JSON
+    let batch_input: BatchImportInput = match serde_json::from_str(&json_content) {
+        Ok(input) => input,
+        Err(e) => {
+            println!("✗ Errore nel parsing JSON: {}", e);
+            println!("  Verifica che il formato JSON sia corretto");
+            return Ok(());
+        }
+    };
+
+    println!("\n📚 Batch Import");
+    println!("  Libreria: {}", library_path.display());
+    println!("  Numero libri: {}", batch_input.len());
+    println!(
+        "  Modalità: {}",
+        if dry_run {
+            "Dry-run (solo validazione)"
+        } else if continue_on_error {
+            "Continue on error"
+        } else {
+            "Stop on first error"
+        }
+    );
+    println!();
+
+    // Dry-run: valida senza importare
+    if dry_run {
+        println!("🔍 Validazione metadata...\n");
+        let mut validation_errors = 0;
+
+        for (idx, import_obj) in batch_input.iter().enumerate() {
+            print!("[{}/{}] Validating: {} ... ", idx + 1, batch_input.len(), import_obj.file_path);
+
+            // Valida usando la funzione interna del service
+            match ritmo_core::service::batch_import_service::validate_import_object(import_obj) {
+                Ok(_) => println!("✓ OK"),
+                Err(e) => {
+                    println!("✗ ERROR");
+                    println!("      {}", e);
+                    validation_errors += 1;
+                }
+            }
+        }
+
+        println!("\n📊 Risultato validazione:");
+        println!("  ✓ Validi: {}", batch_input.len() - validation_errors);
+        println!("  ✗ Errori: {}", validation_errors);
+
+        if validation_errors == 0 {
+            println!("\n✓ Tutti i metadati sono validi!");
+            println!("  Esegui senza --dry-run per importare i libri");
+        } else {
+            println!("\n✗ Correggi gli errori prima di importare");
+        }
+
+        return Ok(());
+    }
+
+    // Esegui batch import
+    println!("📥 Importazione libri...\n");
+
+    let summary = batch_import(&config, &pool, batch_input, !continue_on_error).await?;
+
+    // Mostra progresso durante l'import
+    for (idx, result) in summary.results.iter().enumerate() {
+        print!("[{}/{}] ", idx + 1, summary.total);
+
+        if result.success {
+            println!("✓ {} (ID: {})", result.file_path, result.book_id.unwrap());
+        } else {
+            println!("✗ {}", result.file_path);
+            if let Some(ref err) = result.error_message {
+                println!("      {}", err);
+            }
+        }
+    }
+
+    // Mostra summary finale
+    println!("\n📊 Riepilogo Import:");
+    println!("  Totale: {}", summary.total);
+    println!("  ✓ Importati: {}", summary.successful);
+    println!("  ⊗ Duplicati: {}", summary.skipped_duplicates);
+    println!("  ✗ Falliti: {}", summary.failed);
+
+    if summary.successful == summary.total {
+        println!("\n🎉 Tutti i libri sono stati importati con successo!");
+    } else if summary.successful > 0 {
+        println!(
+            "\n⚠ Importazione parziale: {}/{} libri importati",
+            summary.successful, summary.total
+        );
+    } else {
+        println!("\n✗ Nessun libro importato");
     }
 
     Ok(())

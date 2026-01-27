@@ -63,18 +63,24 @@ The book import system is designed with progressive automation levels:
 - SHA256 hash for duplicate detection
 - Command: `add book.epub --title "Title" --author "Author"`
 
-**Level 2 - Batch Import via Pipe (PLANNED)**
+**Level 2 - Batch Import via Pipe (IMPLEMENTED)**
 - Import multiple books from JSON metadata file or stdin
 - Uses same JSON format as Level 3 ebook_parser output
 - Enables review/edit workflow: extract metadata → review → batch import
-- Supports per-book metadata with optional shared defaults
-- Input format: JSON array of book metadata objects
+- Full import: books + contents + relationships (people, languages, tags, series)
+- Validation: 16 rules with detailed error messages
+- Duplicate detection via SHA256 hash
+- Error handling: stop-on-error (default) or continue-on-error
+- Dry-run mode for validation without importing
 - Examples:
   - `ritmo add-batch --input books_metadata.json`
   - `cat books_metadata.json | ritmo add-batch`
-  - `ritmo extract-metadata ~/books/*.epub > metadata.json` (Level 3)
-  - `# Review/edit metadata.json, then:`
-  - `ritmo add-batch --input metadata.json`
+  - `ritmo add-batch --input metadata.json --dry-run` (validation only)
+  - `ritmo add-batch --input metadata.json --continue-on-error`
+  - Future workflow with Level 3:
+    - `ritmo extract-metadata ~/books/*.epub > metadata.json`
+    - `# Review/edit metadata.json`
+    - `ritmo add-batch --input metadata.json`
 
 **Level 3 - Automatic Metadata Extraction (PLANNED)**
 - Parse EPUB metadata from content.opf automatically
@@ -179,8 +185,14 @@ cargo run -p ritmo_cli -- set-library PATH      # Set current library
 
 ### Book Operations
 ```bash
-# Add book
+# Add single book (Level 1 - Manual)
 cargo run -p ritmo_cli -- add book.epub --title "Title" --author "Author"
+
+# Add books in batch (Level 2 - Batch Import)
+cargo run -p ritmo_cli -- add-batch --input books_metadata.json
+cargo run -p ritmo_cli -- add-batch --input books_metadata.json --dry-run
+cargo run -p ritmo_cli -- add-batch --input books_metadata.json --continue-on-error
+cat books_metadata.json | cargo run -p ritmo_cli -- add-batch
 
 # List books with filters
 cargo run -p ritmo_cli -- list-books --author "King" --format epub
@@ -251,6 +263,21 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 - Supports Slint GUI framework
 
 ## Recent Changes
+
+### 2026-01-27 - Session 21: Book Import Level 2 - Batch Import Implementation - COMPLETED
+Implemented complete batch import system for importing multiple books from JSON files.
+- **CLI Command**: `add-batch` with support for file input (`--input`) and stdin
+- **DTO Structures**: Complete JSON deserialization (ImportObject, BookInput, ContentInput, PersonInput, LanguageInput)
+- **Batch Import Service**: `batch_import_service.rs` with validation, error handling, and summary reporting
+- **Features**:
+  - Dry-run mode for validation without importing
+  - Continue-on-error vs stop-on-first-error modes
+  - Duplicate detection via SHA256 hash
+  - Progress reporting and detailed summary
+  - Full book+contents+relationships import (people, languages, tags, series)
+- **Validation**: 16 validation rules for import objects, books, and contents
+- **Testing**: Comprehensive testing with single/multi-book imports, contents, duplicates, stdin input
+- **Format**: Uses same JSON format as Level 3 ebook_parser output (see docs/book_metadata_format.md)
 
 ### 2026-01-27 - Session 20: Language Preference Management (i18n Phase 5) - COMPLETED
 Implemented persistent language preference management with two new CLI commands.
@@ -366,8 +393,7 @@ For complete session history, see [docs/sessions/](docs/sessions/).
 
 ### High Priority
 1. **Portable Bootstrap**: Automatic binary copying to bootstrap/portable_app/
-2. **Book Import Level 2**: Batch import via pipe (file/stdin) for bulk operations
-3. **Book Import Level 3**: ebook_parser integration for automatic metadata extraction (95% automation goal)
+2. **Book Import Level 3**: ebook_parser integration for automatic metadata extraction (95% automation goal)
 
 ### Medium Priority
 3. **Advanced Filters**: SQL-like query DSL for complex queries

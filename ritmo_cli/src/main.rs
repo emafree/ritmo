@@ -308,6 +308,21 @@ enum Commands {
         tags: Vec<String>,
     },
 
+    /// Importa libri in batch da file JSON
+    AddBatch {
+        /// Percorso del file JSON con metadata (opzionale, legge da stdin se omesso)
+        #[arg(long, short = 'i')]
+        input: Option<PathBuf>,
+
+        /// Continua su errori invece di fermarsi al primo errore
+        #[arg(long)]
+        continue_on_error: bool,
+
+        /// Modalità dry-run: valida il JSON senza importare
+        #[arg(long)]
+        dry_run: bool,
+    },
+
     /// Aggiorna metadati di un libro esistente
     UpdateBook {
         /// ID del libro da aggiornare
@@ -775,6 +790,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 tags,
             )
             .await?;
+        }
+        Commands::AddBatch {
+            input,
+            continue_on_error,
+            dry_run,
+        } => {
+            cmd_add_batch(&cli.library, &app_settings, input, continue_on_error, dry_run).await?;
         }
         Commands::UpdateBook {
             id,
