@@ -109,11 +109,75 @@ cargo run -p ritmo_cli -- add book.pdf \
 # Update book metadata
 cargo run -p ritmo_cli -- update-book 1 --title "New Title" --year 2024
 cargo run -p ritmo_cli -- update-book 1 --author "New Author" --notes "Updated notes"
+```
 
-# Delete book
-cargo run -p ritmo_cli -- delete-book 1                   # Delete record only
-cargo run -p ritmo_cli -- delete-book 1 --delete-file     # Delete record + file
-cargo run -p ritmo_cli -- delete-book 1 --delete-file --force  # Force deletion
+#### Book Deletion and Cleanup
+
+Ritmo provides comprehensive deletion with automatic cascade cleanup of relationships and manual cleanup of orphaned entities.
+
+```bash
+# Delete book (database record only, keeps physical file)
+cargo run -p ritmo_cli -- delete-book 1
+
+# Delete book AND physical file from storage
+cargo run -p ritmo_cli -- delete-book 1 --delete-file
+
+# Force deletion even if file is missing or can't be deleted
+cargo run -p ritmo_cli -- delete-book 1 --delete-file --force
+```
+
+**What happens when deleting a book:**
+
+1. **Automatic CASCADE deletion** (immediate):
+   - All book-content associations (`x_books_contents`)
+   - All book-author/contributor associations (`x_books_people_roles`)
+   - All book-tag associations (`x_books_tags`)
+
+2. **Referenced entities are kept** (become orphaned):
+   - People (authors, translators, etc.)
+   - Publishers
+   - Series
+   - Formats
+   - Tags
+   - Contents
+
+3. **Optional file deletion**:
+   - With `--delete-file`: removes physical file from `storage/` directory
+   - With `--force`: continues even if file doesn't exist or can't be deleted
+
+**Cleanup orphaned entities:**
+
+After deleting books, you can remove entities that are no longer referenced:
+
+```bash
+# Preview what would be removed (dry-run mode - NOT YET IMPLEMENTED)
+cargo run -p ritmo_cli -- cleanup --dry-run
+
+# Remove orphaned entities
+cargo run -p ritmo_cli -- cleanup
+```
+
+> **Note**: The `--dry-run` flag is not yet fully implemented and will only display a message without showing preview.
+
+**Entities cleaned up:**
+- **People**: Not associated with any book or content
+- **Publishers**: Not referenced by any book
+- **Series**: Not referenced by any book
+- **Formats**: Not used by any book
+- **Types**: Not used by any content
+- **Tags**: Not associated with any book or content
+
+**Recommended workflow:**
+```bash
+# 1. Delete one or more books
+cargo run -p ritmo_cli -- delete-book 1 --delete-file
+cargo run -p ritmo_cli -- delete-book 2 --delete-file
+
+# 2. Preview orphaned entities
+cargo run -p ritmo_cli -- cleanup --dry-run
+
+# 3. Remove orphaned entities if desired
+cargo run -p ritmo_cli -- cleanup
 ```
 
 #### Listing and Filtering

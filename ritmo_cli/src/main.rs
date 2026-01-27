@@ -362,16 +362,16 @@ enum Commands {
         tags: Vec<String>,
     },
 
-    /// Elimina un libro dal database
+    /// Elimina un libro dal database (rimuove automaticamente tutte le associazioni)
     DeleteBook {
         /// ID del libro da eliminare
         id: i64,
 
-        /// Elimina anche il file fisico dallo storage
+        /// Elimina anche il file fisico dallo storage (default: mantiene il file)
         #[arg(long)]
         delete_file: bool,
 
-        /// Forza l'eliminazione anche in caso di errori filesystem
+        /// Forza l'eliminazione anche in caso di errori filesystem (utile se il file è già stato eliminato)
         #[arg(long)]
         force: bool,
     },

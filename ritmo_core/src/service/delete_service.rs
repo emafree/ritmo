@@ -5,11 +5,17 @@ use ritmo_errors::{RitmoErr, RitmoResult};
 use std::fs;
 
 /// Opzioni per la cancellazione di un libro
+///
+/// Controlla il comportamento della funzione `delete_book()`.
 #[derive(Debug, Clone, Default)]
 pub struct DeleteOptions {
-    /// Se true, elimina anche il file fisico dallo storage
+    /// Se true, elimina anche il file fisico dalla directory `storage/`.
+    /// Se false, elimina solo il record dal database.
     pub delete_file: bool,
-    /// Se true, forza la cancellazione anche se ci sono errori nel filesystem
+
+    /// Se true, continua la cancellazione anche se il file non esiste o non può essere eliminato.
+    /// Se false, la funzione restituisce errore in caso di problemi con il filesystem.
+    /// Utile quando il file è già stato eliminato manualmente o non è più accessibile.
     pub force: bool,
 }
 
@@ -18,14 +24,30 @@ pub struct DeleteOptions {
 /// Questa funzione:
 /// 1. Verifica che il libro esista
 /// 2. Opzionalmente elimina il file fisico dallo storage
-/// 3. Elimina il record dal database (le relazioni vengono eliminate automaticamente per CASCADE)
+/// 3. Elimina il record dal database
+///
+/// # Comportamento CASCADE automatico (ON DELETE CASCADE nel database schema)
+///
+/// Quando un libro viene eliminato, le seguenti relazioni vengono rimosse automaticamente:
+/// - **x_books_contents**: Associazioni libro-contenuti
+/// - **x_books_people_roles**: Associazioni libro-autori/contributori
+/// - **x_books_tags**: Associazioni libro-tag
+///
+/// Le entità referenziate (people, publishers, series, formats, tags, contents) **NON** vengono
+/// eliminate e possono diventare orfane. Utilizzare `cleanup_orphaned_entities()` per rimuoverle.
 ///
 /// # Arguments
 /// * `config` - Configurazione della libreria (per trovare i file)
 /// * `pool` - Pool di connessioni al database
 /// * `book_id` - ID del libro da eliminare
-/// * `options` - Opzioni di cancellazione
+/// * `options` - Opzioni di cancellazione (delete_file, force)
 /// * `reporter` - Reporter per messaggi di stato ed errori
+///
+/// # Errors
+/// Restituisce errore se:
+/// - Il libro non esiste
+/// - Il file non può essere eliminato (senza flag --force)
+/// - Errori del database durante la cancellazione
 pub async fn delete_book(
     config: &LibraryConfig,
     pool: &sqlx::SqlitePool,
@@ -130,15 +152,28 @@ pub async fn delete_content(
 
 /// Pulisce entità orfane (autori, editori, serie non referenziati)
 ///
-/// Questa funzione rimuove dal database:
-/// - Autori (people) non associati a nessun libro o contenuto
-/// - Editori (publishers) non associati a nessun libro
-/// - Serie (series) non associate a nessun libro
-/// - Formati (formats) non usati
-/// - Tipi (types) non usati
-/// - Tag non associati a libri o contenuti
+/// Un'entità è considerata "orfana" quando non è più referenziata da nessun libro o contenuto.
+/// Questo accade tipicamente dopo la cancellazione di libri con `delete_book()`.
 ///
-/// Restituisce il numero di entità eliminate per categoria
+/// Questa funzione rimuove dal database:
+/// - **People** (autori, traduttori, etc.): non presenti in `x_books_people_roles` né `x_contents_people_roles`
+/// - **Publishers**: non referenziati da nessun libro (`books.publisher_id`)
+/// - **Series**: non referenziate da nessun libro (`books.series_id`)
+/// - **Formats**: non usati da nessun libro (`books.format_id`)
+/// - **Types**: non usati da nessun contenuto (`contents.type_id`)
+/// - **Tags**: non presenti in `x_books_tags` né `x_contents_tags`
+///
+/// # Workflow raccomandato
+/// ```
+/// 1. Eliminare uno o più libri con delete_book()
+/// 2. Chiamare cleanup_orphaned_entities() per rimuovere entità orfane
+/// ```
+///
+/// # Returns
+/// `CleanupStats` con il conteggio di entità eliminate per categoria
+///
+/// # Errors
+/// Restituisce errore in caso di problemi di database
 pub async fn cleanup_orphaned_entities(pool: &sqlx::SqlitePool) -> RitmoResult<CleanupStats> {
     let mut stats = CleanupStats::default();
 
@@ -208,13 +243,22 @@ pub async fn cleanup_orphaned_entities(pool: &sqlx::SqlitePool) -> RitmoResult<C
 }
 
 /// Statistiche di pulizia entità orfane
+///
+/// Contiene il numero di entità rimosse per categoria dalla funzione `cleanup_orphaned_entities()`.
+/// Ogni campo rappresenta il conteggio di record eliminati dalla rispettiva tabella.
 #[derive(Debug, Default, Clone)]
 pub struct CleanupStats {
+    /// Numero di persone (autori, traduttori, etc.) rimosse
     pub people_removed: u64,
+    /// Numero di editori rimossi
     pub publishers_removed: u64,
+    /// Numero di serie rimosse
     pub series_removed: u64,
+    /// Numero di formati (epub, pdf, etc.) rimossi
     pub formats_removed: u64,
+    /// Numero di tipi di contenuto rimossi
     pub types_removed: u64,
+    /// Numero di tag rimossi
     pub tags_removed: u64,
 }
 

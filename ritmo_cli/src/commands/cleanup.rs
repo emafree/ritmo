@@ -1,4 +1,20 @@
 //! Cleanup and maintenance commands
+//!
+//! Questo modulo fornisce comandi per la pulizia e manutenzione del database,
+//! in particolare la rimozione di entità orfane che non sono più referenziate
+//! da libri o contenuti.
+//!
+//! ## Comando cleanup
+//!
+//! Rimuove dal database:
+//! - Persone (autori, traduttori, etc.) non associate a libri o contenuti
+//! - Editori non referenziati da libri
+//! - Serie non referenziate da libri
+//! - Formati non usati da libri
+//! - Tipi non usati da contenuti
+//! - Tag non associati a libri o contenuti
+//!
+//! Tipicamente usato dopo aver eliminato libri con `delete-book`.
 
 use crate::helpers::get_library_path;
 use ritmo_config::AppSettings;

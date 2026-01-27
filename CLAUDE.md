@@ -50,7 +50,7 @@ Detailed documentation is organized in the `docs/` directory:
 - **Create**: Import books with manual metadata, SHA256 hash for duplicate detection
 - **Read**: List and filter books with comprehensive query system
 - **Update**: Modify book metadata with optional field updates
-- **Delete**: Remove books with optional file deletion and cleanup of orphaned entities
+- **Delete**: Remove books with CASCADE deletion of relationships, optional physical file deletion, and separate cleanup command for orphaned entities (people, publishers, series, tags, formats)
 
 ### Filter System
 - Multiple filter types: author, publisher, series, format, year, ISBN, dates
@@ -96,11 +96,17 @@ cargo run -p ritmo_cli -- list-books --author "King" --format epub
 # Update book
 cargo run -p ritmo_cli -- update-book 1 --title "New Title"
 
-# Delete book
+# Delete book (database only)
+cargo run -p ritmo_cli -- delete-book 1
+
+# Delete book with physical file
 cargo run -p ritmo_cli -- delete-book 1 --delete-file
 
-# Cleanup orphaned entities
-cargo run -p ritmo_cli -- cleanup --dry-run
+# Force deletion even if file errors occur
+cargo run -p ritmo_cli -- delete-book 1 --delete-file --force
+
+# Cleanup orphaned entities (people, publishers, series, tags, formats)
+cargo run -p ritmo_cli -- cleanup
 ```
 
 ### Content Operations
