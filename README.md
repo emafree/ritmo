@@ -44,6 +44,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[Development Guide](docs/development.md)** - Build, test, and run commands
 - **[Filter System](docs/filters.md)** - Filter types, presets, and usage
 - **[ML System](docs/ml-system.md)** - Entity deduplication documentation
+- **[Book Metadata Format](docs/book_metadata_format.md)** - JSON format for batch import and metadata extraction
 - **[i18n Guide](docs/i18n.md)** - Internationalization system and translation guide
 - **[Session History](docs/sessions/)** - Development changelog
 
@@ -59,6 +60,21 @@ Comprehensive documentation is available in the `docs/` directory:
 - **Read**: List and filter books with comprehensive query system
 - **Update**: Modify book metadata with optional field updates
 - **Delete**: Remove books with optional file deletion and cleanup of orphaned entities
+
+### Book Import Levels
+Progressive automation with integrated workflow:
+- **Level 1 (Implemented)**: Manual single-book import with CLI arguments
+- **Level 2 (Planned)**: Batch import from JSON metadata file (stdin or file)
+- **Level 3 (Planned)**: Automatic EPUB metadata extraction to JSON format (95% automation goal)
+
+**Integrated Workflow**: Level 3 extracts metadata to JSON → Review/edit → Level 2 imports batch
+```bash
+ritmo extract-metadata ~/books/*.epub --output metadata.json  # Level 3
+# Review and edit metadata.json
+ritmo add-batch --input metadata.json  # Level 2
+```
+
+See [Architecture](docs/architecture.md#book-import-levels) for detailed design, JSON format specification, and implementation plans.
 
 ### Filter System
 - Multiple filter types: author, publisher, series, format, year, ISBN, dates
@@ -201,7 +217,8 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 
 ### High Priority
 1. **Portable Bootstrap**: Automatic binary copying to bootstrap/portable_app/
-2. **ebook_parser Integration**: Extract EPUB metadata automatically (goal: 95% automation)
+2. **Book Import Level 2**: Batch import via pipe (file/stdin) for bulk operations
+3. **Book Import Level 3**: ebook_parser integration for automatic metadata extraction (95% automation goal)
 
 ### Medium Priority
 3. **Advanced Filters**: SQL-like query DSL for complex queries

@@ -37,6 +37,7 @@ Detailed documentation is organized in the `docs/` directory:
 - **[Development Guide](docs/development.md)** - Build, test, and run commands
 - **[Filter System](docs/filters.md)** - Comprehensive filter and preset system documentation
 - **[ML System](docs/ml-system.md)** - Entity deduplication with machine learning
+- **[Book Metadata Format](docs/book_metadata_format.md)** - JSON format specification for Levels 2 & 3
 - **[Session History](docs/sessions/)** - Chronological changelog of all development sessions
 
 ## Key Features
@@ -51,6 +52,97 @@ Detailed documentation is organized in the `docs/` directory:
 - **Read**: List and filter books with comprehensive query system
 - **Update**: Modify book metadata with optional field updates
 - **Delete**: Remove books with CASCADE deletion of relationships, optional physical file deletion, and separate cleanup command for orphaned entities (people, publishers, series, tags, formats)
+
+### Book Import Levels
+The book import system is designed with progressive automation levels:
+
+**Level 1 - Manual Import (IMPLEMENTED)**
+- Single book import with manual metadata entry
+- Title is required, all other metadata optional
+- Format auto-detected from file extension
+- SHA256 hash for duplicate detection
+- Command: `add book.epub --title "Title" --author "Author"`
+
+**Level 2 - Batch Import via Pipe (PLANNED)**
+- Import multiple books from JSON metadata file or stdin
+- Uses same JSON format as Level 3 ebook_parser output
+- Enables review/edit workflow: extract metadata → review → batch import
+- Supports per-book metadata with optional shared defaults
+- Input format: JSON array of book metadata objects
+- Examples:
+  - `ritmo add-batch --input books_metadata.json`
+  - `cat books_metadata.json | ritmo add-batch`
+  - `ritmo extract-metadata ~/books/*.epub > metadata.json` (Level 3)
+  - `# Review/edit metadata.json, then:`
+  - `ritmo add-batch --input metadata.json`
+
+**Level 3 - Automatic Metadata Extraction (PLANNED)**
+- Parse EPUB metadata from content.opf automatically
+- Extract: title, authors, publisher, publication date, ISBN, language
+- Output JSON format compatible with Level 2 batch import
+- Goal: 95% automation for ~12,000+ books
+- Confidence scores for each extracted field
+- Two modes:
+  - Extract-only: output JSON for review (use with Level 2)
+  - Direct import: extract and import in one step
+- Integration with ebook_parser crate
+
+**JSON Metadata Format (Levels 2 & 3)**
+
+The format uses a Book/Contents structure reflecting ritmo's database architecture:
+- **Book**: Physical book file with edition metadata (publisher, ISBN, series, format)
+- **Contents**: Literary works contained in the book (authors, translators, languages, type)
+- **People**: Contributors (book-level: editors, preface; content-level: authors, translators)
+
+```json
+[
+  {
+    "file_path": "/path/to/book.epub",
+    "book": {
+      "title": "Complete Works Edition",
+      "original_title": "Original Edition Title",
+      "people": [
+        {"name": "Editor Name", "role": "role.editor"},
+        {"name": "Preface Author", "role": "role.preface"}
+      ],
+      "publisher": "Publisher Name",
+      "year": 2024,
+      "isbn": "978-1234567890",
+      "format": "epub",
+      "series": "Series Name",
+      "series_index": 1,
+      "pages": 350,
+      "notes": "Collected edition",
+      "tags": ["fiction", "collection"]
+    },
+    "contents": [
+      {
+        "title": "Novel Title",
+        "original_title": "Original Title",
+        "people": [
+          {"name": "Author Name", "role": "role.author"},
+          {"name": "Translator Name", "role": "role.translator"}
+        ],
+        "type": "type.novel",
+        "year": 2020,
+        "languages": [
+          {"code": "en", "role": "language_role.original"},
+          {"code": "it", "role": "language_role.actual"}
+        ]
+      }
+    ],
+    "confidence": {
+      "book.title": 0.95,
+      "book.publisher": 0.85,
+      "book.series": 0.85,
+      "contents[0].title": 0.95,
+      "contents[0].people": 0.90
+    }
+  }
+]
+```
+
+See [Book Metadata Format](docs/book_metadata_format.md) for complete specification.
 
 ### Filter System
 - Multiple filter types: author, publisher, series, format, year, ISBN, dates
@@ -274,7 +366,8 @@ For complete session history, see [docs/sessions/](docs/sessions/).
 
 ### High Priority
 1. **Portable Bootstrap**: Automatic binary copying to bootstrap/portable_app/
-2. **ebook_parser Integration**: Extract EPUB metadata automatically (goal: 95% automation)
+2. **Book Import Level 2**: Batch import via pipe (file/stdin) for bulk operations
+3. **Book Import Level 3**: ebook_parser integration for automatic metadata extraction (95% automation goal)
 
 ### Medium Priority
 3. **Advanced Filters**: SQL-like query DSL for complex queries

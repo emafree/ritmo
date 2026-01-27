@@ -1,0 +1,179 @@
+[
+  {
+    "file_path": "/path/to/book1.epub",
+    "book": {
+      "title": "The Complete Works of John Doe",
+      "original_title": "Complete Works - Original Edition",
+      "people": [
+        {
+          "name": "Emily Editor",
+          "role": "role.editor"
+        },
+        {
+          "name": "Peter Publisher",
+          "role": "role.preface"
+        }
+      ],
+      "publisher": "Example Publishing House",
+      "year": 2024,
+      "isbn": "978-1234567890",
+      "format": "epub",
+      "series": "The Great Series",
+      "series_index": 1,
+      "pages": 450,
+      "notes": "Collected edition with three novels",
+      "tags": [
+        "fiction",
+        "fantasy",
+        "collection"
+      ]
+    },
+    "contents": [
+      {
+        "title": "The Great Novel",
+        "original_title": "Le Grand Roman",
+        "people": [
+          {
+            "name": "John Doe",
+            "role": "role.author"
+          },
+          {
+            "name": "Jane Smith",
+            "role": "role.translator"
+          }
+        ],
+        "type": "type.novel",
+        "year": 2020,
+        "languages": [
+          {
+            "code": "fr",
+            "role": "language_role.original"
+          },
+          {
+            "code": "en",
+            "role": "language_role.actual"
+          }
+        ]
+      },
+      {
+        "title": "The Second Adventure",
+        "people": [
+          {
+            "name": "John Doe",
+            "role": "role.author"
+          },
+          {
+            "name": "Jane Smith",
+            "role": "role.translator"
+          }
+        ],
+        "type": "type.novel",
+        "year": 2021,
+        "languages": [
+          {
+            "code": "fr",
+            "role": "language_role.original"
+          },
+          {
+            "code": "en",
+            "role": "language_role.actual"
+          }
+        ]
+      },
+      {
+        "title": "Short Stories Collection",
+        "people": [
+          {
+            "name": "John Doe",
+            "role": "role.author"
+          }
+        ],
+        "type": "type.short_story",
+        "year": 2022,
+        "languages": [
+          {
+            "code": "fr",
+            "role": "language_role.original"
+          },
+          {
+            "code": "en",
+            "role": "language_role.actual"
+          }
+        ]
+      }
+    ],
+    "confidence": {
+      "book.title": 0.95,
+      "book.publisher": 0.85,
+      "book.year": 0.90,
+      "book.isbn": 0.95,
+      "book.series": 0.85,
+      "book.people": 0.75,
+      "contents[0].title": 0.95,
+      "contents[0].people": 0.90,
+      "contents[1].title": 0.92,
+      "contents[1].people": 0.90,
+      "contents[2].title": 0.88,
+      "contents[2].people": 0.90
+    }
+  },
+  {
+    "file_path": "/path/to/book2.epub",
+    "book": {
+      "title": "History of Ancient Rome",
+      "people": [
+        {
+          "name": "David Reviewer",
+          "role": "role.introduction"
+        }
+      ],
+      "publisher": "Academic Press",
+      "year": 2023,
+      "isbn": "978-0987654321",
+      "format": "epub",
+      "pages": 280,
+      "tags": [
+        "non-fiction",
+        "history",
+        "ancient-rome"
+      ]
+    },
+    "contents": [
+      {
+        "title": "History of Ancient Rome",
+        "people": [
+          {
+            "name": "Alice Johnson",
+            "role": "role.author"
+          },
+          {
+            "name": "Marco Translator",
+            "role": "role.translator"
+          }
+        ],
+        "type": "type.essay",
+        "year": 2023,
+        "languages": [
+          {
+            "code": "en",
+            "role": "language_role.original"
+          },
+          {
+            "code": "it",
+            "role": "language_role.actual"
+          }
+        ]
+      }
+    ],
+    "confidence": {
+      "book.title": 0.95,
+      "book.publisher": 0.88,
+      "book.year": 0.90,
+      "book.isbn": 0.95,
+      "book.people": 0.80,
+      "contents[0].title": 0.95,
+      "contents[0].people": 0.92,
+      "contents[0].languages": 0.90
+    }
+  }
+]

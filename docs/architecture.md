@@ -107,6 +107,329 @@ The project is organized as a Rust workspace with the following crates:
 - Critical utility for extracting metadata from EPUB files
 - Originally standalone, now being integrated
 - Must handle ~95% of books automatically (goal: 12,000+ books)
+- Part of Level 3 book import automation (see Book Import Levels below)
+
+## Book Import Levels
+
+The book import system is designed with progressive automation levels:
+
+### Level 1 - Manual Import (IMPLEMENTED)
+**Status**: Fully functional in ritmo_cli
+
+**Location**:
+- CLI: `ritmo_cli/src/commands/books.rs` - `cmd_add()`
+- Service: `ritmo_core/src/service/book_import_service.rs` - `import_book()`
+
+**Features**:
+- Single book import with command-line arguments
+- Title is required, all other metadata optional
+- Format auto-detected from file extension
+- SHA256 hash calculation for duplicate detection
+- Full entity management (authors, publishers, series, tags)
+
+**Usage**:
+```bash
+cargo run -p ritmo_cli -- add book.epub --title "Title" --author "Author"
+```
+
+### Level 2 - Batch Import via Pipe (PLANNED)
+**Status**: Not yet implemented
+
+**Design Goals**:
+- Accept JSON metadata file from stdin or file input
+- Use same JSON format as Level 3 ebook_parser output for seamless integration
+- Enable review/edit workflow: extract → review → import
+- Support per-book metadata with optional shared defaults
+- Maintain same validation and duplicate detection as Level 1
+
+**Planned Features**:
+- Read metadata from file: `--input books_metadata.json`
+- Read from stdin pipe: `cat books_metadata.json | ritmo add-batch`
+- Integration with Level 3: `ritmo extract-metadata *.epub | ritmo add-batch`
+- Progress reporting for batch operations (N/M books imported)
+- Error handling modes:
+  - `--stop-on-error`: abort on first failure (default)
+  - `--continue-on-error`: skip failed books, report at end
+  - `--dry-run`: validate metadata without importing
+- Duplicate detection: skip books with existing SHA256 hash
+- Summary report: success/failure counts, skipped duplicates, errors
+
+**JSON Input Format**:
+The batch import uses a JSON array of import objects, where each object represents a physical book file and its associated contents. This structure reflects ritmo's database architecture with Books and Contents as separate entities. See [book_metadata_format.json](book_metadata_format.json) for a complete example file.
+
+Structure:
+
+```json
+[
+  {
+    "file_path": "/absolute/path/to/book.epub",
+    "book": {
+      "title": "Complete Works Edition",
+      "original_title": "Original Title",
+      "people": [
+        {"name": "Editor Name", "role": "role.editor"},
+        {"name": "Preface Author", "role": "role.preface"}
+      ],
+      "publisher": "Publisher Name",
+      "year": 2024,
+      "isbn": "978-1234567890",
+      "format": "epub",
+      "series": "Series Name",
+      "series_index": 1,
+      "pages": 350,
+      "notes": "Collected edition",
+      "tags": ["fiction", "collection"]
+    },
+    "contents": [
+      {
+        "title": "Novel Title",
+        "original_title": "Original Title",
+        "people": [
+          {"name": "Author Name", "role": "role.author"},
+          {"name": "Translator Name", "role": "role.translator"}
+        ],
+        "type": "type.novel",
+        "year": 2020,
+        "languages": [
+          {"code": "en", "role": "language_role.original"},
+          {"code": "it", "role": "language_role.actual"}
+        ]
+      }
+    ],
+    "confidence": {
+      "book.title": 0.95,
+      "book.publisher": 0.85,
+      "contents[0].title": 0.95,
+      "contents[0].people": 0.90
+    }
+  }
+]
+```
+
+**Field Specifications**:
+
+*Import Object Level:*
+- `file_path` (required): Absolute or relative path to book file
+- `book` (required): Book object (see below)
+- `contents` (optional): Array of content objects (see below)
+- `confidence` (optional): Confidence scores for Level 3 extracted fields (ignored during import)
+
+*Book Object:*
+- `title` (required): Book title (physical edition title)
+- `original_title` (optional): Original title if different
+- `people` (optional): Array of {name, role} objects for book-level contributors (editors, preface writers)
+- `publisher` (optional): Publisher name
+- `year` (optional): Publication year of this edition (integer)
+- `isbn` (optional): ISBN identifier
+- `format` (optional): File format (auto-detected if omitted)
+- `series` (optional): Series name
+- `series_index` (optional): Position in series (integer)
+- `pages` (optional): Page count (integer)
+- `notes` (optional): Free-text notes
+- `tags` (optional): Array of tag strings
+
+*Content Object:*
+- `title` (required): Content title (work title)
+- `original_title` (optional): Original title if different
+- `people` (optional): Array of {name, role} objects for content creators (authors, translators)
+- `type` (optional): Content type (i18n key: "type.novel", "type.short_story", "type.essay", etc.)
+- `year` (optional): Original publication year of work (integer)
+- `languages` (optional): Array of {code, role} objects (role uses i18n keys: "language_role.original", "language_role.actual", etc.)
+
+*People Object:*
+- `name` (required): Person name
+- `role` (required): Role i18n key ("role.author", "role.translator", "role.editor", etc.)
+
+**Book vs Content Level**:
+- **Book-level**: Physical edition metadata (publisher, ISBN, series, format, pages, edition contributors)
+- **Content-level**: Literary work metadata (authors, translators, original year, languages, type)
+- A book can contain multiple contents (collections, omnibus editions)
+- If `contents` is empty or omitted, only book metadata is imported
+
+**Workflow Integration with Level 3**:
+```bash
+# Step 1: Extract metadata from EPUBs (Level 3)
+ritmo extract-metadata ~/books/*.epub --output metadata.json
+
+# Step 2: Review and edit metadata.json manually
+# - Check confidence scores (low-confidence fields)
+# - Fix incorrect extractions (wrong authors, series, etc.)
+# - Add missing data (tags, notes, missing contributors)
+# - Split or merge contents if needed
+# - Remove unwanted books from the array
+
+# Step 3: Batch import with reviewed metadata (Level 2)
+ritmo add-batch --input metadata.json
+
+# Alternative: Combined one-step workflow for trusted sources
+ritmo extract-metadata ~/books/*.epub | ritmo add-batch
+
+# Or with confidence filtering:
+ritmo extract-metadata ~/books/*.epub --min-confidence 0.85 | ritmo add-batch
+```
+
+**Key Integration Points**:
+- Level 3 output = Level 2 input (same JSON schema)
+- Confidence scores help identify fields needing manual review
+- Manual editing step allows correction before database import
+- One-step pipeline available for trusted sources
+
+**Implementation Considerations**:
+- New CLI command: `add-batch` (separate from `add` for clarity)
+- Parser: Use `serde_json` to deserialize JSON array of import objects
+- Validation: Check required fields before processing:
+  - Import level: `file_path`, `book` object
+  - Book level: `book.title`
+  - Content level: `contents[].title` (if contents present)
+- Import service refactoring:
+  - Extend or create new service to handle book + contents import
+  - Current `book_import_service::import_book()` handles single book without contents
+  - Need service to import book + create contents + associate them
+- Database operations:
+  1. Import book file (hash, storage, create books record)
+  2. Create/get book-level entities (publisher, series, people, tags)
+  3. For each content:
+     - Create contents record
+     - Create/get content-level entities (people, languages)
+     - Link content to book (x_books_contents)
+  4. Link all relationships (x_books_people_roles, x_contents_people_roles, etc.)
+- Transaction strategy: per import object (not batch-level) for partial success
+- Batch orchestration layer:
+  - Progress bar using indicatif crate (N/M books imported)
+  - Error collection and reporting (skip failed, continue or abort)
+  - Summary: success count, failure count, skipped duplicates
+- File path resolution: support both absolute and relative paths
+- RitmoReporter integration for consistent output
+- Content detection: if `contents` array is empty/missing, create single default content from book metadata
+
+### Level 3 - Automatic Metadata Extraction (PLANNED)
+**Status**: ebook_parser crate exists but only as skeleton
+
+**Location**: `ebook_parser/`
+
+**Design Goals**:
+- Extract metadata automatically from EPUB files (content.opf)
+- Output JSON format compatible with Level 2 batch import
+- Achieve 95% automation rate for metadata population
+- Handle 12,000+ books without manual intervention
+- Provide confidence scores for user review
+
+**Planned Features**:
+- Parse EPUB archive (ZIP format with `zip` crate)
+- Extract content.opf (package metadata location from container.xml)
+- Parse Dublin Core metadata elements:
+  - `dc:title` → title
+  - `dc:creator` (with role="aut") → authors
+  - `dc:contributor` (with role="trl", etc.) → translators/contributors
+  - `dc:publisher` → publisher
+  - `dc:date` → year (extract year from date)
+  - `dc:identifier` (scheme="ISBN") → isbn
+  - `dc:language` → languages
+  - `dc:subject` → tags
+- Series detection:
+  - Check for `<meta property="belongs-to-collection">` (EPUB3)
+  - Check for `<meta name="calibre:series">` (Calibre format)
+  - Fallback: extract from title or filename patterns
+- Page count estimation:
+  - Parse spine items and estimate from content length
+- Confidence scoring for each extracted field (0.0-1.0)
+- Output modes:
+  - `--output JSON`: Write JSON file (for Level 2 workflow)
+  - `--stdout`: Pipe to stdout (for direct Level 2 integration)
+  - `--import`: Direct import mode (extract + import in one step)
+
+**Output Format**:
+Same JSON format as Level 2 input (see Level 2 section above). The ebook_parser will:
+1. Extract book-level metadata (publisher, ISBN, edition year) from EPUB metadata
+2. Detect and extract individual contents (works) within the EPUB:
+   - Single-work EPUBs: one content entry
+   - Collections/omnibus: multiple content entries (detected from spine structure or TOC)
+3. Assign people to appropriate level:
+   - Authors, translators → content-level people
+   - Editors, edition preface/introduction → book-level people
+4. Generate confidence scores for all extracted fields
+
+Example commands:
+
+```bash
+# Extract metadata only (for review)
+ritmo extract-metadata ~/books/*.epub --output metadata.json
+
+# Extract and pipe to batch import
+ritmo extract-metadata ~/books/*.epub | ritmo add-batch
+
+# Extract with confidence threshold (filter out low-confidence)
+ritmo extract-metadata ~/books/*.epub --min-confidence 0.80 --output metadata.json
+
+# Extract single file
+ritmo extract-metadata book.epub
+```
+
+Example output structure:
+```json
+[
+  {
+    "file_path": "/path/to/book.epub",
+    "book": { /* edition metadata */ },
+    "contents": [ /* work(s) metadata */ ],
+    "confidence": { /* extraction confidence scores */ }
+  }
+]
+```
+
+**Confidence Scoring Logic**:
+
+*Book-level fields:*
+- **book.title**: 0.95 if found in dc:title, 0.50 if extracted from filename
+- **book.publisher**: 0.85 if found in dc:publisher
+- **book.year**: 0.90 if parsed from dc:date, 0.60 if estimated
+- **book.isbn**: 0.95 if found in dc:identifier with scheme="ISBN"
+- **book.series**: 0.90 if found in metadata (EPUB3 collection or Calibre meta), 0.60 if extracted from title/filename
+- **book.people**: 0.75 if contributors found in dc:contributor (edition-level roles)
+
+*Content-level fields:*
+- **contents[N].title**: 0.95 if found in dc:title or spine metadata, 0.60 if inferred
+- **contents[N].people**: 0.90 if found in dc:creator with role, 0.70 if role missing
+- **contents[N].type**: 0.85 if found in dc:type, 0.60 if inferred from content
+- **contents[N].year**: 0.90 if found in metadata, 0.60 if estimated
+- **contents[N].languages**: 0.90 if found in dc:language
+
+*General scoring ranges:*
+- **0.90-1.0**: Found in proper metadata fields
+- **0.70-0.89**: Inferred with medium confidence
+- **0.50-0.69**: Extracted from filename or estimated
+
+Confidence keys use dot notation for books (`book.*`) and array indexing for contents (`contents[N].*`).
+
+**Dependencies Ready**:
+- `zip = "2.2"` - EPUB archive reading
+- `quick-xml = "0.36"` - OPF XML parsing
+- `serde = { workspace }` - JSON serialization
+- `serde_json` - JSON output generation
+- `thiserror = "2.0"` - Error handling
+
+**CLI Integration**:
+New command in `ritmo_cli`:
+```rust
+// ritmo_cli/src/commands/metadata.rs
+pub async fn cmd_extract_metadata(
+    files: Vec<PathBuf>,
+    output: Option<PathBuf>,
+    min_confidence: Option<f32>,
+) -> Result<(), RitmoErr>
+```
+
+**Integration Points**:
+- **Level 2 Workflow**: Extract to JSON → review → batch import
+- **Level 1 Enhancement**: Use ebook_parser as metadata suggestion for single imports
+- **Direct Import Mode**: Extract + import in one command for trusted sources
+- **GUI Integration**: Show extracted metadata with confidence scores for user review
+
+**Error Handling**:
+- Invalid EPUB structure: skip file, log error, continue with next
+- Missing OPF file: attempt fallback to filename parsing
+- Malformed XML: use regex fallback for critical fields (title, author)
+- Invalid metadata: include in output with low confidence scores
 
 ## Directory Structure
 
