@@ -60,7 +60,7 @@ fn format_books_table(books: &[BookResult]) -> String {
     for book in books {
         let title = truncate(&book.name, 38);
         let publisher = truncate(&book.publisher_name.clone().unwrap_or_default(), 18);
-        let format = book.format_name.clone().unwrap_or_default();
+        let format = book.format_key.clone().unwrap_or_default();
         let year = book
             .formatted_publication_date()
             .and_then(|d| d.split('-').next().map(String::from))
@@ -94,7 +94,7 @@ fn format_books_simple(books: &[BookResult]) -> String {
             output.push_str(&format!("[{}] ", year.split('-').next().unwrap_or("")));
         }
 
-        if let Some(format) = &book.format_name {
+        if let Some(format) = &book.format_key {
             output.push_str(&format!("- {} ", format));
         }
 
@@ -127,7 +127,7 @@ fn format_contents_table(contents: &[ContentResult]) -> String {
     // Rows
     for content in contents {
         let title = truncate(&content.name, 43);
-        let content_type = truncate(&content.type_name.clone().unwrap_or_default(), 18);
+        let content_type = truncate(&content.type_key.clone().unwrap_or_default(), 18);
         let year = content
             .formatted_publication_date()
             .and_then(|d| d.split('-').next().map(String::from))
@@ -153,7 +153,7 @@ fn format_contents_simple(contents: &[ContentResult]) -> String {
     for content in contents {
         output.push_str(&format!("• {} ", content.name));
 
-        if let Some(content_type) = &content.type_name {
+        if let Some(content_type) = &content.type_key {
             output.push_str(&format!("[{}] ", content_type));
         }
 

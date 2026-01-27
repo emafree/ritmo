@@ -264,6 +264,15 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 
 ## Recent Changes
 
+### 2026-01-27 - Session 22: Filter System Schema Migration Bugfix - COMPLETED
+Fixed SQL errors in list-books and list-contents commands after Session 17 i18n schema changes.
+- **Problem**: Commands failed with "no such column: formats.name" and "types.name" errors
+- **Root Cause**: Filter system queries not updated after Session 17 changed `formats.name` → `formats.key` and `types.name` → `types.key`
+- **Files Modified**: 3 files (builder.rs, types.rs, formatter.rs)
+- **Changes**: Updated 14 references from `format_name/type_name` to `format_key/type_key`
+- **Testing**: All commands now work correctly with table, JSON, and simple output formats
+- **Related**: Session 17 (i18n Phase 2 - Type and Format Models)
+
 ### 2026-01-27 - Session 21: Book Import Level 2 - Batch Import Implementation - COMPLETED
 Implemented complete batch import system for importing multiple books from JSON files.
 - **CLI Command**: `add-batch` with support for file input (`--input`) and stdin

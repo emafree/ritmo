@@ -215,7 +215,7 @@ impl ContentSortField {
             Self::Title => "contents.name",
             Self::Author => "people.name",
             Self::Year => "contents.publication_date",
-            Self::Type => "types.name",
+            Self::Type => "types.key",
         }
     }
 }
@@ -227,7 +227,7 @@ pub struct BookResult {
     pub name: String,
     pub original_title: Option<String>,
     pub publisher_name: Option<String>,
-    pub format_name: Option<String>,
+    pub format_key: Option<String>,
     pub series_name: Option<String>,
     pub series_index: Option<i64>,
     pub publication_date: Option<i64>,
@@ -276,7 +276,7 @@ pub struct ContentResult {
     pub id: i64,
     pub name: String,
     pub original_title: Option<String>,
-    pub type_name: Option<String>,
+    pub type_key: Option<String>,
     pub publication_date: Option<i64>,
     pub pages: Option<i64>,
     pub created_at: i64,
@@ -303,7 +303,7 @@ impl ContentResult {
     pub fn to_short_string(&self) -> String {
         let mut parts = vec![self.name.clone()];
 
-        if let Some(content_type) = &self.type_name {
+        if let Some(content_type) = &self.type_key {
             parts.push(format!("[{}]", content_type));
         }
 
@@ -370,7 +370,7 @@ mod tests {
             name: "Il barone rampante".to_string(),
             original_title: Some("Il barone rampante".to_string()),
             publisher_name: Some("Einaudi".to_string()),
-            format_name: Some("EPUB".to_string()),
+            format_key: Some("format.epub".to_string()),
             series_name: Some("I nostri antenati".to_string()),
             series_index: Some(2),
             publication_date: Some(1262304000), // 2010-01-01
@@ -394,7 +394,7 @@ mod tests {
             id: 1,
             name: "Il cavaliere inesistente".to_string(),
             original_title: None,
-            type_name: Some("Romanzo".to_string()),
+            type_key: Some("type.novel".to_string()),
             publication_date: Some(1262304000), // 2010-01-01
             pages: Some(250),
             created_at: 1609459200,
@@ -407,6 +407,6 @@ mod tests {
         assert!(content
             .to_short_string()
             .contains("Il cavaliere inesistente"));
-        assert!(content.to_short_string().contains("[Romanzo]"));
+        assert!(content.to_short_string().contains("[type.novel]"));
     }
 }

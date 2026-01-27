@@ -53,7 +53,7 @@ pub fn build_books_query(filters: &BookFilters) -> (String, Vec<String>) {
             books.name,
             books.original_title,
             publishers.name as publisher_name,
-            formats.name as format_name,
+            formats.key as format_key,
             series.name as series_name,
             books.series_index,
             books.publication_date,
@@ -106,7 +106,7 @@ pub fn build_books_query(filters: &BookFilters) -> (String, Vec<String>) {
 
     // Filtro formati (OR logic if multiple)
     if let Some((clause, mut clause_params)) =
-        build_or_clause("formats.name", &filters.formats, true)
+        build_or_clause("formats.key", &filters.formats, true)
     {
         where_clauses.push(clause);
         params.append(&mut clause_params);
@@ -177,7 +177,7 @@ pub fn build_contents_query(filters: &ContentFilters) -> (String, Vec<String>) {
             contents.id,
             contents.name,
             contents.original_title,
-            types.name as type_name,
+            types.key as type_key,
             contents.publication_date,
             contents.pages,
             contents.created_at
@@ -208,7 +208,7 @@ pub fn build_contents_query(filters: &ContentFilters) -> (String, Vec<String>) {
 
     // Filtro tipi di contenuto (OR logic if multiple)
     if let Some((clause, mut clause_params)) =
-        build_or_clause("types.name", &filters.content_types, true)
+        build_or_clause("types.key", &filters.content_types, true)
     {
         where_clauses.push(clause);
         params.append(&mut clause_params);
