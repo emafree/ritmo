@@ -101,12 +101,21 @@ pub async fn import_book(
             .timestamp()
     });
 
-    let file_name = file_path
-        .file_name()
-        .and_then(|n| n.to_str())
-        .ok_or_else(|| RitmoErr::Generic("Nome file non valido".into()))?;
+    // Determina estensione file
+    let extension = file_path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("epub");
 
-    let relative_path = format!("books/{}", file_name);
+    // Genera path hash-based gerarchico
+    // Formato: books/{hash[0:2]}/{hash[2:4]}/{hash[4:]}.{ext}
+    let relative_path = format!(
+        "books/{}/{}/{}.{}",
+        &file_hash[0..2],   // Primo livello directory
+        &file_hash[2..4],   // Secondo livello directory
+        &file_hash[4..],    // Nome file (resto dell'hash)
+        extension
+    );
 
     let book = Book {
         id: None,

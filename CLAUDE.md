@@ -264,6 +264,23 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 
 ## Recent Changes
 
+### 2026-01-27 - Session 23: Hash-Based Storage System Implementation - COMPLETED
+Implemented content-addressed hash-based file storage system for optimal performance and deduplication.
+- **Problem**: Previous system used human-readable filenames (flat directory, collision-prone, poor scalability)
+- **Solution**: SHA256 hash-based hierarchical storage: `books/{hash[0:2]}/{hash[2:4]}/{hash[4:]}.{ext}`
+- **Implementation**:
+  - Modified `book_import_service.rs` to generate hash-based paths from file content hash
+  - Removed unused `storage_service.rs` and `Book::set_book_persistence()` (metadata-based hashing)
+  - Both single and batch import use new system automatically
+- **Benefits**:
+  - 65,536 subdirectories (256×256) for optimal distribution
+  - Content-addressed: same file = same path (automatic deduplication)
+  - O(1) lookup performance with known hash
+  - Scalable to millions of books
+- **Testing**: Verified import, list, delete, and duplicate detection
+- **Database Cleared**: Removed 23 existing books (old naming system), fresh start
+- **Documentation**: Comprehensive "File Storage System" section in architecture.md
+
 ### 2026-01-27 - Session 22: Filter System Schema Migration Bugfix - COMPLETED
 Fixed SQL errors in list-books and list-contents commands after Session 17 i18n schema changes.
 - **Problem**: Commands failed with "no such column: formats.name" and "types.name" errors

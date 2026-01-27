@@ -33,12 +33,12 @@ The project is organized as a Rust workspace with the following crates:
 - Core business logic and ebook management
 - DTOs in `src/dto/`: book_dto, people_dto, publishers_dto, language_dto, alias_dto, content_dto, tags_dto (some placeholders)
 - Services in `src/service/`:
-  - `storage_service.rs`: File storage operations
-  - `book_import_service.rs`: Book import with manual metadata (SHA256 hash, duplicate detection)
+  - `book_import_service.rs`: Book import with manual metadata (SHA256 hash-based storage, duplicate detection)
   - `book_update_service.rs`: Update book metadata with optional fields
   - `content_update_service.rs`: Update content metadata
   - `delete_service.rs`: Delete operations with file management + cleanup utilities
-- Uses SHA2 for content hashing
+  - `batch_import_service.rs`: Batch import for multiple books from JSON
+- Uses SHA2 for content hashing and hash-based file storage
 
 ### ritmo_cli
 - Command-line interface with full library management
@@ -461,7 +461,11 @@ Created when library is initialized:
 library_root/
 ├── database/              # SQLite database (ritmo.db)
 ├── storage/
-│   ├── books/            # Actual book files
+│   ├── books/            # Book files organized by SHA256 hash
+│   │   ├── {hash[0:2]}/  # First level: first 2 chars of hash
+│   │   │   └── {hash[2:4]}/  # Second level: chars 3-4 of hash
+│   │   │       └── {hash[4:]}.{ext}  # Filename: remaining hash + extension
+│   │   # Example: d1/21/b095fd222ac6d4f13eebaba7a3d08fe35fee3189b996d6020b3365c27252.epub
 │   ├── covers/           # Cover images
 │   └── temp/             # Temporary files
 ├── config/               # Configuration files
@@ -473,6 +477,12 @@ library_root/
         ├── ritmo_cli     # CLI executable
         └── README.md     # Usage instructions
 ```
+
+**Hash-Based Storage**: Book files are stored in a hierarchical structure based on their SHA256 content hash. This provides:
+- Content-addressed storage (same file = same location)
+- Efficient distribution across 65,536 subdirectories (256×256)
+- Automatic duplicate detection at the filesystem level
+- Optimal performance with large collections
 
 **Portable Mode**: When running from `library_root/bootstrap/portable_app/`, ritmo automatically detects and uses the parent library without needing global configuration.
 
@@ -486,6 +496,79 @@ library_root/
 - Template-based initialization: database copied from embedded template (`DB_TEMPLATE`)
 - Async operations via SQLx with Tokio runtime
 - Connection pooling for concurrent access
+
+## File Storage System
+
+**Hash-Based Content-Addressed Storage**: Ritmo uses SHA256 content hashing for file organization and duplicate detection.
+
+### Storage Path Structure
+```
+storage/books/{hash[0:2]}/{hash[2:4]}/{hash[4:]}.{extension}
+```
+
+**Example**: File with SHA256 hash `d121b095fd222ac6d4f13eebaba7a3d08fe35fee3189b996d6020b3365c27252`
+```
+storage/books/d1/21/b095fd222ac6d4f13eebaba7a3d08fe35fee3189b996d6020b3365c27252.epub
+```
+
+### Key Features
+
+1. **Content-Addressed**: Same file content always results in the same storage path
+   - Automatic deduplication at the filesystem level
+   - Identical books are stored only once
+
+2. **Hierarchical Distribution**:
+   - First level: 256 directories (00-ff, first 2 hex chars)
+   - Second level: 256 subdirectories per first level (256×256 = 65,536 total)
+   - With 1 million books: ~15 files per directory (optimal filesystem performance)
+
+3. **Duplicate Detection**: SHA256 hash stored in `books.file_hash` (UNIQUE constraint)
+   - Hash calculated from file content during import
+   - Database query prevents duplicate imports before file copy
+   - No collision risk (SHA256 collision probability: ~1 in 2^256)
+
+4. **Database Integration**:
+   - `books.file_link`: Relative path from storage root (e.g., `"books/d1/21/b095fd222...epub"`)
+   - `books.file_hash`: Full SHA256 hash (64 hex characters)
+   - `books.file_size`: File size in bytes
+
+### Import Workflow
+
+1. Read file content and calculate SHA256 hash
+2. Check database for existing `file_hash` (duplicate detection)
+3. Generate hierarchical path from hash
+4. Create subdirectories if needed (`mkdir -p`)
+5. Copy file to storage location
+6. Save book record with `file_link` and `file_hash`
+
+### Benefits
+
+- **Performance**: O(1) lookup with known hash, efficient with millions of files
+- **Portability**: Relative paths allow library relocation
+- **Integrity**: Content hash verifies file integrity
+- **Deduplication**: Same content = same location (no duplicates)
+- **Scalability**: Excellent distribution prevents filesystem bottlenecks
+- **Backup-Friendly**: Stable paths (hash-based, not metadata-based)
+
+### Implementation
+
+**Location**: `ritmo_core/src/service/book_import_service.rs`
+
+```rust
+// Hash calculation
+let file_content = fs::read(file_path)?;
+let file_hash = calculate_hash(&file_content);  // SHA256 -> 64 hex chars
+
+// Path generation
+let extension = file_path.extension().unwrap_or("epub");
+let relative_path = format!(
+    "books/{}/{}/{}.{}",
+    &file_hash[0..2],   // First level
+    &file_hash[2..4],   // Second level
+    &file_hash[4..],    // Filename
+    extension
+);
+```
 
 ## Internationalization (i18n) Architecture
 
