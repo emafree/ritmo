@@ -130,11 +130,11 @@ cargo run -p ritmo_cli -- cleanup --dry-run
 
 ### ML Deduplication Operations
 ```bash
-# Find duplicate authors (dry-run mode)
-cargo run -p ritmo_cli -- deduplicate-authors --dry-run
+# Find duplicate people (authors, translators, etc.) - dry-run mode
+cargo run -p ritmo_cli -- deduplicate-people --dry-run
 
-# Merge duplicate authors with auto-merge
-cargo run -p ritmo_cli -- deduplicate-authors --threshold 0.90 --auto-merge
+# Merge duplicate people with auto-merge
+cargo run -p ritmo_cli -- deduplicate-people --threshold 0.90 --auto-merge
 
 # Find duplicate publishers
 cargo run -p ritmo_cli -- deduplicate-publishers --dry-run
@@ -145,7 +145,7 @@ cargo run -p ritmo_cli -- deduplicate-series --dry-run
 # Find duplicate tags
 cargo run -p ritmo_cli -- deduplicate-tags --dry-run
 
-# Run deduplication for all entity types (authors, publishers, series, tags)
+# Run deduplication for all entity types (people, publishers, series, tags, roles)
 cargo run -p ritmo_cli -- deduplicate-all --threshold 0.85 --dry-run
 ```
 

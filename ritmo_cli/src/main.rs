@@ -496,8 +496,8 @@ enum Commands {
         dry_run: bool,
     },
 
-    /// Find and merge duplicate authors using ML
-    DeduplicateAuthors {
+    /// Find and merge duplicate people (authors, translators, etc.) using ML
+    DeduplicatePeople {
         /// Minimum confidence threshold (0.0-1.0)
         #[arg(long, short = 't', default_value = "0.85")]
         threshold: f64,
@@ -891,12 +891,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Cleanup { dry_run } => {
             cmd_cleanup(&cli.library, &app_settings, dry_run).await?;
         }
-        Commands::DeduplicateAuthors {
+        Commands::DeduplicatePeople {
             threshold,
             auto_merge,
             dry_run,
         } => {
-            cmd_deduplicate_authors(&cli.library, &app_settings, threshold, auto_merge, dry_run)
+            cmd_deduplicate_people(&cli.library, &app_settings, threshold, auto_merge, dry_run)
                 .await?;
         }
         Commands::DeduplicatePublishers {

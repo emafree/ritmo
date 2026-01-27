@@ -99,8 +99,8 @@ The ritmo CLI provides five commands for ML-based deduplication:
 ### Command Overview
 
 ```bash
-# Find duplicate authors (dry-run mode - safe preview)
-ritmo deduplicate-authors --dry-run
+# Find duplicate people (authors, translators, etc.) - dry-run mode (safe preview)
+ritmo deduplicate-people --dry-run
 
 # Find duplicate publishers
 ritmo deduplicate-publishers --dry-run
@@ -126,20 +126,20 @@ All deduplication commands support these options:
 ### Examples
 
 ```bash
-# Preview duplicate authors with default threshold (0.85)
-cargo run -p ritmo_cli -- deduplicate-authors --dry-run
+# Preview duplicate people with default threshold (0.85)
+cargo run -p ritmo_cli -- deduplicate-people --dry-run
 
-# Find duplicate authors with higher confidence threshold
-cargo run -p ritmo_cli -- deduplicate-authors --threshold 0.90 --dry-run
+# Find duplicate people with higher confidence threshold
+cargo run -p ritmo_cli -- deduplicate-people --threshold 0.90 --dry-run
 
-# Actually merge duplicate authors (CAUTION: modifies database!)
-cargo run -p ritmo_cli -- deduplicate-authors --threshold 0.90 --auto-merge
+# Actually merge duplicate people (CAUTION: modifies database!)
+cargo run -p ritmo_cli -- deduplicate-people --threshold 0.90 --auto-merge
 
 # Find duplicate tags
 cargo run -p ritmo_cli -- deduplicate-tags --dry-run
 cargo run -p ritmo_cli -- deduplicate-tags --threshold 0.85 --auto-merge
 
-# Find duplicates across all entity types (authors, publishers, series, tags)
+# Find duplicates across all entity types (people, publishers, series, tags, roles)
 cargo run -p ritmo_cli -- deduplicate-all --threshold 0.85 --dry-run
 
 # Merge all duplicates with high confidence
@@ -287,13 +287,13 @@ let series = SeriesRecord {
 - Unicode NFC normalization
 - Efficient database queries
 
-## CLI Integration (Planned)
+## CLI Integration (COMPLETED)
 
-Future commands:
+The following commands are now available:
 ```bash
-# Deduplicate authors
+# Deduplicate people (authors, translators, etc.)
 ritmo deduplicate-people --dry-run
-ritmo deduplicate-people --auto-merge --min-confidence 0.95
+ritmo deduplicate-people --auto-merge --threshold 0.95
 
 # Deduplicate publishers
 ritmo deduplicate-publishers --dry-run
@@ -301,6 +301,13 @@ ritmo deduplicate-publishers --auto-merge
 
 # Deduplicate series
 ritmo deduplicate-series --dry-run
+ritmo deduplicate-series --auto-merge
+
+# Deduplicate tags
+ritmo deduplicate-tags --dry-run
+
+# Deduplicate all entities
+ritmo deduplicate-all --dry-run
 ```
 
 ## Testing

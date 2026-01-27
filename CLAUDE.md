@@ -131,11 +131,11 @@ cargo run -p ritmo_cli -- unlink-content --content-id 1 --book-id 1
 
 ### ML Deduplication Operations
 ```bash
-# Find duplicate authors (dry-run by default)
-cargo run -p ritmo_cli -- deduplicate-authors --dry-run
+# Find duplicate people (authors, translators, etc.) - dry-run by default
+cargo run -p ritmo_cli -- deduplicate-people --dry-run
 
-# Merge duplicate authors with custom threshold
-cargo run -p ritmo_cli -- deduplicate-authors --threshold 0.90 --auto-merge
+# Merge duplicate people with custom threshold
+cargo run -p ritmo_cli -- deduplicate-people --threshold 0.90 --auto-merge
 
 # Find duplicate publishers
 cargo run -p ritmo_cli -- deduplicate-publishers --dry-run
@@ -146,7 +146,7 @@ cargo run -p ritmo_cli -- deduplicate-series --dry-run
 # Find duplicate tags
 cargo run -p ritmo_cli -- deduplicate-tags --dry-run
 
-# Run deduplication for all entity types (authors, publishers, series, tags)
+# Run deduplication for all entity types (people, publishers, series, tags, roles)
 cargo run -p ritmo_cli -- deduplicate-all --threshold 0.85 --dry-run
 ```
 
@@ -235,10 +235,11 @@ Implemented full CRUD operations for Contents with 3 new CLI commands.
 - Full test coverage and documentation updates
 
 ### 2026-01-25 - Session 12: ML CLI Integration - COMPLETED
-Integrated ritmo_ml deduplication system into CLI with 4 new commands.
-- `deduplicate-authors` - Find and merge duplicate authors using ML
+Integrated ritmo_ml deduplication system into CLI with 5 new commands.
+- `deduplicate-people` - Find and merge duplicate people (authors, translators, etc.) using ML
 - `deduplicate-publishers` - Find and merge duplicate publishers
 - `deduplicate-series` - Find and merge duplicate series
+- `deduplicate-tags` - Find and merge duplicate tags
 - `deduplicate-all` - Run deduplication for all entity types
 - Configurable threshold, auto-merge, and dry-run modes
 - User-friendly output with confidence scores and merge statistics

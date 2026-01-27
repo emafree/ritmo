@@ -72,8 +72,8 @@ fn print_deduplication_results(result: &DeduplicationResult, entity_type: &str, 
     }
 }
 
-/// Command: deduplicate-authors - Find and merge duplicate authors
-pub async fn cmd_deduplicate_authors(
+/// Command: deduplicate-people - Find and merge duplicate people (authors, translators, etc.)
+pub async fn cmd_deduplicate_people(
     cli_library: &Option<PathBuf>,
     app_settings: &AppSettings,
     threshold: f64,
@@ -90,7 +90,7 @@ pub async fn cmd_deduplicate_authors(
     let mut reporter = SilentReporter;
     let pool = config.create_pool(&mut reporter).await?;
 
-    println!("🔍 Searching for duplicate authors...");
+    println!("🔍 Searching for duplicate people...");
 
     // Default to dry-run mode for safety (invert the flag logic)
     let actual_dry_run = if auto_merge && !dry_run {
@@ -108,7 +108,7 @@ pub async fn cmd_deduplicate_authors(
 
     match deduplicate_people(&pool, &dedup_config).await {
         Ok(result) => {
-            print_deduplication_results(&result, "Authors", dry_run);
+            print_deduplication_results(&result, "People", dry_run);
             Ok(())
         }
         Err(e) => {
@@ -336,13 +336,13 @@ pub async fn cmd_deduplicate_all(
         dry_run: actual_dry_run,
     };
 
-    // Deduplicate authors
+    // Deduplicate people (authors, translators, etc.)
     println!("═══════════════════════════════════════════════════════");
-    println!("👥 AUTHORS");
+    println!("👥 PEOPLE");
     println!("═══════════════════════════════════════════════════════");
     match deduplicate_people(&pool, &dedup_config).await {
-        Ok(result) => print_deduplication_results(&result, "Authors", dry_run),
-        Err(e) => eprintln!("✗ Error deduplicating authors: {}", e),
+        Ok(result) => print_deduplication_results(&result, "People", dry_run),
+        Err(e) => eprintln!("✗ Error deduplicating people: {}", e),
     }
 
     // Deduplicate publishers
