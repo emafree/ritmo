@@ -2,6 +2,7 @@
 
 use crate::helpers::get_library_path;
 use ritmo_config::AppSettings;
+use ritmo_db::mark_books_for_sync;
 use ritmo_db_core::LibraryConfig;
 use ritmo_errors::reporter::SilentReporter;
 use ritmo_ml::deduplication::{
@@ -109,6 +110,23 @@ pub async fn cmd_deduplicate_people(
     match deduplicate_people(&pool, &dedup_config).await {
         Ok(result) => {
             print_deduplication_results(&result, "People", dry_run);
+
+            // Mark affected books for sync if not dry-run
+            if !actual_dry_run && !result.merged_groups.is_empty() {
+                let mut all_affected_books = Vec::new();
+                for stats in &result.merged_groups {
+                    all_affected_books.extend(&stats.affected_book_ids);
+                }
+                all_affected_books.sort();
+                all_affected_books.dedup();
+
+                if !all_affected_books.is_empty() {
+                    mark_books_for_sync(&pool, &all_affected_books, "author_deduplicate").await?;
+                    println!("\n📝 Marked {} books for metadata sync", all_affected_books.len());
+                    println!("   Run 'ritmo sync-metadata' to update EPUB files with new metadata");
+                }
+            }
+
             Ok(())
         }
         Err(e) => {
@@ -155,6 +173,23 @@ pub async fn cmd_deduplicate_publishers(
     match deduplicate_publishers(&pool, &dedup_config).await {
         Ok(result) => {
             print_deduplication_results(&result, "Publishers", dry_run);
+
+            // Mark affected books for sync if not dry-run
+            if !actual_dry_run && !result.merged_groups.is_empty() {
+                let mut all_affected_books = Vec::new();
+                for stats in &result.merged_groups {
+                    all_affected_books.extend(&stats.affected_book_ids);
+                }
+                all_affected_books.sort();
+                all_affected_books.dedup();
+
+                if !all_affected_books.is_empty() {
+                    mark_books_for_sync(&pool, &all_affected_books, "publisher_deduplicate").await?;
+                    println!("\n📝 Marked {} books for metadata sync", all_affected_books.len());
+                    println!("   Run 'ritmo sync-metadata' to update EPUB files with new metadata");
+                }
+            }
+
             Ok(())
         }
         Err(e) => {
@@ -201,6 +236,23 @@ pub async fn cmd_deduplicate_series(
     match deduplicate_series(&pool, &dedup_config).await {
         Ok(result) => {
             print_deduplication_results(&result, "Series", dry_run);
+
+            // Mark affected books for sync if not dry-run
+            if !actual_dry_run && !result.merged_groups.is_empty() {
+                let mut all_affected_books = Vec::new();
+                for stats in &result.merged_groups {
+                    all_affected_books.extend(&stats.affected_book_ids);
+                }
+                all_affected_books.sort();
+                all_affected_books.dedup();
+
+                if !all_affected_books.is_empty() {
+                    mark_books_for_sync(&pool, &all_affected_books, "series_deduplicate").await?;
+                    println!("\n📝 Marked {} books for metadata sync", all_affected_books.len());
+                    println!("   Run 'ritmo sync-metadata' to update EPUB files with new metadata");
+                }
+            }
+
             Ok(())
         }
         Err(e) => {
@@ -247,6 +299,23 @@ pub async fn cmd_deduplicate_tags(
     match deduplicate_tags(&pool, &dedup_config).await {
         Ok(result) => {
             print_deduplication_results(&result, "Tags", dry_run);
+
+            // Mark affected books for sync if not dry-run
+            if !actual_dry_run && !result.merged_groups.is_empty() {
+                let mut all_affected_books = Vec::new();
+                for stats in &result.merged_groups {
+                    all_affected_books.extend(&stats.affected_book_ids);
+                }
+                all_affected_books.sort();
+                all_affected_books.dedup();
+
+                if !all_affected_books.is_empty() {
+                    mark_books_for_sync(&pool, &all_affected_books, "tag_deduplicate").await?;
+                    println!("\n📝 Marked {} books for metadata sync", all_affected_books.len());
+                    println!("   Run 'ritmo sync-metadata' to update EPUB files with new metadata");
+                }
+            }
+
             Ok(())
         }
         Err(e) => {
@@ -293,6 +362,23 @@ pub async fn cmd_deduplicate_roles(
     match deduplicate_roles(&pool, &dedup_config).await {
         Ok(result) => {
             print_deduplication_results(&result, "Roles", dry_run);
+
+            // Mark affected books for sync if not dry-run
+            if !actual_dry_run && !result.merged_groups.is_empty() {
+                let mut all_affected_books = Vec::new();
+                for stats in &result.merged_groups {
+                    all_affected_books.extend(&stats.affected_book_ids);
+                }
+                all_affected_books.sort();
+                all_affected_books.dedup();
+
+                if !all_affected_books.is_empty() {
+                    mark_books_for_sync(&pool, &all_affected_books, "role_deduplicate").await?;
+                    println!("\n📝 Marked {} books for metadata sync", all_affected_books.len());
+                    println!("   Run 'ritmo sync-metadata' to update EPUB files with new metadata");
+                }
+            }
+
             Ok(())
         }
         Err(e) => {

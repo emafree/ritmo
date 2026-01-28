@@ -1,0 +1,669 @@
+[
+  {
+    "book": {
+      "title": "Gocce di resina",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "Gocce di resina",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Mauro Corona",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/2001.Gocce di resina - Mauro Corona.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "Aspro E Dolce",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "Aspro E Dolce",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Mauro Corona",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/2004.Aspro e Dolce - Mauro Corona.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "I fantasmi di pietra",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "I fantasmi di pietra",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Mauro Corona",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/2006.I fantasmi di pietra - Mauro Corona.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "2008.Storia di neve",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "2008.Storia di neve",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Mauro Corona",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/2008.Storia di neve - Mauro Corona.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "La Voce Degli Uomini Freddi",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "La Voce Degli Uomini Freddi",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Mauro Corona",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/2013.La Voce Degli Uomini Fredd - Mauro Corona.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "All'ombra dell'I Ching",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "All'ombra dell'I Ching",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Alejandro Jodorowsky",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/Alejandro Jodorowsky - All'ombra dell'I Ching (2020).epub"
+    }
+  },
+  {
+    "book": {
+      "title": "Le altalene",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "Le altalene",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Mauro Corona",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/altalene, Le - Mauro Corona.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "index",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "index",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Unknown",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/Andrea g Pinketts Nonostante clizia.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "Sotto mentite spoglie",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "Sotto mentite spoglie",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Antonio Manzini",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/Antonio Manzini - Sotto mentite spoglie.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "La sonnambula",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "La sonnambula",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Bianca Pitzorno",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/Bianca Pitzorno - La sonnambula (Bompiani 2026-01).epub"
+    }
+  },
+  {
+    "book": {
+      "title": "Le cinque porte",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "Le cinque porte",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Mauro Corona",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/cinque porte, Le - Mauro Corona.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "Corona Mauro - 2006 - Vajont: quelli del dopo",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "Corona Mauro - 2006 - Vajont: quelli del dopo",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Corona Mauro",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/Corona Mauro - 2006 - Vajont Quelli Del Dopo - Corona Mauro.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "I Ching. El libro de las mutaciones",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "I Ching. El libro de las mutaciones",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Richard Wilhelm",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/[Ebook ITA] Wilhelm, Richard - 1995 - I Ching. Il libro dei mutamenti.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "Il libro bianco",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "Il libro bianco",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Sconosciuto",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/Han Kang - Il libro bianco (Adelphi 2025).epub"
+    }
+  },
+  {
+    "book": {
+      "title": "La scoperta di Troia",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "La scoperta di Troia",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Heinrich Schliemann",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/Heinrich Schliemann-La Scoperta Di Troia.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "I sentieri degli aghi di pino",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "I sentieri degli aghi di pino",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Mauro Corona",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/Mauro Corona - I sentieri degli aghi di pino (Mondadori 2025-10).epub"
+    }
+  },
+  {
+    "book": {
+      "title": "La ballata della donna ertana",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "La ballata della donna ertana",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Mauro Corona",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/Mauro Corona - La ballata della donna ertana (Oscar Mondadori Bestsellers 2019-11).epub"
+    }
+  },
+  {
+    "book": {
+      "title": "Understanding Chess Middlegames",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "Understanding Chess Middlegames",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "John Nunn",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/Nunn - Understanding Chess Middlegames (2011) - John Nunn.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "Quattro presunti familiari",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "Quattro presunti familiari",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Daniele Mencarelli",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/Quattro presunti familiari (Daniele Mencarelli) (Z-Library).epub"
+    }
+  },
+  {
+    "book": {
+      "title": "Quattro stagioni per vivere",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "Quattro stagioni per vivere",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Mauro Corona",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/Quattro stagioni per vivere - Mauro Corona.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "L'ultimo sorso. Vita di Celio",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "L'ultimo sorso. Vita di Celio",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Mauro Corona",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/ultimo sorso. Vita di Celio, L' - Mauro Corona.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "La via del sole",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "La via del sole",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Mauro Corona",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/via del sole, La - Mauro Corona.epub"
+    }
+  },
+  {
+    "book": {
+      "title": "Che succede a Baum?",
+      "subtitle": null,
+      "contributors": [],
+      "publisher": null,
+      "publication_date": null,
+      "series": null,
+      "identifiers": [],
+      "tags": [],
+      "content": [
+        {
+          "title": "Che succede a Baum?",
+          "subtitle": null,
+          "contributors": [
+            {
+              "name": "Woody Allen",
+              "role": "author"
+            }
+          ],
+          "language": null,
+          "description": null,
+          "tags": [],
+          "original_publication_date": null
+        }
+      ],
+      "file_path": "/home/ema/epub_lib_test/Woody Allen - Che Succede A Baum (2025 ita).epub"
+    }
+  }
+]

@@ -13,6 +13,7 @@ pub struct MergeStats {
     pub merged_ids: Vec<i64>,
     pub books_updated: usize,
     pub contents_updated: usize,
+    pub affected_book_ids: Vec<i64>,
 }
 
 /// Merge duplicate people (authors) into a single primary record
@@ -52,10 +53,15 @@ pub async fn merge_people(
     validate_people_exist(&mut tx, primary_id, duplicate_ids).await?;
 
     // Step 2: Update x_books_people_roles to point to primary_id
-    let books_updated = update_books_people_roles(&mut tx, primary_id, duplicate_ids).await?;
+    let (books_updated, mut affected_book_ids) = update_books_people_roles(&mut tx, primary_id, duplicate_ids).await?;
 
     // Step 3: Update x_contents_people_roles to point to primary_id
-    let contents_updated = update_contents_people_roles(&mut tx, primary_id, duplicate_ids).await?;
+    let (contents_updated, content_book_ids) = update_contents_people_roles(&mut tx, primary_id, duplicate_ids).await?;
+
+    // Collect all affected book IDs
+    affected_book_ids.extend(content_book_ids);
+    affected_book_ids.sort();
+    affected_book_ids.dedup();
 
     // Step 4: Delete duplicate person records
     delete_people(&mut tx, duplicate_ids).await?;
@@ -68,6 +74,7 @@ pub async fn merge_people(
         merged_ids: duplicate_ids.to_vec(),
         books_updated,
         contents_updated,
+        affected_book_ids,
     })
 }
 
@@ -95,7 +102,7 @@ pub async fn merge_publishers(
     validate_publishers_exist(&mut tx, primary_id, duplicate_ids).await?;
 
     // Step 2: Update books.publisher_id to point to primary_id
-    let books_updated = update_books_publisher(&mut tx, primary_id, duplicate_ids).await?;
+    let (books_updated, affected_book_ids) = update_books_publisher(&mut tx, primary_id, duplicate_ids).await?;
 
     // Step 3: Delete duplicate publisher records
     delete_publishers(&mut tx, duplicate_ids).await?;
@@ -108,6 +115,7 @@ pub async fn merge_publishers(
         merged_ids: duplicate_ids.to_vec(),
         books_updated,
         contents_updated: 0, // Publishers not linked to contents
+        affected_book_ids,
     })
 }
 
@@ -135,7 +143,7 @@ pub async fn merge_series(
     validate_series_exist(&mut tx, primary_id, duplicate_ids).await?;
 
     // Step 2: Update books.series_id to point to primary_id
-    let books_updated = update_books_series(&mut tx, primary_id, duplicate_ids).await?;
+    let (books_updated, affected_book_ids) = update_books_series(&mut tx, primary_id, duplicate_ids).await?;
 
     // Step 3: Delete duplicate series records
     delete_series(&mut tx, duplicate_ids).await?;
@@ -148,6 +156,7 @@ pub async fn merge_series(
         merged_ids: duplicate_ids.to_vec(),
         books_updated,
         contents_updated: 0, // Series not linked to contents
+        affected_book_ids,
     })
 }
 
@@ -193,10 +202,19 @@ async fn update_books_people_roles(
     tx: &mut Transaction<'_, Sqlite>,
     primary_id: i64,
     duplicate_ids: &[i64],
-) -> RitmoResult<usize> {
+) -> RitmoResult<(usize, Vec<i64>)> {
     let mut total_updated = 0;
+    let mut affected_book_ids = Vec::new();
 
     for &dup_id in duplicate_ids {
+        // First, get affected book IDs before updating
+        let books = sqlx::query!("SELECT DISTINCT book_id FROM x_books_people_roles WHERE person_id = ?", dup_id)
+            .fetch_all(&mut **tx)
+            .await?;
+
+        affected_book_ids.extend(books.iter().map(|r| r.book_id));
+
+        // Then update
         let result = sqlx::query!(
             "UPDATE x_books_people_roles SET person_id = ? WHERE person_id = ?",
             primary_id,
@@ -208,17 +226,36 @@ async fn update_books_people_roles(
         total_updated += result.rows_affected() as usize;
     }
 
-    Ok(total_updated)
+    affected_book_ids.sort();
+    affected_book_ids.dedup();
+
+    Ok((total_updated, affected_book_ids))
 }
 
 async fn update_contents_people_roles(
     tx: &mut Transaction<'_, Sqlite>,
     primary_id: i64,
     duplicate_ids: &[i64],
-) -> RitmoResult<usize> {
+) -> RitmoResult<(usize, Vec<i64>)> {
     let mut total_updated = 0;
+    let mut affected_book_ids = Vec::new();
 
     for &dup_id in duplicate_ids {
+        // First, get affected content IDs
+        let contents = sqlx::query!("SELECT DISTINCT content_id FROM x_contents_people_roles WHERE person_id = ?", dup_id)
+            .fetch_all(&mut **tx)
+            .await?;
+
+        // Then get books associated with those contents
+        for content_record in contents {
+            let books = sqlx::query!("SELECT DISTINCT book_id FROM x_books_contents WHERE content_id = ?", content_record.content_id)
+                .fetch_all(&mut **tx)
+                .await?;
+
+            affected_book_ids.extend(books.iter().map(|r| r.book_id));
+        }
+
+        // Then update
         let result = sqlx::query!(
             "UPDATE x_contents_people_roles SET person_id = ? WHERE person_id = ?",
             primary_id,
@@ -230,7 +267,10 @@ async fn update_contents_people_roles(
         total_updated += result.rows_affected() as usize;
     }
 
-    Ok(total_updated)
+    affected_book_ids.sort();
+    affected_book_ids.dedup();
+
+    Ok((total_updated, affected_book_ids))
 }
 
 async fn delete_people(tx: &mut Transaction<'_, Sqlite>, ids: &[i64]) -> RitmoResult<()> {
@@ -283,10 +323,20 @@ async fn update_books_publisher(
     tx: &mut Transaction<'_, Sqlite>,
     primary_id: i64,
     duplicate_ids: &[i64],
-) -> RitmoResult<usize> {
+) -> RitmoResult<(usize, Vec<i64>)> {
     let mut total_updated = 0;
+    let mut affected_book_ids = Vec::new();
 
     for &dup_id in duplicate_ids {
+        // First, get affected book IDs before updating
+        let books: Vec<i64> = sqlx::query_scalar("SELECT id FROM books WHERE publisher_id = ?")
+            .bind(dup_id)
+            .fetch_all(&mut **tx)
+            .await?;
+
+        affected_book_ids.extend(books);
+
+        // Then update
         let result = sqlx::query!(
             "UPDATE books SET publisher_id = ? WHERE publisher_id = ?",
             primary_id,
@@ -298,7 +348,10 @@ async fn update_books_publisher(
         total_updated += result.rows_affected() as usize;
     }
 
-    Ok(total_updated)
+    affected_book_ids.sort();
+    affected_book_ids.dedup();
+
+    Ok((total_updated, affected_book_ids))
 }
 
 async fn delete_publishers(tx: &mut Transaction<'_, Sqlite>, ids: &[i64]) -> RitmoResult<()> {
@@ -351,10 +404,20 @@ async fn update_books_series(
     tx: &mut Transaction<'_, Sqlite>,
     primary_id: i64,
     duplicate_ids: &[i64],
-) -> RitmoResult<usize> {
+) -> RitmoResult<(usize, Vec<i64>)> {
     let mut total_updated = 0;
+    let mut affected_book_ids = Vec::new();
 
     for &dup_id in duplicate_ids {
+        // First, get affected book IDs before updating
+        let books: Vec<i64> = sqlx::query_scalar("SELECT id FROM books WHERE series_id = ?")
+            .bind(dup_id)
+            .fetch_all(&mut **tx)
+            .await?;
+
+        affected_book_ids.extend(books);
+
+        // Then update
         let result = sqlx::query!(
             "UPDATE books SET series_id = ? WHERE series_id = ?",
             primary_id,
@@ -366,7 +429,10 @@ async fn update_books_series(
         total_updated += result.rows_affected() as usize;
     }
 
-    Ok(total_updated)
+    affected_book_ids.sort();
+    affected_book_ids.dedup();
+
+    Ok((total_updated, affected_book_ids))
 }
 
 async fn delete_series(tx: &mut Transaction<'_, Sqlite>, ids: &[i64]) -> RitmoResult<()> {
@@ -420,10 +486,15 @@ pub async fn merge_tags(
     validate_tags_exist(&mut tx, primary_id, duplicate_ids).await?;
 
     // Step 2: Update x_books_tags to point to primary_id
-    let books_updated = update_books_tags(&mut tx, primary_id, duplicate_ids).await?;
+    let (books_updated, mut affected_book_ids) = update_books_tags(&mut tx, primary_id, duplicate_ids).await?;
 
     // Step 3: Update x_contents_tags to point to primary_id
-    let contents_updated = update_contents_tags(&mut tx, primary_id, duplicate_ids).await?;
+    let (contents_updated, content_book_ids) = update_contents_tags(&mut tx, primary_id, duplicate_ids).await?;
+
+    // Collect all affected book IDs
+    affected_book_ids.extend(content_book_ids);
+    affected_book_ids.sort();
+    affected_book_ids.dedup();
 
     // Step 4: Delete duplicate tag records
     delete_tags(&mut tx, duplicate_ids).await?;
@@ -436,6 +507,7 @@ pub async fn merge_tags(
         merged_ids: duplicate_ids.to_vec(),
         books_updated,
         contents_updated,
+        affected_book_ids,
     })
 }
 
@@ -481,10 +553,19 @@ async fn update_books_tags(
     tx: &mut Transaction<'_, Sqlite>,
     primary_id: i64,
     duplicate_ids: &[i64],
-) -> RitmoResult<usize> {
+) -> RitmoResult<(usize, Vec<i64>)> {
     let mut total_updated = 0;
+    let mut affected_book_ids = Vec::new();
 
     for &dup_id in duplicate_ids {
+        // First, get affected book IDs before updating
+        let books = sqlx::query!("SELECT DISTINCT book_id FROM x_books_tags WHERE tag_id = ?", dup_id)
+            .fetch_all(&mut **tx)
+            .await?;
+
+        affected_book_ids.extend(books.iter().map(|r| r.book_id));
+
+        // Then update
         let result = sqlx::query!(
             "UPDATE x_books_tags SET tag_id = ? WHERE tag_id = ?",
             primary_id,
@@ -496,17 +577,36 @@ async fn update_books_tags(
         total_updated += result.rows_affected() as usize;
     }
 
-    Ok(total_updated)
+    affected_book_ids.sort();
+    affected_book_ids.dedup();
+
+    Ok((total_updated, affected_book_ids))
 }
 
 async fn update_contents_tags(
     tx: &mut Transaction<'_, Sqlite>,
     primary_id: i64,
     duplicate_ids: &[i64],
-) -> RitmoResult<usize> {
+) -> RitmoResult<(usize, Vec<i64>)> {
     let mut total_updated = 0;
+    let mut affected_book_ids = Vec::new();
 
     for &dup_id in duplicate_ids {
+        // First, get affected content IDs
+        let contents = sqlx::query!("SELECT DISTINCT content_id FROM x_contents_tags WHERE tag_id = ?", dup_id)
+            .fetch_all(&mut **tx)
+            .await?;
+
+        // Then get books associated with those contents
+        for content_record in contents {
+            let books = sqlx::query!("SELECT DISTINCT book_id FROM x_books_contents WHERE content_id = ?", content_record.content_id)
+                .fetch_all(&mut **tx)
+                .await?;
+
+            affected_book_ids.extend(books.iter().map(|r| r.book_id));
+        }
+
+        // Then update
         let result = sqlx::query!(
             "UPDATE x_contents_tags SET tag_id = ? WHERE tag_id = ?",
             primary_id,
@@ -518,7 +618,10 @@ async fn update_contents_tags(
         total_updated += result.rows_affected() as usize;
     }
 
-    Ok(total_updated)
+    affected_book_ids.sort();
+    affected_book_ids.dedup();
+
+    Ok((total_updated, affected_book_ids))
 }
 
 async fn delete_tags(tx: &mut Transaction<'_, Sqlite>, ids: &[i64]) -> RitmoResult<()> {
@@ -572,10 +675,15 @@ pub async fn merge_roles(
     validate_roles_exist(&mut tx, primary_id, duplicate_ids).await?;
 
     // Step 2: Update x_books_people_roles to point to primary_id
-    let books_updated = update_books_people_roles_role(&mut tx, primary_id, duplicate_ids).await?;
+    let (books_updated, mut affected_book_ids) = update_books_people_roles_role(&mut tx, primary_id, duplicate_ids).await?;
 
     // Step 3: Update x_contents_people_roles to point to primary_id
-    let contents_updated = update_contents_people_roles_role(&mut tx, primary_id, duplicate_ids).await?;
+    let (contents_updated, content_book_ids) = update_contents_people_roles_role(&mut tx, primary_id, duplicate_ids).await?;
+
+    // Collect all affected book IDs
+    affected_book_ids.extend(content_book_ids);
+    affected_book_ids.sort();
+    affected_book_ids.dedup();
 
     // Step 4: Delete duplicate role records
     delete_roles(&mut tx, duplicate_ids).await?;
@@ -588,6 +696,7 @@ pub async fn merge_roles(
         merged_ids: duplicate_ids.to_vec(),
         books_updated,
         contents_updated,
+        affected_book_ids,
     })
 }
 
@@ -633,10 +742,19 @@ async fn update_books_people_roles_role(
     tx: &mut Transaction<'_, Sqlite>,
     primary_id: i64,
     duplicate_ids: &[i64],
-) -> RitmoResult<usize> {
+) -> RitmoResult<(usize, Vec<i64>)> {
     let mut total_updated = 0;
+    let mut affected_book_ids = Vec::new();
 
     for &dup_id in duplicate_ids {
+        // First, get affected book IDs before updating
+        let books = sqlx::query!("SELECT DISTINCT book_id FROM x_books_people_roles WHERE role_id = ?", dup_id)
+            .fetch_all(&mut **tx)
+            .await?;
+
+        affected_book_ids.extend(books.iter().map(|r| r.book_id));
+
+        // Then update
         let result = sqlx::query!(
             "UPDATE x_books_people_roles SET role_id = ? WHERE role_id = ?",
             primary_id,
@@ -648,17 +766,36 @@ async fn update_books_people_roles_role(
         total_updated += result.rows_affected() as usize;
     }
 
-    Ok(total_updated)
+    affected_book_ids.sort();
+    affected_book_ids.dedup();
+
+    Ok((total_updated, affected_book_ids))
 }
 
 async fn update_contents_people_roles_role(
     tx: &mut Transaction<'_, Sqlite>,
     primary_id: i64,
     duplicate_ids: &[i64],
-) -> RitmoResult<usize> {
+) -> RitmoResult<(usize, Vec<i64>)> {
     let mut total_updated = 0;
+    let mut affected_book_ids = Vec::new();
 
     for &dup_id in duplicate_ids {
+        // First, get affected content IDs
+        let contents = sqlx::query!("SELECT DISTINCT content_id FROM x_contents_people_roles WHERE role_id = ?", dup_id)
+            .fetch_all(&mut **tx)
+            .await?;
+
+        // Then get books associated with those contents
+        for content_record in contents {
+            let books = sqlx::query!("SELECT DISTINCT book_id FROM x_books_contents WHERE content_id = ?", content_record.content_id)
+                .fetch_all(&mut **tx)
+                .await?;
+
+            affected_book_ids.extend(books.iter().map(|r| r.book_id));
+        }
+
+        // Then update
         let result = sqlx::query!(
             "UPDATE x_contents_people_roles SET role_id = ? WHERE role_id = ?",
             primary_id,
@@ -670,7 +807,10 @@ async fn update_contents_people_roles_role(
         total_updated += result.rows_affected() as usize;
     }
 
-    Ok(total_updated)
+    affected_book_ids.sort();
+    affected_book_ids.dedup();
+
+    Ok((total_updated, affected_book_ids))
 }
 
 async fn delete_roles(tx: &mut Transaction<'_, Sqlite>, ids: &[i64]) -> RitmoResult<()> {

@@ -207,6 +207,14 @@ CREATE TABLE IF NOT EXISTS "x_contents_languages" (
 	FOREIGN KEY("content_id") REFERENCES "contents"("id") ON DELETE CASCADE,
 	FOREIGN KEY("language_id") REFERENCES "running_languages"("id") ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS "pending_metadata_sync" (
+	"id"	INTEGER,
+	"book_id"	INTEGER NOT NULL,
+	"reason"	TEXT NOT NULL,
+	"created_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY("book_id") REFERENCES "books"("id") ON DELETE CASCADE
+);
 CREATE TABLE IF NOT EXISTS "metadata" (
 	"version"		TEXT NOT NULL,
 	"updated_at"  	INTEGER NOT NULL,
@@ -334,6 +342,9 @@ CREATE INDEX IF NOT EXISTS "idx_contents_languages_lookup" ON "x_contents_langua
 CREATE INDEX IF NOT EXISTS "idx_contents_languages_by_language" ON "x_contents_languages" (
 	"language_id",
 	"content_id"
+);
+CREATE INDEX IF NOT EXISTS "idx_pending_sync_book_lookup" ON "pending_metadata_sync" (
+	"book_id"
 );
 CREATE TRIGGER normalize_person_name
     BEFORE INSERT ON people

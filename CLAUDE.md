@@ -254,6 +254,18 @@ cargo run -p ritmo_cli -- deduplicate-tags --dry-run
 cargo run -p ritmo_cli -- deduplicate-all --threshold 0.85 --dry-run
 ```
 
+### Metadata Sync Operations
+```bash
+# Check how many books need metadata sync
+cargo run -p ritmo_cli -- sync-metadata --status
+
+# Preview what would be synced (dry-run)
+cargo run -p ritmo_cli -- sync-metadata --dry-run
+
+# Actually sync EPUB files with database metadata
+cargo run -p ritmo_cli -- sync-metadata
+```
+
 For complete command reference, see [Development Guide](docs/development.md).
 
 ## Rust Version
@@ -263,6 +275,35 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 - Supports Slint GUI framework
 
 ## Recent Changes
+
+### 2026-01-28 - Session 26: Metadata Sync Tracking System - COMPLETED
+Implemented complete metadata sync tracking system to keep EPUB files in sync with database after entity deduplication.
+- **Feature**: Track books requiring metadata sync after entity merges (authors, publishers, series, tags, roles)
+- **Architecture**: DB → EPUB sync direction (database is source of truth)
+- **Implementation**:
+  - Added `pending_metadata_sync` table with CASCADE deletion, reasons tracking, and index
+  - Created `ritmo_db/src/models/pending_sync.rs` with helper functions (mark, get, count, clear)
+  - Modified `ritmo_ml/src/merge.rs` - Added `affected_book_ids` to MergeStats, all merge functions now capture affected books
+  - Updated all deduplicate commands - Automatically mark affected books after successful merge
+  - Created `ritmo_core/src/service/metadata_sync_service.rs` (~350 lines) - Complete sync service
+  - Created `ritmo_cli/src/commands/sync.rs` (~135 lines) - CLI command with 3 modes
+- **CLI Command**: `ritmo sync-metadata` with `--status`, `--dry-run`, and default (sync) modes
+- **Sync Workflow**:
+  1. Read all metadata from DB (book + contents + relations)
+  2. Build OPFMetadata from DB data
+  3. Modify EPUB using existing OPF modification system
+  4. **Recalculate SHA256 hash**
+  5. **Move file to new hash-based path**
+  6. Update DB with new file_hash and file_link
+  7. Clear sync mark
+- **Key Features**:
+  - Automatic marking during deduplication (5 entity types)
+  - Hash recalculation ensures content-addressed storage integrity
+  - Original OPF backup in `originals_opf/` preserved unchanged
+  - Graceful error handling - failed syncs don't clear marks (retry possible)
+  - Progress reporting with detailed output
+- **Testing**: Full workspace build successful
+- **Documentation**: Complete session history in docs/sessions/2026-01-sessions.md
 
 ### 2026-01-28 - Session 25: EPUB OPF Metadata Modification - COMPLETED
 Implemented automatic modification of EPUB OPF metadata with user-provided data during import.

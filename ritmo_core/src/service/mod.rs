@@ -4,6 +4,7 @@ pub mod book_update_service;
 pub mod content_create_service;
 pub mod content_update_service;
 pub mod delete_service;
+pub mod metadata_sync_service;
 
 pub use batch_import_service::{batch_import, BatchImportSummary, ImportResult};
 pub use book_import_service::{import_book, BookImportMetadata};
@@ -15,3 +16,4 @@ pub use content_update_service::{update_content, ContentUpdateMetadata};
 pub use delete_service::{
     cleanup_orphaned_entities, delete_book, delete_content, CleanupStats, DeleteOptions,
 };
+pub use metadata_sync_service::{sync_book_metadata, SyncResult};

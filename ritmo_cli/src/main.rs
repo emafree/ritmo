@@ -601,6 +601,21 @@ enum Commands {
         dry_run: bool,
     },
 
+    /// Sync EPUB metadata with database
+    SyncMetadata {
+        /// Show count of pending books
+        #[arg(long)]
+        status: bool,
+
+        /// Preview changes without syncing
+        #[arg(long)]
+        dry_run: bool,
+
+        /// Use specific library
+        #[arg(short, long)]
+        library: Option<PathBuf>,
+    },
+
     /// Set the preferred language for the application
     SetLanguage {
         /// Language code (e.g., "en", "it")
@@ -966,6 +981,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         } => {
             cmd_deduplicate_all(&cli.library, &app_settings, threshold, auto_merge, dry_run)
                 .await?;
+        }
+        Commands::SyncMetadata {
+            status,
+            dry_run,
+            library,
+        } => {
+            if status {
+                cmd_sync_status(&library, &app_settings).await?;
+            } else if dry_run {
+                cmd_sync_dry_run(&library, &app_settings).await?;
+            } else {
+                cmd_sync_metadata(&library, &app_settings).await?;
+            }
         }
         Commands::SetLanguage { language } => {
             cmd_set_language(language, &mut app_settings, &settings_path)?;
