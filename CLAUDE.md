@@ -276,6 +276,24 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 
 ## Recent Changes
 
+### 2026-01-28 - Session 27: Code Cleanup and Test Fixes - COMPLETED
+Fixed compiler warnings and test race conditions for clean builds and reliable test execution.
+- **Issues Resolved**:
+  - Eliminated 2 compiler warnings (unused function, unused struct)
+  - Fixed race conditions in 32 i18n tests modifying global locale state
+  - Fixed missing table in ritmo_ml test schema
+  - Fixed doctest compilation error
+- **Implementation**:
+  - Added `#[cfg(test)]` to `is_valid_library()` in ritmo_config
+  - Removed unused `CliReporter` struct from ritmo_cli
+  - Added `serial_test = "3.2"` dependency to ritmo_db
+  - Marked 33 i18n tests with `#[serial]` to prevent parallel execution interference
+  - Added `x_books_contents` table to ritmo_ml test helpers
+  - Fixed doctest block from ` ``` to ` ```text in delete_service
+- **Key Learning**: Tests with global state side effects (i18n locale) require serialization via `serial_test` crate
+- **Testing**: Full workspace build with zero warnings, all 33+ tests passing consistently
+- **Impact**: CI/CD ready codebase with reliable test suite
+
 ### 2026-01-28 - Session 26: Metadata Sync Tracking System - COMPLETED
 Implemented complete metadata sync tracking system to keep EPUB files in sync with database after entity deduplication.
 - **Feature**: Track books requiring metadata sync after entity merges (authors, publishers, series, tags, roles)

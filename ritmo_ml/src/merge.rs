@@ -1009,6 +1009,12 @@ mod tests {
             .await
             .unwrap();
 
+        // Link content to book
+        sqlx::query("INSERT INTO x_books_contents (book_id, content_id) VALUES (1, 1)")
+            .execute(&pool)
+            .await
+            .unwrap();
+
         sqlx::query(
             "INSERT INTO x_contents_people_roles (content_id, person_id, role_id)
              VALUES (1, 1, 2), (1, 2, 3)",

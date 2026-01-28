@@ -5,8 +5,10 @@
 
 use ritmo_db::i18n_utils::set_locale;
 use ritmo_db::{Role, RunningLanguages};
+use serial_test::serial;
 
 #[test]
+#[serial]
 fn test_role_display_name_english() {
     // Force reset to English (tests may run in any order)
     set_locale("en");
@@ -23,6 +25,7 @@ fn test_role_display_name_english() {
 }
 
 #[test]
+#[serial]
 fn test_role_display_name_italian() {
     // Force reset to Italian
     set_locale("it");
@@ -39,6 +42,7 @@ fn test_role_display_name_italian() {
 }
 
 #[test]
+#[serial]
 fn test_all_role_translations() {
     // Start fresh with English
     set_locale("en");
@@ -84,6 +88,7 @@ fn test_all_role_translations() {
 }
 
 #[test]
+#[serial]
 fn test_language_role_display_english() {
     set_locale("en");
 
@@ -101,6 +106,7 @@ fn test_language_role_display_english() {
 }
 
 #[test]
+#[serial]
 fn test_language_role_display_italian() {
     set_locale("it");
 
@@ -118,6 +124,7 @@ fn test_language_role_display_italian() {
 }
 
 #[test]
+#[serial]
 fn test_all_language_role_translations() {
     set_locale("en");
 
@@ -164,6 +171,7 @@ fn test_all_language_role_translations() {
 }
 
 #[test]
+#[serial]
 fn test_locale_switching() {
     // Start with English
     set_locale("en");

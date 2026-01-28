@@ -149,8 +149,10 @@ impl LocalizableError for RitmoErr {
 mod tests {
     use super::*;
     use crate::i18n_utils::set_locale;
+    use serial_test::serial;
 
     #[test]
+    #[serial]
     fn test_database_error_localization_english() {
         set_locale("en");
 
@@ -159,6 +161,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_database_error_localization_italian() {
         set_locale("it");
 
@@ -167,6 +170,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_file_error_localization_english() {
         set_locale("en");
 
@@ -175,6 +179,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_file_error_localization_italian() {
         set_locale("it");
 
@@ -183,6 +188,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_ml_error_localization() {
         set_locale("en");
         let err = RitmoErr::MLError("Pattern matching failed".to_string());
@@ -193,6 +199,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_config_error_localization() {
         set_locale("en");
         let err = RitmoErr::ConfigDirNotFound;

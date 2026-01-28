@@ -106,6 +106,14 @@ pub async fn create_test_db() -> RitmoResult<SqlitePool> {
             FOREIGN KEY("person_id") REFERENCES "people"("id") ON DELETE CASCADE,
             FOREIGN KEY("role_id") REFERENCES "roles"("id") ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS "x_books_contents" (
+            "book_id" INTEGER NOT NULL,
+            "content_id" INTEGER NOT NULL,
+            PRIMARY KEY("book_id", "content_id"),
+            FOREIGN KEY("book_id") REFERENCES "books"("id") ON DELETE CASCADE,
+            FOREIGN KEY("content_id") REFERENCES "contents"("id") ON DELETE CASCADE
+        );
         "#,
     )
     .execute(&pool)

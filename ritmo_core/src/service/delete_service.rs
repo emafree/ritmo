@@ -164,7 +164,7 @@ pub async fn delete_content(
 /// - **Tags**: non presenti in `x_books_tags` né `x_contents_tags`
 ///
 /// # Workflow raccomandato
-/// ```
+/// ```text
 /// 1. Eliminare uno o più libri con delete_book()
 /// 2. Chiamare cleanup_orphaned_entities() per rimuovere entità orfane
 /// ```

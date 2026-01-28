@@ -1,5 +1,5 @@
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 /// Rileva se il programma è in esecuzione da bootstrap/portable_app/
 /// Ritorna Some(library_root) se è in modalità portabile, None altrimenti
@@ -29,7 +29,8 @@ pub fn is_running_portable() -> bool {
 
 /// Verifica se un path è una libreria Ritmo valida
 /// (controlla l'esistenza delle directory essenziali)
-pub fn is_valid_library(path: &Path) -> bool {
+#[cfg(test)]
+pub fn is_valid_library(path: &std::path::Path) -> bool {
     path.is_dir()
         && path.join("database").is_dir()
         && path.join("storage").is_dir()

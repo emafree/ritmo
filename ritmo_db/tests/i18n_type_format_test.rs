@@ -6,12 +6,14 @@
 use ritmo_db::i18n_trait::I18nDisplayable;
 use ritmo_db::i18n_utils::set_locale;
 use ritmo_db::{Format, Type};
+use serial_test::serial;
 
 // ============================================================================
 // Type Model Tests
 // ============================================================================
 
 #[test]
+#[serial]
 fn test_type_display_name_english() {
     set_locale("en");
 
@@ -26,6 +28,7 @@ fn test_type_display_name_english() {
 }
 
 #[test]
+#[serial]
 fn test_type_display_name_italian() {
     set_locale("it");
 
@@ -40,6 +43,7 @@ fn test_type_display_name_italian() {
 }
 
 #[test]
+#[serial]
 fn test_all_type_translations() {
     set_locale("en");
 
@@ -84,6 +88,7 @@ fn test_all_type_translations() {
 }
 
 #[test]
+#[serial]
 fn test_type_translate_method() {
     set_locale("en");
 
@@ -107,6 +112,7 @@ fn test_type_translate_method() {
 }
 
 #[test]
+#[serial]
 fn test_type_i18n_key() {
     let type_record = Type {
         id: Some(1),
@@ -123,6 +129,7 @@ fn test_type_i18n_key() {
 // ============================================================================
 
 #[test]
+#[serial]
 fn test_format_display_name_english() {
     set_locale("en");
 
@@ -137,6 +144,7 @@ fn test_format_display_name_english() {
 }
 
 #[test]
+#[serial]
 fn test_format_display_name_italian() {
     set_locale("it");
 
@@ -151,6 +159,7 @@ fn test_format_display_name_italian() {
 }
 
 #[test]
+#[serial]
 fn test_all_format_translations() {
     set_locale("en");
 
@@ -195,6 +204,7 @@ fn test_all_format_translations() {
 }
 
 #[test]
+#[serial]
 fn test_format_translate_method() {
     set_locale("en");
 
@@ -218,6 +228,7 @@ fn test_format_translate_method() {
 }
 
 #[test]
+#[serial]
 fn test_format_i18n_key() {
     let format = Format {
         id: Some(1),
@@ -234,6 +245,7 @@ fn test_format_i18n_key() {
 // ============================================================================
 
 #[test]
+#[serial]
 fn test_generic_function_with_type_and_format() {
     set_locale("en");
 
@@ -261,6 +273,7 @@ fn test_generic_function_with_type_and_format() {
 }
 
 #[test]
+#[serial]
 fn test_type_format_locale_switching() {
     // Start with English
     set_locale("en");

@@ -6,9 +6,11 @@
 use ritmo_db::i18n_trait::I18nDisplayable;
 use ritmo_db::i18n_utils::set_locale;
 use ritmo_db::{Role, RunningLanguages};
+use serial_test::serial;
 
 /// Test that the trait translate() method works correctly for Role
 #[test]
+#[serial]
 fn test_trait_translate_role() {
     set_locale("en");
 
@@ -32,6 +34,7 @@ fn test_trait_translate_role() {
 
 /// Test that the trait translate() method works correctly for RunningLanguages
 #[test]
+#[serial]
 fn test_trait_translate_running_languages() {
     set_locale("en");
 
@@ -59,6 +62,7 @@ fn test_trait_translate_running_languages() {
 
 /// Test trait behavior across multiple instances
 #[test]
+#[serial]
 fn test_trait_multiple_instances() {
     set_locale("en");
 
@@ -97,6 +101,7 @@ fn test_trait_multiple_instances() {
 
 /// Test that i18n_key() returns the expected key
 #[test]
+#[serial]
 fn test_trait_i18n_key() {
     let role = Role {
         id: Some(1),
@@ -121,6 +126,7 @@ fn test_trait_i18n_key() {
 
 /// Test that i18n_namespace() returns the expected namespace
 #[test]
+#[serial]
 fn test_trait_i18n_namespace() {
     let role = Role {
         id: Some(1),
@@ -146,6 +152,7 @@ fn test_trait_i18n_namespace() {
 
 /// Test generic function that accepts any I18nDisplayable
 #[test]
+#[serial]
 fn test_trait_generic_function() {
     set_locale("en");
 
@@ -176,6 +183,7 @@ fn test_trait_generic_function() {
 
 /// Test that trait handles missing translations gracefully
 #[test]
+#[serial]
 fn test_trait_missing_translation() {
     set_locale("en");
 

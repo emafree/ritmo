@@ -196,6 +196,7 @@ pub fn init_i18n_with_preference(saved_preference: Option<&str>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[test]
     fn test_detect_locale_default() {
@@ -211,6 +212,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_set_and_get_locale() {
         set_locale("it");
         assert_eq!(get_locale(), "it".to_string());
