@@ -1,5 +1,5 @@
 use crate::dto::{BatchImportInput, ContentInput, ImportObject};
-use crate::service::book_import_service::{import_book, BookImportMetadata};
+use crate::service::book_import_service::{import_book_with_contents, BookImportMetadata};
 use ritmo_db::{Content, Person, Role, RunningLanguages, Type};
 use ritmo_db_core::LibraryConfig;
 use ritmo_errors::{RitmoErr, RitmoResult};
@@ -163,8 +163,15 @@ async fn import_single(
         },
     };
 
-    // 4. Import book using existing service
-    let book_id = import_book(config, pool, &file_path, book_metadata).await?;
+    // 4. Import book using existing service WITH contents for OPF modification
+    let book_id = import_book_with_contents(
+        config,
+        pool,
+        &file_path,
+        book_metadata,
+        &import_obj.contents,
+    )
+    .await?;
 
     // 5. Create and associate contents
     for content_input in import_obj.contents {

@@ -264,6 +264,29 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 
 ## Recent Changes
 
+### 2026-01-28 - Session 25: EPUB OPF Metadata Modification - COMPLETED
+Implemented automatic modification of EPUB OPF metadata with user-provided data during import.
+- **Feature**: During import, EPUB metadata is updated with user-provided data (title, people, publisher, year, ISBN, tags, series)
+- **Workflow**: Extract original OPF (backup) → Modify OPF XML → Rebuild EPUB → Save to storage
+- **Implementation**:
+  - Created `ritmo_core/src/epub_opf_modifier.rs` (~500 lines) with OPF metadata structures and modification logic
+  - `build_opf_metadata()` - Aggregates metadata from BookImportMetadata + ALL ContentInputs (Level 2 batch import)
+  - `modify_opf_xml()` - Updates Dublin Core metadata (dc:title, dc:creator, dc:publisher, dc:date, dc:subject, dc:language)
+  - `modify_epub_metadata()` - ZIP read/write operations to rebuild EPUB with modified OPF
+  - Role mapping: "role.author" → "aut", "role.translator" → "trl", etc. (MARC relator codes)
+- **Integration**:
+  - Modified `book_import_service.rs` - Renamed `import_book()` → `import_book_with_contents(contents: &[ContentInput])`
+  - Wrapper `import_book()` maintained for Level 1 backward compatibility
+  - Modified `batch_import_service.rs` - Uses `import_book_with_contents()` to pass content metadata for aggregation
+- **Metadata Handling**:
+  - Level 1 (manual): Only book-level metadata
+  - Level 2 (batch): Aggregates ALL people and languages from ALL contents into EPUB OPF
+  - None values: Preserves original OPF elements (doesn't remove existing metadata)
+- **Error Handling**: Graceful degradation - OPF modification failure falls back to original EPUB copy
+- **Testing**: Verified with Level 1 import - EPUB correctly modified with user metadata, original OPF preserved as backup
+- **Dependencies**: Added `quick-xml = "0.36"` to `ritmo_core/Cargo.toml`
+- **Documentation**: Complete plan in `/home/ema/.claude/plans/wobbly-floating-raven.md`
+
 ### 2026-01-28 - Session 24: OPF Metadata Preservation - COMPLETED
 Implemented automatic extraction and storage of original EPUB OPF metadata files during import.
 - **Feature**: Extract OPF (Open Packaging Format) XML from EPUB files during import

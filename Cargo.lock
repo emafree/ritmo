@@ -4651,6 +4651,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "dirs 6.0.0",
+ "quick-xml 0.36.2",
  "ritmo_db",
  "ritmo_db_core",
  "ritmo_errors",

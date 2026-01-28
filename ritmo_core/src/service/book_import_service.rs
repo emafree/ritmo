@@ -1,3 +1,5 @@
+use crate::dto::ContentInput;
+use crate::epub_opf_modifier;
 use crate::epub_utils::extract_opf;
 use ritmo_db::{Book, Format, Person, Publisher, Role, Series, Tag};
 use ritmo_db_core::LibraryConfig;
@@ -31,12 +33,24 @@ pub struct BookImportMetadata {
 /// 2. Calcola l'hash per rilevare duplicati
 /// 3. Crea/ottiene le entità correlate (formato, publisher, series, autore)
 /// 4. Salva il libro nel database
-/// 5. Copia il file nello storage
-pub async fn import_book(
+/// 5. Modifica metadati OPF nell'EPUB (se applicabile)
+/// 6. Copia il file nello storage
+///
+/// # Arguments
+/// * `config` - Library configuration
+/// * `pool` - Database connection pool
+/// * `file_path` - Path to the file to import
+/// * `metadata` - Book metadata provided by user
+/// * `contents` - Optional content metadata (from batch import Level 2)
+///
+/// # Returns
+/// Book ID on success
+pub async fn import_book_with_contents(
     config: &LibraryConfig,
     pool: &sqlx::SqlitePool,
     file_path: &Path,
     metadata: BookImportMetadata,
+    contents: &[ContentInput],
 ) -> RitmoResult<i64> {
     // 1. Verifica che il file esista
     if !file_path.exists() {
@@ -109,6 +123,10 @@ pub async fn import_book(
         .and_then(|e| e.to_str())
         .unwrap_or("epub");
 
+    // Costruisci OPF metadata PRIMA di consumare metadata nel Book struct
+    // (necessario perché alcuni campi vengono spostati nel Book)
+    let opf_metadata = epub_opf_modifier::build_opf_metadata(&metadata, contents);
+
     // Genera path hash-based gerarchico
     // Formato: books/{hash[0:2]}/{hash[2:4]}/{hash[4:]}.{ext}
     let relative_path = format!(
@@ -143,14 +161,13 @@ pub async fn import_book(
     // 7. Salva nel database
     let book_id = book.save(pool).await?;
 
-    // 8. Copia file nello storage
+    // 8. Prepara directory storage
     let storage_path = config.canonical_storage_path().join(&relative_path);
     if let Some(parent) = storage_path.parent() {
         fs::create_dir_all(parent)?;
     }
-    fs::copy(file_path, &storage_path)?;
 
-    // 9. Estrai e salva OPF originale (solo per EPUB)
+    // 9. Estrai e salva OPF originale (solo per EPUB) - BACKUP
     if extension == "epub" {
         match extract_opf(file_path) {
             Ok(opf_content) => {
@@ -169,7 +186,7 @@ pub async fn import_book(
                     fs::create_dir_all(parent)?;
                 }
 
-                // Salva OPF
+                // Salva OPF originale
                 let mut opf_file = fs::File::create(&opf_storage_path)?;
                 opf_file.write_all(opf_content.as_bytes())?;
             }
@@ -178,6 +195,35 @@ pub async fn import_book(
                 // (alcuni EPUB potrebbero avere strutture non standard)
             }
         }
+    }
+
+    // 10. Modifica EPUB con metadati utente (solo per EPUB)
+    if extension == "epub" {
+        // opf_metadata già costruito all'inizio della funzione
+
+        // Crea temp file per EPUB modificato
+        let temp_epub = storage_path.with_extension("epub.tmp");
+
+        match epub_opf_modifier::modify_epub_metadata(file_path, &temp_epub, &opf_metadata) {
+            Ok(_) => {
+                // Successo: sposta temp → finale
+                fs::rename(&temp_epub, &storage_path)?;
+            }
+            Err(e) => {
+                // Fallimento: log warning, copia EPUB originale as-is
+                eprintln!("Warning: Could not modify EPUB metadata: {:?}", e);
+                eprintln!("Copying original EPUB without modification");
+
+                // Rimuovi temp file se esiste
+                let _ = fs::remove_file(&temp_epub);
+
+                // Copia originale
+                fs::copy(file_path, &storage_path)?;
+            }
+        }
+    } else {
+        // Non-EPUB: copia as-is
+        fs::copy(file_path, &storage_path)?;
     }
 
     // 10. Crea persone e collegamento con i loro ruoli
@@ -212,6 +258,27 @@ pub async fn import_book(
     }
 
     Ok(book_id)
+}
+
+/// Importa un libro senza contents (Level 1 - manual import)
+///
+/// Wrapper for backward compatibility. Calls `import_book_with_contents` with empty contents array.
+///
+/// # Arguments
+/// * `config` - Library configuration
+/// * `pool` - Database connection pool
+/// * `file_path` - Path to the file to import
+/// * `metadata` - Book metadata provided by user
+///
+/// # Returns
+/// Book ID on success
+pub async fn import_book(
+    config: &LibraryConfig,
+    pool: &sqlx::SqlitePool,
+    file_path: &Path,
+    metadata: BookImportMetadata,
+) -> RitmoResult<i64> {
+    import_book_with_contents(config, pool, file_path, metadata, &[]).await
 }
 
 fn calculate_hash(data: &[u8]) -> String {

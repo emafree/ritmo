@@ -629,6 +629,117 @@ storage/originals_opf/{hash[0:2]}/{hash[2:4]}/{hash[4:]}.opf.xml
 </package>
 ```
 
+### EPUB OPF Metadata Modification
+
+**Feature**: Automatic modification of EPUB OPF metadata with user-provided data during import.
+
+**Purpose**: Ensures EPUBs stored in ritmo have correct, user-verified metadata instead of potentially incorrect original metadata. The database is the source of truth, and EPUBs are updated to match.
+
+**Workflow**:
+1. Extract and save original OPF (backup in `originals_opf/`)
+2. Build OPF metadata from user-provided data
+3. Modify OPF XML inside EPUB
+4. Rebuild EPUB with updated OPF
+5. Save modified EPUB to storage
+
+**Metadata Sources**:
+- **Level 1 (Manual Import)**: Only book-level metadata (title, people, publisher, year, ISBN, tags, series)
+- **Level 2 (Batch Import)**: Aggregates **ALL** metadata from book AND all contents (authors, translators, languages)
+
+**Implementation**: `ritmo_core/src/epub_opf_modifier.rs` (~500 lines)
+
+**Key Components**:
+
+1. **OPFMetadata Structure**:
+```rust
+pub struct OPFMetadata {
+    // Dublin Core elements
+    pub title: Option<String>,
+    pub creators: Vec<OPFPerson>,      // dc:creator (authors)
+    pub contributors: Vec<OPFPerson>,  // dc:contributor (translators, editors)
+    pub publisher: Option<String>,
+    pub date: Option<String>,           // ISO format YYYY-MM-DD
+    pub identifiers: Vec<OPFIdentifier>, // ISBN, etc.
+    pub subjects: Vec<String>,          // tags
+    pub languages: Vec<String>,         // ISO 639-1 codes
+
+    // Calibre meta tags
+    pub series: Option<String>,
+    pub series_index: Option<f64>,
+    pub pages: Option<i64>,
+    pub notes: Option<String>,
+}
+```
+
+2. **Role Mapping** (Ritmo → OPF MARC relator codes):
+```
+role.author      → aut  (dc:creator)
+role.translator  → trl  (dc:contributor)
+role.editor      → edt  (dc:contributor)
+role.illustrator → ill  (dc:contributor)
+```
+
+3. **Core Functions**:
+- `build_opf_metadata(book_metadata, contents)` - Aggregates metadata from book + all contents
+- `modify_opf_xml(original_opf, metadata)` - Updates Dublin Core metadata elements
+- `modify_epub_metadata(epub_path, output_path, metadata)` - ZIP read/write operations
+
+**Metadata Mapping** (Ritmo → OPF):
+
+| Ritmo Field | OPF Element | Notes |
+|-------------|-------------|-------|
+| `title` | `<dc:title>` | Replaces original |
+| `people[role.author]` | `<dc:creator opf:role="aut">` | From book OR contents |
+| `people[role.translator]` | `<dc:contributor opf:role="trl">` | From contents |
+| `people[role.editor]` | `<dc:contributor opf:role="edt">` | From book |
+| `publisher` | `<dc:publisher>` | Replaces original |
+| `year` | `<dc:date>` | Format: YYYY-01-01 |
+| `isbn` | `<dc:identifier opf:scheme="ISBN">` | Replaces original |
+| `tags[]` | `<dc:subject>` | Multiple elements |
+| `contents[].languages[]` | `<dc:language>` | ISO 639-1, multiple |
+| `series` | `<meta name="calibre:series">` | Calibre extension |
+| `series_index` | `<meta name="calibre:series_index">` | Calibre extension |
+
+**None Value Handling**: If a field is `None`, the original OPF element is preserved (not removed).
+
+**Batch Import Aggregation**: For Level 2 import with multiple contents:
+- ALL authors from ALL contents → `<dc:creator>` elements
+- ALL translators from ALL contents → `<dc:contributor>` elements
+- ALL languages from ALL contents → `<dc:language>` elements
+- Deduplicated by (name, role) or language code
+
+**Error Handling**: Graceful degradation
+- If OPF modification fails, fallback to copying original EPUB
+- Import continues successfully (database metadata is correct)
+- Original OPF always preserved in `originals_opf/` for recovery
+- Warnings logged but don't abort import
+
+**Integration**:
+- `book_import_service::import_book_with_contents()` - Main function with contents parameter
+- `book_import_service::import_book()` - Backward-compatible wrapper (Level 1)
+- `batch_import_service::import_single()` - Passes contents array for aggregation
+
+**Example Modification**:
+
+Original OPF:
+```xml
+<dc:title>Original Title</dc:title>
+<dc:creator>Original Author</dc:creator>
+<dc:publisher>Original Publisher</dc:publisher>
+```
+
+Modified OPF (after import with user metadata):
+```xml
+<dc:title>User Provided Title</dc:title>
+<dc:creator opf:role="aut">User Author</dc:creator>
+<dc:publisher>User Publisher</dc:publisher>
+<dc:date>2024-01-01</dc:date>
+<dc:subject>tag1</dc:subject>
+<dc:subject>tag2</dc:subject>
+```
+
+**Testing**: Verified with Level 1 import - EPUB correctly modified with user metadata while original OPF preserved as backup.
+
 ## Internationalization (i18n) Architecture
 
 - **Framework**: rust-i18n v3 with YAML translation files
