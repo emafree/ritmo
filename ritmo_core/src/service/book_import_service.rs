@@ -1,8 +1,10 @@
+use crate::epub_utils::extract_opf;
 use ritmo_db::{Book, Format, Person, Publisher, Role, Series, Tag};
 use ritmo_db_core::LibraryConfig;
 use ritmo_errors::{RitmoErr, RitmoResult};
 use sha2::{Digest, Sha256};
 use std::fs;
+use std::io::Write;
 use std::path::Path;
 
 /// Metadati per l'import di un libro
@@ -134,7 +136,7 @@ pub async fn import_book(
         has_paper: 0,
         file_link: Some(relative_path.clone()),
         file_size: Some(file_content.len() as i64),
-        file_hash: Some(file_hash),
+        file_hash: Some(file_hash.clone()),
         created_at: now,
     };
 
@@ -148,7 +150,37 @@ pub async fn import_book(
     }
     fs::copy(file_path, &storage_path)?;
 
-    // 9. Crea persone e collegamento con i loro ruoli
+    // 9. Estrai e salva OPF originale (solo per EPUB)
+    if extension == "epub" {
+        match extract_opf(file_path) {
+            Ok(opf_content) => {
+                // Path OPF: storage/originals_opf/{hash[0:2]}/{hash[2:4]}/{hash[4:]}.opf.xml
+                let opf_relative_path = format!(
+                    "originals_opf/{}/{}/{}.opf.xml",
+                    &file_hash[0..2],
+                    &file_hash[2..4],
+                    &file_hash[4..]
+                );
+
+                let opf_storage_path = config.canonical_storage_path().join(&opf_relative_path);
+
+                // Crea directory se non esistono
+                if let Some(parent) = opf_storage_path.parent() {
+                    fs::create_dir_all(parent)?;
+                }
+
+                // Salva OPF
+                let mut opf_file = fs::File::create(&opf_storage_path)?;
+                opf_file.write_all(opf_content.as_bytes())?;
+            }
+            Err(_) => {
+                // Se l'estrazione fallisce, continuiamo comunque l'import
+                // (alcuni EPUB potrebbero avere strutture non standard)
+            }
+        }
+    }
+
+    // 10. Crea persone e collegamento con i loro ruoli
     if let Some(people) = metadata.people {
         for (person_name, role_name) in people {
             let person_id = Person::get_or_create_by_name(pool, &person_name).await?;
@@ -165,7 +197,7 @@ pub async fn import_book(
         }
     }
 
-    // 10. Crea e collega tags
+    // 11. Crea e collega tags
     if let Some(tags) = metadata.tags {
         for tag_name in tags {
             let tag_id = Tag::get_or_create_by_name(pool, &tag_name).await?;

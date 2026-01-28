@@ -10,6 +10,7 @@ ritmo_db_core = { path = "../ritmo_db_core" }
 ritmo_db = { path = "../ritmo_db" }
 
 sha2 = "0.10"
+zip = "2.2"
 serde.workspace = true
 serde_json.workspace = true
 sqlx.workspace = true

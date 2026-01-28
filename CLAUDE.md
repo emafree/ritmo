@@ -264,6 +264,21 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 
 ## Recent Changes
 
+### 2026-01-28 - Session 24: OPF Metadata Preservation - COMPLETED
+Implemented automatic extraction and storage of original EPUB OPF metadata files during import.
+- **Feature**: Extract OPF (Open Packaging Format) XML from EPUB files during import
+- **Storage**: `storage/originals_opf/{hash[0:2]}/{hash[2:4]}/{hash[4:]}.opf.xml` (same hierarchy as books)
+- **Implementation**:
+  - Created `ritmo_core/src/epub_utils.rs` with `extract_opf()` function
+  - EPUB opened as ZIP, reads `META-INF/container.xml` to find OPF path
+  - Extracts OPF XML and saves with hash-based filename
+  - Integrated into `book_import_service.rs` (step 9 after file copy)
+- **Error Handling**: Graceful degradation - OPF extraction failure doesn't block import
+- **Use Cases**: Metadata analysis, Level 3 auto-extraction, validation, ML training
+- **Testing**: Verified extraction, storage, and XML validity with real EPUB
+- **Dependencies**: Added `zip = "2.2"` to `ritmo_core/Cargo.toml`
+- **Documentation**: Comprehensive "OPF Metadata Preservation" section in architecture.md
+
 ### 2026-01-27 - Session 23: Hash-Based Storage System Implementation - COMPLETED
 Implemented content-addressed hash-based file storage system for optimal performance and deduplication.
 - **Problem**: Previous system used human-readable filenames (flat directory, collision-prone, poor scalability)

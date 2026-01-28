@@ -466,6 +466,11 @@ library_root/
 │   │   │   └── {hash[2:4]}/  # Second level: chars 3-4 of hash
 │   │   │       └── {hash[4:]}.{ext}  # Filename: remaining hash + extension
 │   │   # Example: d1/21/b095fd222ac6d4f13eebaba7a3d08fe35fee3189b996d6020b3365c27252.epub
+│   ├── originals_opf/    # Original OPF metadata files (EPUB only)
+│   │   ├── {hash[0:2]}/  # Same hierarchical structure as books/
+│   │   │   └── {hash[2:4]}/
+│   │   │       └── {hash[4:]}.opf.xml  # OPF extracted from EPUB
+│   │   # Example: d1/21/b095fd222ac6d4f13eebaba7a3d08fe35fee3189b996d6020b3365c27252.opf.xml
 │   ├── covers/           # Cover images
 │   └── temp/             # Temporary files
 ├── config/               # Configuration files
@@ -568,6 +573,60 @@ let relative_path = format!(
     &file_hash[4..],    // Filename
     extension
 );
+```
+
+### OPF Metadata Preservation
+
+**Feature**: Automatic extraction and storage of original EPUB OPF (Open Packaging Format) metadata files.
+
+**Purpose**: The OPF file is the metadata container in EPUB files, containing:
+- Book metadata (title, author, publisher, ISBN, language, etc.)
+- File structure and manifest
+- Table of contents (spine)
+- Cover references
+
+**Storage Location**: `storage/originals_opf/` with the same hash-based hierarchy as `books/`:
+```
+storage/originals_opf/{hash[0:2]}/{hash[2:4]}/{hash[4:]}.opf.xml
+```
+
+**Example**:
+- Book: `storage/books/d1/21/b095fd222...epub`
+- OPF: `storage/originals_opf/d1/21/b095fd222...opf.xml`
+
+**Extraction Process**:
+1. Open EPUB as ZIP archive
+2. Read `META-INF/container.xml` to find OPF path
+3. Extract OPF file from ZIP
+4. Save to `originals_opf/` with hash-based path
+
+**Implementation**: `ritmo_core/src/epub_utils.rs` - `extract_opf()` function
+
+**Use Cases**:
+- **Metadata Analysis**: Examine original metadata for debugging
+- **Level 3 Import**: Future automatic metadata extraction can use these files
+- **Validation**: Compare imported metadata with original OPF
+- **Bulk Updates**: Re-extract metadata from preserved OPFs without original files
+- **ML Training**: Use OPF corpus for training metadata extraction models
+
+**Error Handling**: OPF extraction failures don't block import (graceful degradation)
+- Non-standard EPUB structures continue importing
+- Only EPUB files attempt OPF extraction (PDFs, MOBI skip)
+
+**Example OPF Content** (24KB typical size):
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0">
+  <metadata>
+    <dc:creator>Julie Adair King</dc:creator>
+    <dc:title>Fotografia digitale For Dummies</dc:title>
+    <dc:publisher>Hoepli</dc:publisher>
+    <dc:identifier opf:scheme="ISBN">9788820360108</dc:identifier>
+    <dc:language>it</dc:language>
+    <dc:date>2014-04-06</dc:date>
+  </metadata>
+  <!-- ... manifest, spine, guide ... -->
+</package>
 ```
 
 ## Internationalization (i18n) Architecture
