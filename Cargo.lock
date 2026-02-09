@@ -4617,7 +4617,7 @@ dependencies = [
 
 [[package]]
 name = "ritmo_cli"
-version = "0.1.0"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -4631,12 +4631,13 @@ dependencies = [
  "ritmo_ml",
  "rust-i18n",
  "serde_json",
+ "sqlx",
  "tokio",
 ]
 
 [[package]]
 name = "ritmo_config"
-version = "0.1.0"
+version = "2.0.0"
 dependencies = [
  "dirs 5.0.1",
  "ritmo_errors",
@@ -4703,7 +4704,7 @@ dependencies = [
 
 [[package]]
 name = "ritmo_errors"
-version = "0.1.0"
+version = "2.0.0"
 dependencies = [
  "serde_json",
  "sqlx",
@@ -4737,7 +4738,7 @@ dependencies = [
 
 [[package]]
 name = "ritmo_ml"
-version = "0.1.0"
+version = "2.0.0"
 dependencies = [
  "human_name",
  "ritmo_errors",

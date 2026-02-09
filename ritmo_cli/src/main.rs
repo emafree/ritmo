@@ -5,6 +5,7 @@ mod commands;
 mod confirmation;
 mod filter_args;
 mod formatter;
+mod handlers;
 mod helpers;
 
 use clap::{Parser, Subcommand};
@@ -27,218 +28,238 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Inizializza una nuova libreria o usa quella esistente
+    /// Library management operations
+    #[command(subcommand)]
+    Libraries(LibrariesCommands),
+
+    /// Language preference management
+    #[command(subcommand)]
+    Language(LanguageCommands),
+
+    /// Filter presets management
+    #[command(subcommand)]
+    Presets(PresetsCommands),
+
+    /// Book operations (CRUD + cleanup)
+    #[command(subcommand)]
+    Books(BooksCommands),
+
+    /// Content operations (CRUD + link/unlink)
+    #[command(subcommand)]
+    Contents(ContentsCommands),
+
+    /// Entity deduplication using ML
+    #[command(subcommand)]
+    Deduplicate(DeduplicateCommands),
+
+    /// Metadata synchronization
+    #[command(subcommand)]
+    Sync(SyncCommands),
+}
+
+/// Libraries subcommands
+#[derive(Subcommand)]
+enum LibrariesCommands {
+    /// Initialize a new library
     Init {
-        /// Percorso della libreria (default: ~/RitmoLibrary)
+        /// Library path (default: ~/RitmoLibrary)
         path: Option<PathBuf>,
     },
 
-    /// Mostra informazioni sulla libreria corrente
+    /// Show current library information
     Info,
 
-    /// Lista tutte le librerie recenti
-    ListLibraries,
+    /// List all recent libraries
+    List,
 
-    /// Imposta la libreria corrente
-    SetLibrary {
-        /// Percorso della libreria da impostare come corrente
+    /// Set current library
+    Set {
+        /// Library path to set as current
         path: PathBuf,
     },
+}
 
-    /// Salva un preset di filtri
-    SavePreset {
-        /// Tipo di preset: books o contents
+/// Language subcommands
+#[derive(Subcommand)]
+enum LanguageCommands {
+    /// Set preferred language
+    Set {
+        /// Language code (en, it)
+        lang: String,
+    },
+
+    /// Get current language preference
+    Get,
+}
+
+/// Presets subcommands
+#[derive(Subcommand)]
+enum PresetsCommands {
+    /// Save a filter preset
+    Save {
+        /// Preset type: books or contents
         preset_type: String,
 
-        /// Nome del preset
+        /// Preset name
         #[arg(long)]
         name: String,
 
-        /// Descrizione opzionale
+        /// Description
         #[arg(long)]
         description: Option<String>,
 
-        /// Salva nella libreria corrente invece che globalmente
+        /// Save in current library instead of globally
         #[arg(long)]
         in_library: bool,
 
-        // Filtri per books
-        #[arg(long)]
-        author: Option<String>,
-
-        #[arg(long)]
-        publisher: Option<String>,
-
-        #[arg(long)]
-        series: Option<String>,
-
-        #[arg(long)]
-        format: Option<String>,
-
-        #[arg(long)]
-        year: Option<i32>,
-
-        #[arg(long)]
-        isbn: Option<String>,
-
-        #[arg(long)]
-        search: Option<String>,
-
-        #[arg(long)]
-        acquired_after: Option<String>,
-
-        #[arg(long)]
-        acquired_before: Option<String>,
-
-        // Filtro per contents
-        #[arg(long)]
-        content_type: Option<String>,
-
-        #[arg(long, default_value = "title")]
-        sort: String,
-
-        #[arg(long)]
-        limit: Option<i64>,
-
-        #[arg(long, default_value = "0")]
-        offset: i64,
+        #[command(flatten)]
+        filters: filter_args::PresetFilterArgs,
     },
 
-    /// Lista tutti i preset salvati
-    ListPresets {
-        /// Tipo opzionale: books o contents (mostra entrambi se omesso)
+    /// List all saved presets
+    List {
+        /// Filter by type (books, contents)
+        #[arg(long)]
         preset_type: Option<String>,
+
+        /// Show global presets
+        #[arg(long)]
+        global: bool,
     },
 
-    /// Elimina un preset
-    DeletePreset {
-        /// Tipo di preset: books o contents
-        preset_type: String,
-
-        /// Nome del preset da eliminare
+    /// Delete a preset
+    Delete {
+        /// Preset name to delete
         name: String,
+
+        /// Delete from library instead of global
+        #[arg(long)]
+        in_library: bool,
     },
 
-    /// Imposta il preset di default per una libreria
-    SetDefaultFilter {
-        /// Tipo: books o contents
+    /// Set default preset for a library
+    SetDefault {
+        /// Preset name
+        name: String,
+
+        /// Preset type (books, contents)
         preset_type: String,
+    },
+}
 
-        /// Nome del preset da impostare come default (usa 'none' per rimuovere)
-        preset_name: String,
+/// Deduplication subcommands
+#[derive(Subcommand)]
+enum DeduplicateCommands {
+    /// Find and merge duplicate people (authors, translators, etc.)
+    People {
+        /// Similarity threshold (0.0-1.0)
+        #[arg(long, default_value = "0.85")]
+        threshold: f64,
+
+        /// Automatically merge duplicates without confirmation
+        #[arg(long)]
+        auto_merge: bool,
+
+        /// Preview duplicates without merging
+        #[arg(long)]
+        dry_run: bool,
     },
 
-    /// Lista libri con filtri
-    ListBooks {
-        /// Usa un preset salvato
-        #[arg(long, short = 'p')]
-        preset: Option<String>,
+    /// Find and merge duplicate publishers
+    Publishers {
+        /// Similarity threshold (0.0-1.0)
+        #[arg(long, default_value = "0.85")]
+        threshold: f64,
 
-        /// Filtra per autore
+        /// Automatically merge duplicates without confirmation
         #[arg(long)]
-        author: Option<String>,
+        auto_merge: bool,
 
-        /// Filtra per editore
+        /// Preview duplicates without merging
         #[arg(long)]
-        publisher: Option<String>,
-
-        /// Filtra per serie
-        #[arg(long)]
-        series: Option<String>,
-
-        /// Filtra per formato (epub, pdf, mobi, etc.)
-        #[arg(long)]
-        format: Option<String>,
-
-        /// Filtra per anno di pubblicazione
-        #[arg(long)]
-        year: Option<i32>,
-
-        /// Filtra per ISBN
-        #[arg(long)]
-        isbn: Option<String>,
-
-        /// Ricerca full-text (titolo, autori, note)
-        #[arg(long, short)]
-        search: Option<String>,
-
-        /// Filtra libri acquisiti dopo questa data (YYYY-MM-DD)
-        #[arg(long)]
-        acquired_after: Option<String>,
-
-        /// Filtra libri acquisiti prima di questa data (YYYY-MM-DD)
-        #[arg(long)]
-        acquired_before: Option<String>,
-
-        /// Filtra libri acquisiti negli ultimi N giorni
-        #[arg(long, conflicts_with = "acquired_after")]
-        last_days: Option<i64>,
-
-        /// Filtra libri acquisiti negli ultimi N mesi
-        #[arg(long, conflicts_with = "acquired_after")]
-        last_months: Option<i64>,
-
-        /// Limita ai primi N libri acquisiti più recentemente (equivale a sort=date_added + limit)
-        #[arg(long)]
-        recent_count: Option<i64>,
-
-        /// Ordina per campo (title, author, year, date_added)
-        #[arg(long, default_value = "title")]
-        sort: String,
-
-        /// Limita numero risultati
-        #[arg(long)]
-        limit: Option<i64>,
-
-        /// Offset risultati (per paginazione)
-        #[arg(long, default_value = "0")]
-        offset: i64,
-
-        /// Formato output (table, json, simple)
-        #[arg(long, short = 'o', default_value = "table")]
-        output: String,
+        dry_run: bool,
     },
 
-    /// Lista contenuti con filtri
-    ListContents {
-        /// Usa un preset salvato
-        #[arg(long, short = 'p')]
-        preset: Option<String>,
+    /// Find and merge duplicate series
+    Series {
+        /// Similarity threshold (0.0-1.0)
+        #[arg(long, default_value = "0.85")]
+        threshold: f64,
 
-        /// Filtra per autore del contenuto
+        /// Automatically merge duplicates without confirmation
         #[arg(long)]
-        author: Option<String>,
+        auto_merge: bool,
 
-        /// Filtra per tipo (Romanzo, Racconto, Saggio, etc.)
+        /// Preview duplicates without merging
         #[arg(long)]
-        content_type: Option<String>,
-
-        /// Filtra per anno di pubblicazione
-        #[arg(long)]
-        year: Option<i32>,
-
-        /// Ricerca full-text (titolo, autori, note)
-        #[arg(long, short)]
-        search: Option<String>,
-
-        /// Ordina per campo (title, author, year, type)
-        #[arg(long, default_value = "title")]
-        sort: String,
-
-        /// Limita numero risultati
-        #[arg(long)]
-        limit: Option<i64>,
-
-        /// Offset risultati (per paginazione)
-        #[arg(long, default_value = "0")]
-        offset: i64,
-
-        /// Formato output (table, json, simple)
-        #[arg(long, short = 'o', default_value = "table")]
-        output: String,
+        dry_run: bool,
     },
 
-    /// Importa un libro nella libreria
+    /// Find and merge duplicate tags
+    Tags {
+        /// Similarity threshold (0.0-1.0)
+        #[arg(long, default_value = "0.85")]
+        threshold: f64,
+
+        /// Automatically merge duplicates without confirmation
+        #[arg(long)]
+        auto_merge: bool,
+
+        /// Preview duplicates without merging
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Find and merge duplicate roles
+    Roles {
+        /// Similarity threshold (0.0-1.0)
+        #[arg(long, default_value = "0.85")]
+        threshold: f64,
+
+        /// Automatically merge duplicates without confirmation
+        #[arg(long)]
+        auto_merge: bool,
+
+        /// Preview duplicates without merging
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Find and merge all duplicate entities
+    All {
+        /// Similarity threshold (0.0-1.0)
+        #[arg(long, default_value = "0.85")]
+        threshold: f64,
+
+        /// Automatically merge duplicates without confirmation
+        #[arg(long)]
+        auto_merge: bool,
+
+        /// Preview duplicates without merging
+        #[arg(long)]
+        dry_run: bool,
+    },
+}
+
+/// Sync subcommands
+#[derive(Subcommand)]
+enum SyncCommands {
+    /// Sync EPUB metadata with database
+    Metadata {
+        /// Show status without syncing
+        #[arg(long)]
+        status: bool,
+
+        /// Preview changes without applying
+        #[arg(long)]
+        dry_run: bool,
+    },
+}
+
+/// Books subcommands
+#[derive(Subcommand)]
+enum BooksCommands {
+    /// Add single book with metadata
     Add {
         /// Percorso del file da importare
         file: PathBuf,
@@ -251,7 +272,7 @@ enum Commands {
         #[arg(long)]
         original_title: Option<String>,
 
-        /// Persone con ruoli (formato: "Nome:Ruolo", es. "Stephen King:Autore", può essere specificato più volte)
+        /// Persone con ruoli (formato: "Nome:Ruolo", es. "Stephen King:Autore")
         #[arg(long)]
         people: Vec<String>,
 
@@ -292,7 +313,7 @@ enum Commands {
         tags: Vec<String>,
     },
 
-    /// Importa libri in batch da file JSON
+    /// Batch import from JSON
     AddBatch {
         /// Percorso del file JSON con metadata (opzionale, legge da stdin se omesso)
         #[arg(long, short = 'i')]
@@ -307,118 +328,69 @@ enum Commands {
         dry_run: bool,
     },
 
-    /// Aggiorna metadati di un libro esistente
-    UpdateBook {
-        /// ID del libro da aggiornare
-        id: i64,
+    /// List books with filters
+    List {
+        #[command(flatten)]
+        filters: filter_args::BookFilterArgs,
 
-        /// Nuovo titolo
-        #[arg(long)]
-        title: Option<String>,
-
-        /// Nuovo titolo originale
-        #[arg(long)]
-        original_title: Option<String>,
-
-        /// Nuove persone con ruoli (formato: "Nome:Ruolo", sostituisce tutte le persone esistenti)
-        #[arg(long)]
-        people: Vec<String>,
-
-        /// Nuovo editore
-        #[arg(long)]
-        publisher: Option<String>,
-
-        /// Nuovo anno di pubblicazione
-        #[arg(long)]
-        year: Option<i32>,
-
-        /// Nuovo ISBN
-        #[arg(long)]
-        isbn: Option<String>,
-
-        /// Nuovo formato
-        #[arg(long)]
-        format: Option<String>,
-
-        /// Nuova serie
-        #[arg(long)]
-        series: Option<String>,
-
-        /// Nuovo indice nella serie
-        #[arg(long)]
-        series_index: Option<i64>,
-
-        /// Nuove note
-        #[arg(long)]
-        notes: Option<String>,
-
-        /// Numero di pagine
-        #[arg(long)]
-        pages: Option<i64>,
-
-        /// Nuovi tags (sostituiscono tutti i tags esistenti, può essere specificato più volte)
-        #[arg(long)]
-        tags: Vec<String>,
+        /// Formato output (table, json, simple)
+        #[arg(long, short = 'o', default_value = "table")]
+        output: String,
     },
 
-    /// Elimina un libro dal database (rimuove automaticamente tutte le associazioni)
-    DeleteBook {
-        /// ID del libro da eliminare
-        id: i64,
+    /// Update book(s) by ID or filters with bulk support
+    Update {
+        #[command(flatten)]
+        selector: filter_args::BookBulkUpdateSelector,
 
-        /// Elimina anche il file fisico dallo storage (default: mantiene il file)
+        /// Skip confirmation prompt
+        #[arg(long)]
+        yes: bool,
+
+        /// Preview changes without executing
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Delete book(s) by ID or filters
+    Delete {
+        /// Book ID to delete (mutually exclusive with filter args)
+        #[arg(long, conflicts_with_all = ["author", "publisher", "series", "format", "year", "isbn", "search"])]
+        id: Option<i64>,
+
+        #[command(flatten)]
+        filters: filter_args::BookFilterArgs,
+
+        /// Elimina anche il file fisico dallo storage
         #[arg(long)]
         delete_file: bool,
 
-        /// Forza l'eliminazione anche in caso di errori filesystem (utile se il file è già stato eliminato)
+        /// Forza l'eliminazione anche in caso di errori filesystem
         #[arg(long)]
         force: bool,
+
+        /// Skip confirmation prompt
+        #[arg(long)]
+        yes: bool,
+
+        /// Preview changes without executing
+        #[arg(long)]
+        dry_run: bool,
     },
 
-    /// Aggiorna metadati di un contenuto esistente
-    UpdateContent {
-        /// ID del contenuto da aggiornare
-        id: i64,
-
-        /// Nuovo titolo
+    /// Clean up orphaned entities
+    Cleanup {
+        /// Mostra cosa verrebbe eliminato senza applicare modifiche
         #[arg(long)]
-        title: Option<String>,
-
-        /// Nuovo titolo originale
-        #[arg(long)]
-        original_title: Option<String>,
-
-        /// Nuove persone con ruoli (formato: "Nome:Ruolo", sostituisce tutte le persone esistenti)
-        #[arg(long)]
-        people: Vec<String>,
-
-        /// Nuovo tipo di contenuto
-        #[arg(long)]
-        content_type: Option<String>,
-
-        /// Nuovo anno di pubblicazione
-        #[arg(long)]
-        year: Option<i32>,
-
-        /// Nuove note
-        #[arg(long)]
-        notes: Option<String>,
-
-        /// Numero di pagine
-        #[arg(long)]
-        pages: Option<i64>,
-
-        /// Nuovi tags (sostituiscono tutti i tags esistenti, può essere specificato più volte)
-        #[arg(long)]
-        tags: Vec<String>,
-
-        /// Nuove languages (sostituiscono tutte le lingue esistenti, formato: "Nome:iso2:iso3:role")
-        #[arg(long)]
-        languages: Vec<String>,
+        dry_run: bool,
     },
+}
 
-    /// Crea un nuovo contenuto
-    AddContent {
+/// Contents subcommands
+#[derive(Subcommand)]
+enum ContentsCommands {
+    /// Add new content with metadata
+    Add {
         /// Titolo del contenuto (richiesto)
         #[arg(long, short = 't')]
         title: String,
@@ -427,7 +399,7 @@ enum Commands {
         #[arg(long)]
         original_title: Option<String>,
 
-        /// Persone con ruoli (formato: "Nome:Ruolo", es. "Stephen King:Autore", può essere specificato più volte)
+        /// Persone con ruoli (formato: "Nome:Ruolo")
         #[arg(long)]
         people: Vec<String>,
 
@@ -439,175 +411,90 @@ enum Commands {
         #[arg(long, short = 'y')]
         year: Option<i32>,
 
-        /// Numero di pagine
-        #[arg(long)]
-        pages: Option<i64>,
-
         /// Note
         #[arg(long, short = 'n')]
         notes: Option<String>,
 
-        /// ID del libro a cui associare il contenuto (opzionale)
-        #[arg(long, short = 'b')]
-        book_id: Option<i64>,
+        /// Numero di pagine
+        #[arg(long)]
+        pages: Option<i64>,
 
-        /// Tags (può essere specificato più volte)
+        /// Tags
         #[arg(long)]
         tags: Vec<String>,
 
-        /// Languages (formato: "Nome:iso2:iso3:role", es. "Italian:it:ita:Original")
+        /// Lingue (formato: "it:original" o "en:actual")
         #[arg(long)]
         languages: Vec<String>,
+
+        /// ID del libro a cui associare il contenuto (opzionale)
+        #[arg(long)]
+        book_id: Option<i64>,
     },
 
-    /// Elimina un contenuto dal database
-    DeleteContent {
-        /// ID del contenuto da eliminare
-        id: i64,
+    /// List contents with filters
+    List {
+        #[command(flatten)]
+        filters: filter_args::ContentFilterArgs,
+
+        /// Formato output (table, json, simple)
+        #[arg(long, short = 'o', default_value = "table")]
+        output: String,
     },
 
-    /// Associa un contenuto a un libro
-    LinkContent {
-        /// ID del contenuto
-        #[arg(long, short = 'c')]
+    /// Update content(s) by ID or filters with bulk support
+    Update {
+        #[command(flatten)]
+        selector: filter_args::ContentBulkUpdateSelector,
+
+        /// Skip confirmation prompt
+        #[arg(long)]
+        yes: bool,
+
+        /// Preview changes without executing
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Delete content(s) by ID or filters
+    Delete {
+        /// Content ID to delete (mutually exclusive with filter args)
+        #[arg(long, conflicts_with_all = ["author", "content_type", "year", "search"])]
+        id: Option<i64>,
+
+        #[command(flatten)]
+        filters: filter_args::ContentFilterArgs,
+
+        /// Skip confirmation prompt
+        #[arg(long)]
+        yes: bool,
+
+        /// Preview changes without executing
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Link content to book
+    Link {
+        /// Content ID
+        #[arg(long)]
         content_id: i64,
 
-        /// ID del libro
-        #[arg(long, short = 'b')]
+        /// Book ID
+        #[arg(long)]
         book_id: i64,
     },
 
-    /// Rimuovi l'associazione tra un contenuto e un libro
-    UnlinkContent {
-        /// ID del contenuto
-        #[arg(long, short = 'c')]
+    /// Unlink content from book
+    Unlink {
+        /// Content ID
+        #[arg(long)]
         content_id: i64,
 
-        /// ID del libro
-        #[arg(long, short = 'b')]
+        /// Book ID
+        #[arg(long)]
         book_id: i64,
     },
-
-    /// Pulisci entità orfane (autori, editori, serie non referenziati)
-    Cleanup {
-        /// Mostra cosa verrebbe eliminato senza applicare modifiche
-        #[arg(long)]
-        dry_run: bool,
-    },
-
-    /// Find and merge duplicate people (authors, translators, etc.) using ML
-    DeduplicatePeople {
-        /// Minimum confidence threshold (0.0-1.0)
-        #[arg(long, short = 't', default_value = "0.85")]
-        threshold: f64,
-
-        /// Automatically merge high-confidence duplicates
-        #[arg(long)]
-        auto_merge: bool,
-
-        /// Show what would be merged without making changes (default: true)
-        #[arg(long)]
-        dry_run: bool,
-    },
-
-    /// Find and merge duplicate publishers using ML
-    DeduplicatePublishers {
-        /// Minimum confidence threshold (0.0-1.0)
-        #[arg(long, short = 't', default_value = "0.85")]
-        threshold: f64,
-
-        /// Automatically merge high-confidence duplicates
-        #[arg(long)]
-        auto_merge: bool,
-
-        /// Show what would be merged without making changes (default: true)
-        #[arg(long)]
-        dry_run: bool,
-    },
-
-    /// Find and merge duplicate series using ML
-    DeduplicateSeries {
-        /// Minimum confidence threshold (0.0-1.0)
-        #[arg(long, short = 't', default_value = "0.85")]
-        threshold: f64,
-
-        /// Automatically merge high-confidence duplicates
-        #[arg(long)]
-        auto_merge: bool,
-
-        /// Show what would be merged without making changes (default: true)
-        #[arg(long)]
-        dry_run: bool,
-    },
-
-    /// Find and merge duplicate tags using ML
-    DeduplicateTags {
-        /// Minimum confidence threshold (0.0-1.0)
-        #[arg(long, short = 't', default_value = "0.85")]
-        threshold: f64,
-
-        /// Automatically merge high-confidence duplicates
-        #[arg(long)]
-        auto_merge: bool,
-
-        /// Show what would be merged without making changes (default: true)
-        #[arg(long)]
-        dry_run: bool,
-    },
-
-    /// Find and merge duplicate roles using ML
-    DeduplicateRoles {
-        /// Minimum confidence threshold (0.0-1.0)
-        #[arg(long, short = 't', default_value = "0.85")]
-        threshold: f64,
-
-        /// Automatically merge high-confidence duplicates
-        #[arg(long)]
-        auto_merge: bool,
-
-        /// Show what would be merged without making changes (default: true)
-        #[arg(long)]
-        dry_run: bool,
-    },
-
-    /// Find and merge all duplicate entities (authors, publishers, series, tags, roles) using ML
-    DeduplicateAll {
-        /// Minimum confidence threshold (0.0-1.0)
-        #[arg(long, short = 't', default_value = "0.85")]
-        threshold: f64,
-
-        /// Automatically merge high-confidence duplicates
-        #[arg(long)]
-        auto_merge: bool,
-
-        /// Show what would be merged without making changes (default: true)
-        #[arg(long)]
-        dry_run: bool,
-    },
-
-    /// Sync EPUB metadata with database
-    SyncMetadata {
-        /// Show count of pending books
-        #[arg(long)]
-        status: bool,
-
-        /// Preview changes without syncing
-        #[arg(long)]
-        dry_run: bool,
-
-        /// Use specific library
-        #[arg(short, long)]
-        library: Option<PathBuf>,
-    },
-
-    /// Set the preferred language for the application
-    SetLanguage {
-        /// Language code (e.g., "en", "it")
-        language: String,
-    },
-
-    /// Get the current language preference
-    GetLanguage,
 }
 
 #[tokio::main]
@@ -622,158 +509,136 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     i18n_utils::init_i18n_with_preference(Some(app_settings.get_language()));
 
     match cli.command {
-        Commands::Init { path } => {
-            cmd_init(path, &mut app_settings, &settings_path).await?;
-        }
-        Commands::Info => {
-            cmd_info(&cli.library, &app_settings).await?;
-        }
-        Commands::ListLibraries => {
-            cmd_list_libraries(&app_settings)?;
-        }
-        Commands::SetLibrary { path } => {
-            cmd_set_library(path, &mut app_settings, &settings_path)?;
-        }
-        Commands::SavePreset {
-            preset_type,
-            name,
-            description,
-            in_library,
-            author,
-            publisher,
-            series,
-            format,
-            year,
-            isbn,
-            search,
-            acquired_after,
-            acquired_before,
-            content_type,
-            sort,
-            limit,
-            offset,
-        } => {
-            cmd_save_preset(
-                &cli.library,
-                &mut app_settings,
-                &settings_path,
+        // === NEW NESTED COMMANDS ===
+        Commands::Libraries(lib_cmd) => match lib_cmd {
+            LibrariesCommands::Init { path } => {
+                cmd_init(path, &mut app_settings, &settings_path).await?;
+            }
+            LibrariesCommands::Info => {
+                cmd_info(&cli.library, &app_settings).await?;
+            }
+            LibrariesCommands::List => {
+                cmd_list_libraries(&app_settings)?;
+            }
+            LibrariesCommands::Set { path } => {
+                cmd_set_library(path, &mut app_settings, &settings_path)?;
+            }
+        },
+
+        Commands::Language(lang_cmd) => match lang_cmd {
+            LanguageCommands::Set { lang } => {
+                cmd_set_language(lang, &mut app_settings, &settings_path)?;
+            }
+            LanguageCommands::Get => {
+                cmd_get_language(&app_settings);
+            }
+        },
+
+        Commands::Presets(preset_cmd) => match preset_cmd {
+            PresetsCommands::Save {
                 preset_type,
                 name,
-                in_library,
                 description,
-                author,
-                publisher,
-                series,
-                format,
-                year,
-                isbn,
-                search,
-                acquired_after,
-                acquired_before,
-                content_type,
-                sort,
-                limit,
-                offset,
-            )?;
-        }
-        Commands::ListPresets { preset_type } => {
-            cmd_list_presets(&cli.library, &app_settings, preset_type)?;
-        }
-        Commands::DeletePreset { preset_type, name } => {
-            cmd_delete_preset(&mut app_settings, &settings_path, preset_type, name)?;
-        }
-        Commands::SetDefaultFilter {
-            preset_type,
-            preset_name,
-        } => {
-            cmd_set_default_filter(&cli.library, &app_settings, preset_type, preset_name)?;
-        }
-        Commands::ListBooks {
-            preset,
-            author,
-            publisher,
-            series,
-            format,
-            year,
-            isbn,
-            search,
-            acquired_after,
-            acquired_before,
-            last_days,
-            last_months,
-            recent_count,
-            sort,
-            limit,
-            offset,
-            output,
-        } => {
-            cmd_list_books(
-                &cli.library,
-                &app_settings,
-                preset,
-                author,
-                publisher,
-                series,
-                format,
-                year,
-                isbn,
-                search,
-                acquired_after,
-                acquired_before,
-                last_days,
-                last_months,
-                recent_count,
-                sort,
-                limit,
-                offset,
-                output,
-            )
-            .await?;
-        }
-        Commands::ListContents {
-            preset,
-            author,
-            content_type,
-            year,
-            search,
-            sort,
-            limit,
-            offset,
-            output,
-        } => {
-            cmd_list_contents(
-                &cli.library,
-                &app_settings,
-                preset,
-                author,
-                content_type,
-                year,
-                search,
-                sort,
-                limit,
-                offset,
-                output,
-            )
-            .await?;
-        }
-        Commands::Add {
-            file,
-            title,
-            original_title,
-            people,
-            publisher,
-            year,
-            isbn,
-            format,
-            series,
-            series_index,
-            pages,
-            notes,
-            tags,
-        } => {
-            cmd_add(
-                &cli.library,
-                &app_settings,
+                in_library,
+                filters,
+            } => {
+                cmd_save_preset(
+                    &cli.library,
+                    &mut app_settings,
+                    &settings_path,
+                    preset_type,
+                    name,
+                    in_library,
+                    description,
+                    filters.author,
+                    filters.publisher,
+                    filters.series,
+                    filters.format,
+                    filters.year,
+                    filters.isbn,
+                    filters.search,
+                    filters.acquired_after,
+                    filters.acquired_before,
+                    filters.content_type,
+                    filters.sort,
+                    filters.limit,
+                    filters.offset,
+                )?;
+            }
+            PresetsCommands::List { preset_type, .. } => {
+                cmd_list_presets(&cli.library, &app_settings, preset_type)?;
+            }
+            PresetsCommands::Delete { name, .. } => {
+                // Note: in_library not used in original cmd, preset_type derived from context
+                cmd_delete_preset(&mut app_settings, &settings_path, "books".to_string(), name)?;
+            }
+            PresetsCommands::SetDefault {
+                name,
+                preset_type,
+            } => {
+                cmd_set_default_filter(&cli.library, &app_settings, preset_type, name)?;
+            }
+        },
+
+        Commands::Deduplicate(dedup_cmd) => match dedup_cmd {
+            DeduplicateCommands::People {
+                threshold,
+                auto_merge,
+                dry_run,
+            } => {
+                cmd_deduplicate_people(&cli.library, &app_settings, threshold, auto_merge, dry_run).await?;
+            }
+            DeduplicateCommands::Publishers {
+                threshold,
+                auto_merge,
+                dry_run,
+            } => {
+                cmd_deduplicate_publishers(&cli.library, &app_settings, threshold, auto_merge, dry_run).await?;
+            }
+            DeduplicateCommands::Series {
+                threshold,
+                auto_merge,
+                dry_run,
+            } => {
+                cmd_deduplicate_series(&cli.library, &app_settings, threshold, auto_merge, dry_run).await?;
+            }
+            DeduplicateCommands::Tags {
+                threshold,
+                auto_merge,
+                dry_run,
+            } => {
+                cmd_deduplicate_tags(&cli.library, &app_settings, threshold, auto_merge, dry_run).await?;
+            }
+            DeduplicateCommands::Roles {
+                threshold,
+                auto_merge,
+                dry_run,
+            } => {
+                cmd_deduplicate_roles(&cli.library, &app_settings, threshold, auto_merge, dry_run).await?;
+            }
+            DeduplicateCommands::All {
+                threshold,
+                auto_merge,
+                dry_run,
+            } => {
+                cmd_deduplicate_all(&cli.library, &app_settings, threshold, auto_merge, dry_run).await?;
+            }
+        },
+
+        Commands::Sync(sync_cmd) => match sync_cmd {
+            SyncCommands::Metadata { status, dry_run } => {
+                if status {
+                    cmd_sync_status(&cli.library, &app_settings).await?;
+                } else if dry_run {
+                    cmd_sync_dry_run(&cli.library, &app_settings).await?;
+                } else {
+                    cmd_sync_metadata(&cli.library, &app_settings).await?;
+                }
+            }
+        },
+
+        Commands::Books(books_cmd) => match books_cmd {
+            BooksCommands::Add {
                 file,
                 title,
                 original_title,
@@ -787,204 +652,182 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 pages,
                 notes,
                 tags,
-            )
-            .await?;
-        }
-        Commands::AddBatch {
-            input,
-            continue_on_error,
-            dry_run,
-        } => {
-            cmd_add_batch(&cli.library, &app_settings, input, continue_on_error, dry_run).await?;
-        }
-        Commands::UpdateBook {
-            id,
-            title,
-            original_title,
-            people,
-            publisher,
-            year,
-            isbn,
-            format,
-            series,
-            series_index,
-            notes,
-            pages,
-            tags,
-        } => {
-            cmd_update_book(
-                &cli.library,
-                &app_settings,
-                id,
-                title,
-                original_title,
-                people,
-                publisher,
-                year,
-                isbn,
-                format,
-                series,
-                series_index,
-                notes,
-                pages,
-                tags,
-            )
-            .await?;
-        }
-        Commands::DeleteBook {
-            id,
-            delete_file,
-            force,
-        } => {
-            cmd_delete_book(&cli.library, &app_settings, id, delete_file, force).await?;
-        }
-        Commands::AddContent {
-            title,
-            original_title,
-            people,
-            content_type,
-            year,
-            pages,
-            notes,
-            book_id,
-            tags,
-            languages,
-        } => {
-            cmd_add_content(
-                &cli.library,
-                &app_settings,
-                title,
-                original_title,
-                people,
-                content_type,
-                year,
-                pages,
-                notes,
-                book_id,
-                tags,
-                languages,
-            )
-            .await?;
-        }
-        Commands::UpdateContent {
-            id,
-            title,
-            original_title,
-            people,
-            content_type,
-            year,
-            notes,
-            pages,
-            tags,
-            languages,
-        } => {
-            cmd_update_content(
-                &cli.library,
-                &app_settings,
-                id,
-                title,
-                original_title,
-                people,
-                content_type,
-                year,
-                notes,
-                pages,
-                tags,
-                languages,
-            )
-            .await?;
-        }
-        Commands::DeleteContent { id } => {
-            cmd_delete_content(&cli.library, &app_settings, id).await?;
-        }
-        Commands::LinkContent {
-            content_id,
-            book_id,
-        } => {
-            cmd_link_content(&cli.library, &app_settings, content_id, book_id).await?;
-        }
-        Commands::UnlinkContent {
-            content_id,
-            book_id,
-        } => {
-            cmd_unlink_content(&cli.library, &app_settings, content_id, book_id).await?;
-        }
-        Commands::Cleanup { dry_run } => {
-            cmd_cleanup(&cli.library, &app_settings, dry_run).await?;
-        }
-        Commands::DeduplicatePeople {
-            threshold,
-            auto_merge,
-            dry_run,
-        } => {
-            cmd_deduplicate_people(&cli.library, &app_settings, threshold, auto_merge, dry_run)
+            } => {
+                handlers::books::handle_books_add(
+                    &cli.library,
+                    &app_settings,
+                    file,
+                    title,
+                    original_title,
+                    people,
+                    publisher,
+                    year,
+                    isbn,
+                    format,
+                    series,
+                    series_index,
+                    pages,
+                    notes,
+                    tags,
+                )
                 .await?;
-        }
-        Commands::DeduplicatePublishers {
-            threshold,
-            auto_merge,
-            dry_run,
-        } => {
-            cmd_deduplicate_publishers(
-                &cli.library,
-                &app_settings,
-                threshold,
-                auto_merge,
-                dry_run,
-            )
-            .await?;
-        }
-        Commands::DeduplicateSeries {
-            threshold,
-            auto_merge,
-            dry_run,
-        } => {
-            cmd_deduplicate_series(&cli.library, &app_settings, threshold, auto_merge, dry_run)
-                .await?;
-        }
-        Commands::DeduplicateTags {
-            threshold,
-            auto_merge,
-            dry_run,
-        } => {
-            cmd_deduplicate_tags(&cli.library, &app_settings, threshold, auto_merge, dry_run)
-                .await?;
-        }
-        Commands::DeduplicateRoles {
-            threshold,
-            auto_merge,
-            dry_run,
-        } => {
-            cmd_deduplicate_roles(&cli.library, &app_settings, threshold, auto_merge, dry_run)
-                .await?;
-        }
-        Commands::DeduplicateAll {
-            threshold,
-            auto_merge,
-            dry_run,
-        } => {
-            cmd_deduplicate_all(&cli.library, &app_settings, threshold, auto_merge, dry_run)
-                .await?;
-        }
-        Commands::SyncMetadata {
-            status,
-            dry_run,
-            library,
-        } => {
-            if status {
-                cmd_sync_status(&library, &app_settings).await?;
-            } else if dry_run {
-                cmd_sync_dry_run(&library, &app_settings).await?;
-            } else {
-                cmd_sync_metadata(&library, &app_settings).await?;
             }
-        }
-        Commands::SetLanguage { language } => {
-            cmd_set_language(language, &mut app_settings, &settings_path)?;
-        }
-        Commands::GetLanguage => {
-            cmd_get_language(&app_settings);
-        }
+
+            BooksCommands::AddBatch {
+                input,
+                continue_on_error,
+                dry_run,
+            } => {
+                handlers::books::handle_books_add_batch(
+                    &cli.library,
+                    &app_settings,
+                    input,
+                    continue_on_error,
+                    dry_run,
+                )
+                .await?;
+            }
+
+            BooksCommands::List { filters, output } => {
+                handlers::books::handle_books_list(&cli.library, &app_settings, filters, output)
+                    .await?;
+            }
+
+            BooksCommands::Update {
+                selector,
+                yes,
+                dry_run,
+            } => {
+                handlers::books::handle_books_update(
+                    &cli.library,
+                    &app_settings,
+                    selector,
+                    yes,
+                    dry_run,
+                )
+                .await?;
+            }
+
+            BooksCommands::Delete {
+                id,
+                filters,
+                delete_file,
+                force,
+                yes,
+                dry_run,
+            } => {
+                handlers::books::handle_books_delete(
+                    &cli.library,
+                    &app_settings,
+                    id,
+                    filters,
+                    delete_file,
+                    force,
+                    yes,
+                    dry_run,
+                )
+                .await?;
+            }
+
+            BooksCommands::Cleanup { dry_run } => {
+                handlers::books::handle_books_cleanup(&cli.library, &app_settings, dry_run)
+                    .await?;
+            }
+        },
+
+        Commands::Contents(contents_cmd) => match contents_cmd {
+            ContentsCommands::Add {
+                title,
+                original_title,
+                people,
+                content_type,
+                year,
+                notes,
+                pages,
+                tags,
+                languages,
+                book_id,
+            } => {
+                handlers::contents::handle_contents_add(
+                    &cli.library,
+                    &app_settings,
+                    title,
+                    original_title,
+                    people,
+                    content_type,
+                    year,
+                    notes,
+                    pages,
+                    tags,
+                    languages,
+                    book_id,
+                )
+                .await?;
+            }
+
+            ContentsCommands::List { filters, output } => {
+                handlers::contents::handle_contents_list(&cli.library, &app_settings, filters, output)
+                    .await?;
+            }
+
+            ContentsCommands::Update {
+                selector,
+                yes,
+                dry_run,
+            } => {
+                handlers::contents::handle_contents_update(
+                    &cli.library,
+                    &app_settings,
+                    selector,
+                    yes,
+                    dry_run,
+                )
+                .await?;
+            }
+
+            ContentsCommands::Delete {
+                id,
+                filters,
+                yes,
+                dry_run,
+            } => {
+                handlers::contents::handle_contents_delete(
+                    &cli.library,
+                    &app_settings,
+                    id,
+                    filters,
+                    yes,
+                    dry_run,
+                )
+                .await?;
+            }
+
+            ContentsCommands::Link {
+                content_id,
+                book_id,
+            } => {
+                handlers::contents::handle_contents_link(
+                    &cli.library,
+                    &app_settings,
+                    content_id,
+                    book_id,
+                )
+                .await?;
+            }
+
+            ContentsCommands::Unlink {
+                content_id,
+                book_id,
+            } => {
+                handlers::contents::handle_contents_unlink(
+                    &cli.library,
+                    &app_settings,
+                    content_id,
+                    book_id,
+                )
+                .await?;
+            }
+        },
     }
 
     Ok(())

@@ -6,9 +6,14 @@
 //! Each handler module implements the business logic for a specific set of commands.
 //! Handlers are called from main.rs after command parsing.
 
-// Re-export handler modules (will be implemented in Phase 2-4)
-// pub mod books;
-// pub mod contents;
+// Common helper functions
+pub mod common;
+
+// Phase 2: Books handlers
+pub mod books;
+
+// Phase 3: Contents handlers
+pub mod contents;
 // pub mod deduplication;
 // pub mod language;
 // pub mod libraries;

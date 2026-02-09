@@ -18,13 +18,13 @@ cargo build --workspace
 cargo test --workspace
 
 # Initialize a new library
-cargo run -p ritmo_cli -- init
+cargo run -p ritmo_cli -- libraries init
 
 # Import a book
-cargo run -p ritmo_cli -- add book.epub --title "Book Title" --author "Author Name"
+cargo run -p ritmo_cli -- books add book.epub --title "Book Title" --author "Author Name"
 
 # List books
-cargo run -p ritmo_cli -- list-books
+cargo run -p ritmo_cli -- books list
 ```
 
 For complete build and run commands, see [Development Guide](docs/development.md).
@@ -61,7 +61,7 @@ The book import system is designed with progressive automation levels:
 - Title is required, all other metadata optional
 - Format auto-detected from file extension
 - SHA256 hash for duplicate detection
-- Command: `add book.epub --title "Title" --author "Author"`
+- Command: `books add book.epub --title "Title" --author "Author"`
 
 **Level 2 - Batch Import via Pipe (IMPLEMENTED)**
 - Import multiple books from JSON metadata file or stdin
@@ -73,14 +73,14 @@ The book import system is designed with progressive automation levels:
 - Error handling: stop-on-error (default) or continue-on-error
 - Dry-run mode for validation without importing
 - Examples:
-  - `ritmo add-batch --input books_metadata.json`
-  - `cat books_metadata.json | ritmo add-batch`
-  - `ritmo add-batch --input metadata.json --dry-run` (validation only)
-  - `ritmo add-batch --input metadata.json --continue-on-error`
+  - `ritmo books add-batch --input books_metadata.json`
+  - `cat books_metadata.json | ritmo books add-batch`
+  - `ritmo books add-batch --input metadata.json --dry-run` (validation only)
+  - `ritmo books add-batch --input metadata.json --continue-on-error`
   - Future workflow with Level 3:
     - `ritmo extract-metadata ~/books/*.epub > metadata.json`
     - `# Review/edit metadata.json`
-    - `ritmo add-batch --input metadata.json`
+    - `ritmo books add-batch --input metadata.json`
 
 **Level 3 - Automatic Metadata Extraction (PLANNED)**
 - Parse EPUB metadata from content.opf automatically
@@ -177,93 +177,135 @@ See [ML System Documentation](docs/ml-system.md) for complete details.
 
 ### Library Operations
 ```bash
-cargo run -p ritmo_cli -- init [PATH]           # Initialize library
-cargo run -p ritmo_cli -- info                  # Show library info
-cargo run -p ritmo_cli -- list-libraries        # Show recent libraries
-cargo run -p ritmo_cli -- set-library PATH      # Set current library
+cargo run -p ritmo_cli -- libraries init [PATH]  # Initialize library
+cargo run -p ritmo_cli -- libraries info         # Show library info
+cargo run -p ritmo_cli -- libraries list         # Show recent libraries
+cargo run -p ritmo_cli -- libraries set PATH     # Set current library
 ```
 
 ### Book Operations
 ```bash
 # Add single book (Level 1 - Manual)
-cargo run -p ritmo_cli -- add book.epub --title "Title" --author "Author"
+cargo run -p ritmo_cli -- books add book.epub --title "Title" --author "Author"
 
 # Add books in batch (Level 2 - Batch Import)
-cargo run -p ritmo_cli -- add-batch --input books_metadata.json
-cargo run -p ritmo_cli -- add-batch --input books_metadata.json --dry-run
-cargo run -p ritmo_cli -- add-batch --input books_metadata.json --continue-on-error
-cat books_metadata.json | cargo run -p ritmo_cli -- add-batch
+cargo run -p ritmo_cli -- books add-batch --input books_metadata.json
+cargo run -p ritmo_cli -- books add-batch --input books_metadata.json --dry-run
+cargo run -p ritmo_cli -- books add-batch --input books_metadata.json --continue-on-error
+cat books_metadata.json | cargo run -p ritmo_cli -- books add-batch
 
 # List books with filters
-cargo run -p ritmo_cli -- list-books --author "King" --format epub
+cargo run -p ritmo_cli -- books list --author "King" --format epub
 
-# Update book
-cargo run -p ritmo_cli -- update-book 1 --title "New Title"
+# Update single book by ID
+cargo run -p ritmo_cli -- books update --id 1 --set-title "New Title"
 
-# Delete book (database only)
-cargo run -p ritmo_cli -- delete-book 1
+# Update multiple books by filters (bulk operation with confirmation)
+cargo run -p ritmo_cli -- books update --filter-author "King" --set-publisher "New Pub"
+
+# Delete book by ID (database only)
+cargo run -p ritmo_cli -- books delete --id 1
 
 # Delete book with physical file
-cargo run -p ritmo_cli -- delete-book 1 --delete-file
+cargo run -p ritmo_cli -- books delete --id 1 --delete-file
 
-# Force deletion even if file errors occur
-cargo run -p ritmo_cli -- delete-book 1 --delete-file --force
+# Delete multiple books by filters (bulk operation with confirmation)
+cargo run -p ritmo_cli -- books delete --filter-format epub --filter-year 2020
+
+# Dry-run mode: preview without executing
+cargo run -p ritmo_cli -- books delete --filter-publisher "Old Pub" --dry-run
+
+# Skip confirmation with --yes flag
+cargo run -p ritmo_cli -- books update --filter-author "King" --set-publisher "New" --yes
 
 # Cleanup orphaned entities (people, publishers, series, tags, formats)
-cargo run -p ritmo_cli -- cleanup
+cargo run -p ritmo_cli -- books cleanup
 ```
 
 ### Content Operations
 ```bash
 # Create new content
-cargo run -p ritmo_cli -- add-content --title "Story Title" --author "Author Name"
-cargo run -p ritmo_cli -- add-content --title "Novel" --content-type "Romanzo" --year 2024
+cargo run -p ritmo_cli -- contents add --title "Story Title" --author "Author Name"
+cargo run -p ritmo_cli -- contents add --title "Novel" --content-type "Romanzo" --year 2024
 
 # Create content and associate to book
-cargo run -p ritmo_cli -- add-content --title "Novel" --author "Author" --book-id 1
+cargo run -p ritmo_cli -- contents add --title "Novel" --author "Author" --book-id 1
 
-# Update content
-cargo run -p ritmo_cli -- update-content 1 --title "New Title" --year 2024
+# Update single content by ID
+cargo run -p ritmo_cli -- contents update --id 1 --set-title "New Title" --set-year 2024
 
-# Delete content
-cargo run -p ritmo_cli -- delete-content 1
+# Update multiple contents by filters (bulk operation with confirmation)
+cargo run -p ritmo_cli -- contents update --filter-author "King" --set-content-type "Romanzo"
+
+# Delete single content by ID
+cargo run -p ritmo_cli -- contents delete --id 1
+
+# Delete multiple contents by filters (bulk operation with confirmation)
+cargo run -p ritmo_cli -- contents delete --filter-content-type "Racconto"
 
 # Associate/unassociate content and book
-cargo run -p ritmo_cli -- link-content --content-id 1 --book-id 1
-cargo run -p ritmo_cli -- unlink-content --content-id 1 --book-id 1
+cargo run -p ritmo_cli -- contents link --content-id 1 --book-id 1
+cargo run -p ritmo_cli -- contents unlink --content-id 1 --book-id 1
+
+# List contents with filters
+cargo run -p ritmo_cli -- contents list --author "King" --content-type "Romanzo"
 ```
 
 ### ML Deduplication Operations
 ```bash
 # Find duplicate people (authors, translators, etc.) - dry-run by default
-cargo run -p ritmo_cli -- deduplicate-people --dry-run
+cargo run -p ritmo_cli -- deduplicate people --dry-run
 
 # Merge duplicate people with custom threshold
-cargo run -p ritmo_cli -- deduplicate-people --threshold 0.90 --auto-merge
+cargo run -p ritmo_cli -- deduplicate people --threshold 0.90 --auto-merge
 
 # Find duplicate publishers
-cargo run -p ritmo_cli -- deduplicate-publishers --dry-run
+cargo run -p ritmo_cli -- deduplicate publishers --dry-run
 
 # Find duplicate series
-cargo run -p ritmo_cli -- deduplicate-series --dry-run
+cargo run -p ritmo_cli -- deduplicate series --dry-run
 
 # Find duplicate tags
-cargo run -p ritmo_cli -- deduplicate-tags --dry-run
+cargo run -p ritmo_cli -- deduplicate tags --dry-run
 
 # Run deduplication for all entity types (people, publishers, series, tags, roles)
-cargo run -p ritmo_cli -- deduplicate-all --threshold 0.85 --dry-run
+cargo run -p ritmo_cli -- deduplicate all --threshold 0.85 --dry-run
 ```
 
 ### Metadata Sync Operations
 ```bash
 # Check how many books need metadata sync
-cargo run -p ritmo_cli -- sync-metadata --status
+cargo run -p ritmo_cli -- sync metadata --status
 
 # Preview what would be synced (dry-run)
-cargo run -p ritmo_cli -- sync-metadata --dry-run
+cargo run -p ritmo_cli -- sync metadata --dry-run
 
 # Actually sync EPUB files with database metadata
-cargo run -p ritmo_cli -- sync-metadata
+cargo run -p ritmo_cli -- sync metadata
+```
+
+### Language Preference Operations
+```bash
+# Set language preference (en or it)
+cargo run -p ritmo_cli -- language set en
+
+# Get current language settings
+cargo run -p ritmo_cli -- language get
+```
+
+### Preset Operations
+```bash
+# Save a book filter preset
+cargo run -p ritmo_cli -- presets save book "my_preset" --author "King" --format epub
+
+# List all saved presets
+cargo run -p ritmo_cli -- presets list
+
+# Delete a preset
+cargo run -p ritmo_cli -- presets delete "my_preset"
+
+# Set default preset for a library
+cargo run -p ritmo_cli -- presets set-default "my_preset" book
 ```
 
 For complete command reference, see [Development Guide](docs/development.md).

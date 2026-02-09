@@ -216,6 +216,151 @@ impl BookUpdateArgs {
     }
 }
 
+/// Book update selector for bulk operations: combines filters (to select books) and update values (to modify them)
+/// Uses prefixed arguments to avoid conflicts: --filter-* for selection, --set-* for updates
+#[derive(Args, Clone, Debug)]
+pub struct BookBulkUpdateSelector {
+    /// Select by ID (mutually exclusive with filters)
+    #[arg(long, conflicts_with_all = ["filter_author", "filter_publisher", "filter_series", "filter_format", "filter_year", "filter_isbn", "filter_search"])]
+    pub id: Option<i64>,
+
+    // FILTER ARGUMENTS (for selecting books to update)
+    /// Filtra per autore
+    #[arg(long = "filter-author")]
+    pub filter_author: Option<String>,
+
+    /// Filtra per editore
+    #[arg(long = "filter-publisher")]
+    pub filter_publisher: Option<String>,
+
+    /// Filtra per serie
+    #[arg(long = "filter-series")]
+    pub filter_series: Option<String>,
+
+    /// Filtra per formato
+    #[arg(long = "filter-format")]
+    pub filter_format: Option<String>,
+
+    /// Filtra per anno
+    #[arg(long = "filter-year")]
+    pub filter_year: Option<i32>,
+
+    /// Filtra per ISBN
+    #[arg(long = "filter-isbn")]
+    pub filter_isbn: Option<String>,
+
+    /// Ricerca full-text
+    #[arg(long = "filter-search")]
+    pub filter_search: Option<String>,
+
+    // UPDATE VALUES (new values to set)
+    /// Nuovo titolo
+    #[arg(long = "set-title")]
+    pub set_title: Option<String>,
+
+    /// Nuovo titolo originale
+    #[arg(long = "set-original-title")]
+    pub set_original_title: Option<String>,
+
+    /// Nuove persone con ruoli (formato: "Nome:Ruolo")
+    #[arg(long = "set-people")]
+    pub set_people: Vec<String>,
+
+    /// Nuovo editore
+    #[arg(long = "set-publisher")]
+    pub set_publisher: Option<String>,
+
+    /// Nuovo anno
+    #[arg(long = "set-year")]
+    pub set_year: Option<i32>,
+
+    /// Nuovo ISBN
+    #[arg(long = "set-isbn")]
+    pub set_isbn: Option<String>,
+
+    /// Nuovo formato
+    #[arg(long = "set-format")]
+    pub set_format: Option<String>,
+
+    /// Nuova serie
+    #[arg(long = "set-series")]
+    pub set_series: Option<String>,
+
+    /// Nuovo indice serie
+    #[arg(long = "set-series-index")]
+    pub set_series_index: Option<i64>,
+
+    /// Nuove note
+    #[arg(long = "set-notes")]
+    pub set_notes: Option<String>,
+
+    /// Numero pagine
+    #[arg(long = "set-pages")]
+    pub set_pages: Option<i64>,
+
+    /// Nuovi tags
+    #[arg(long = "set-tags")]
+    pub set_tags: Vec<String>,
+}
+
+impl BookBulkUpdateSelector {
+    /// Check if using ID mode (single book)
+    pub fn is_id_mode(&self) -> bool {
+        self.id.is_some()
+    }
+
+    /// Check if any filters are specified
+    pub fn has_filters(&self) -> bool {
+        self.filter_author.is_some()
+            || self.filter_publisher.is_some()
+            || self.filter_series.is_some()
+            || self.filter_format.is_some()
+            || self.filter_year.is_some()
+            || self.filter_isbn.is_some()
+            || self.filter_search.is_some()
+    }
+
+    /// Check if any update values are specified
+    pub fn has_updates(&self) -> bool {
+        self.set_title.is_some()
+            || self.set_original_title.is_some()
+            || !self.set_people.is_empty()
+            || self.set_publisher.is_some()
+            || self.set_year.is_some()
+            || self.set_isbn.is_some()
+            || self.set_format.is_some()
+            || self.set_series.is_some()
+            || self.set_series_index.is_some()
+            || self.set_notes.is_some()
+            || self.set_pages.is_some()
+            || !self.set_tags.is_empty()
+    }
+
+    /// Convert filter args to BookFilters
+    pub fn to_filters(&self) -> BookFilters {
+        let mut filters = BookFilters::default();
+
+        if let Some(author) = &self.filter_author {
+            filters = filters.with_author(author.clone());
+        }
+        if let Some(publisher) = &self.filter_publisher {
+            filters = filters.with_publisher(publisher.clone());
+        }
+        if let Some(series) = &self.filter_series {
+            filters = filters.with_series(series.clone());
+        }
+        if let Some(format) = &self.filter_format {
+            filters = filters.with_format(format.clone());
+        }
+
+        filters.year = self.filter_year;
+        filters.isbn = self.filter_isbn.clone();
+        filters.search = self.filter_search.clone();
+
+        filters
+    }
+}
+
 /// Shared filter arguments for content operations
 #[derive(Args, Clone, Debug)]
 pub struct ContentFilterArgs {
@@ -352,6 +497,114 @@ impl ContentUpdateArgs {
             || self.pages.is_some()
             || !self.tags.is_empty()
             || !self.languages.is_empty()
+    }
+}
+
+/// Content update selector for bulk operations: combines filters (to select contents) and update values (to modify them)
+/// Uses prefixed arguments to avoid conflicts: --filter-* for selection, --set-* for updates
+#[derive(Args, Clone, Debug)]
+pub struct ContentBulkUpdateSelector {
+    /// Select by ID (mutually exclusive with filters)
+    #[arg(long, conflicts_with_all = ["filter_author", "filter_content_type", "filter_year", "filter_search"])]
+    pub id: Option<i64>,
+
+    // FILTER ARGUMENTS (for selecting contents to update)
+    /// Filtra per autore
+    #[arg(long = "filter-author")]
+    pub filter_author: Option<String>,
+
+    /// Filtra per tipo di contenuto
+    #[arg(long = "filter-content-type")]
+    pub filter_content_type: Option<String>,
+
+    /// Filtra per anno
+    #[arg(long = "filter-year")]
+    pub filter_year: Option<i32>,
+
+    /// Ricerca full-text
+    #[arg(long = "filter-search")]
+    pub filter_search: Option<String>,
+
+    // UPDATE VALUES (new values to set)
+    /// Nuovo titolo
+    #[arg(long = "set-title")]
+    pub set_title: Option<String>,
+
+    /// Nuovo titolo originale
+    #[arg(long = "set-original-title")]
+    pub set_original_title: Option<String>,
+
+    /// Nuove persone con ruoli (formato: "Nome:Ruolo")
+    #[arg(long = "set-people")]
+    pub set_people: Vec<String>,
+
+    /// Nuovo tipo di contenuto
+    #[arg(long = "set-content-type")]
+    pub set_content_type: Option<String>,
+
+    /// Nuovo anno
+    #[arg(long = "set-year")]
+    pub set_year: Option<i32>,
+
+    /// Nuove note
+    #[arg(long = "set-notes")]
+    pub set_notes: Option<String>,
+
+    /// Numero pagine
+    #[arg(long = "set-pages")]
+    pub set_pages: Option<i64>,
+
+    /// Nuovi tags
+    #[arg(long = "set-tags")]
+    pub set_tags: Vec<String>,
+
+    /// Nuove lingue (formato: "it:original" o "en:actual")
+    #[arg(long = "set-languages")]
+    pub set_languages: Vec<String>,
+}
+
+impl ContentBulkUpdateSelector {
+    /// Check if using ID mode (single content)
+    pub fn is_id_mode(&self) -> bool {
+        self.id.is_some()
+    }
+
+    /// Check if any filters are specified
+    pub fn has_filters(&self) -> bool {
+        self.filter_author.is_some()
+            || self.filter_content_type.is_some()
+            || self.filter_year.is_some()
+            || self.filter_search.is_some()
+    }
+
+    /// Check if any update values are specified
+    pub fn has_updates(&self) -> bool {
+        self.set_title.is_some()
+            || self.set_original_title.is_some()
+            || !self.set_people.is_empty()
+            || self.set_content_type.is_some()
+            || self.set_year.is_some()
+            || self.set_notes.is_some()
+            || self.set_pages.is_some()
+            || !self.set_tags.is_empty()
+            || !self.set_languages.is_empty()
+    }
+
+    /// Convert filter args to ContentFilters
+    pub fn to_filters(&self) -> ContentFilters {
+        let mut filters = ContentFilters::default();
+
+        if let Some(author) = &self.filter_author {
+            filters = filters.with_author(author.clone());
+        }
+        if let Some(content_type) = &self.filter_content_type {
+            filters = filters.with_content_type(content_type.clone());
+        }
+
+        filters.year = self.filter_year;
+        filters.search = self.filter_search.clone();
+
+        filters
     }
 }
 
