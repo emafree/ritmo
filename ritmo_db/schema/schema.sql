@@ -346,6 +346,45 @@ CREATE INDEX IF NOT EXISTS "idx_contents_languages_by_language" ON "x_contents_l
 CREATE INDEX IF NOT EXISTS "idx_pending_sync_book_lookup" ON "pending_metadata_sync" (
 	"book_id"
 );
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_books_file_hash_unique" ON "books" (
+	"file_hash"
+) WHERE "file_hash" IS NOT NULL;
+CREATE INDEX IF NOT EXISTS "idx_books_isbn" ON "books" (
+	"isbn"
+) WHERE "isbn" IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_publishers_name_unique" ON "publishers" (
+	LOWER(TRIM("name"))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_series_name_unique" ON "series" (
+	LOWER(TRIM("name"))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_tags_name_unique" ON "tags" (
+	LOWER(TRIM("name"))
+);
+CREATE INDEX IF NOT EXISTS "idx_books_bulk_filters_covering" ON "books" (
+	"publisher_id",
+	"format_id",
+	"publication_date",
+	"series_id",
+	"name",
+	"id",
+	"created_at"
+);
+CREATE INDEX IF NOT EXISTS "idx_books_people_composite" ON "x_books_people_roles" (
+	"person_id",
+	"role_id",
+	"book_id"
+);
+CREATE INDEX IF NOT EXISTS "idx_contents_type_lookup" ON "contents" (
+	"type_id",
+	"publication_date",
+	"id"
+);
+CREATE INDEX IF NOT EXISTS "idx_pending_sync_composite" ON "pending_metadata_sync" (
+	"book_id",
+	"created_at",
+	"reason"
+);
 CREATE TRIGGER normalize_person_name
     BEFORE INSERT ON people
     FOR EACH ROW
@@ -422,6 +461,23 @@ CREATE TRIGGER update_books_modified_date
 BEGIN
     UPDATE books SET last_modified_date = strftime('%s', 'now') WHERE id = NEW.id;
 END;
+CREATE TRIGGER cleanup_old_audit_logs
+    AFTER INSERT ON audit_log
+    WHEN (SELECT COUNT(*) FROM audit_log) > 10000
+BEGIN
+    DELETE FROM audit_log
+    WHERE timestamp < strftime('%s', 'now', '-90 days')
+    AND id NOT IN (
+        SELECT id FROM audit_log
+        ORDER BY timestamp DESC
+        LIMIT 10000
+    );
+END;
+CREATE TRIGGER cleanup_expired_cache
+    AFTER INSERT ON stats_cache
+BEGIN
+    DELETE FROM stats_cache WHERE expires_at < strftime('%s', 'now');
+END;
 CREATE VIEW PeopleMatchingOptimized AS
 SELECT
     p.id,
@@ -451,11 +507,11 @@ SELECT
     COUNT(*) as total_count,
     COUNT(CASE WHEN has_cover = 1 THEN 1 END) as with_cover,
     COUNT(CASE WHEN has_paper = 1 THEN 1 END) as with_paper,
-    COUNT(CASE WHEN rating IS NOT NULL THEN 1 END) as rated,
-    ROUND(AVG(rating), 2) as avg_rating,
-    COUNT(CASE WHEN read_status = 'read' THEN 1 END) as read_count,
-    COUNT(CASE WHEN read_status = 'reading' THEN 1 END) as reading_count,
-    COUNT(CASE WHEN read_status = 'unread' THEN 1 END) as unread_count
+    0 as rated,
+    0 as avg_rating,
+    0 as read_count,
+    0 as reading_count,
+    0 as unread_count
 FROM books
 UNION ALL
 SELECT
@@ -463,8 +519,8 @@ SELECT
     COUNT(*) as total_count,
     0 as with_cover,
     0 as with_paper,
-    COUNT(CASE WHEN rating IS NOT NULL THEN 1 END) as rated,
-    ROUND(AVG(rating), 2) as avg_rating,
+    0 as rated,
+    0 as avg_rating,
     0 as read_count,
     0 as reading_count,
     0 as unread_count
@@ -522,14 +578,14 @@ WHERE b.id NOT IN (
     SELECT DISTINCT book_id
     FROM x_books_people_roles bpr
     JOIN roles r ON bpr.role_id = r.id
-    WHERE r.name IN ('Autore', 'Author', 'Scrittore')
+    WHERE r.key LIKE 'role.author%'
 );
 CREATE VIEW ContentsWithoutAuthor AS
 SELECT
     c.id,
     c.name,
     c.publication_date,
-    t.name as type_name,
+    t.key as type_key,
     c.created_at
 FROM contents c
 LEFT JOIN types t ON c.type_id = t.id
@@ -537,7 +593,7 @@ WHERE c.id NOT IN (
     SELECT DISTINCT content_id
     FROM x_contents_people_roles cpr
     JOIN roles r ON cpr.role_id = r.id
-    WHERE r.name IN ('Autore', 'Author', 'Scrittore')
+    WHERE r.key LIKE 'role.author%'
 );
 CREATE VIEW BooksSearchOptimized AS
 SELECT
@@ -553,7 +609,7 @@ SELECT
     s.name as series_name,
     p.name as main_author,
     p.id as author_id,
-    f.name as format_name,
+    f.key as format_key,
     pub.name as publisher_name,
     b.created_at,
     b.last_modified_date
@@ -564,7 +620,7 @@ LEFT JOIN publishers pub ON b.publisher_id = pub.id
 LEFT JOIN x_books_people_roles bpr ON b.id = bpr.book_id
 LEFT JOIN people p ON bpr.person_id = p.id
 LEFT JOIN roles r ON bpr.role_id = r.id
-WHERE r.name IN ('Autore', 'Author', 'Scrittore')
+WHERE r.key LIKE 'role.author%'
    OR bpr.role_id = (
        SELECT MIN(role_id)
        FROM x_books_people_roles
@@ -577,7 +633,7 @@ SELECT
     c.original_title,
     c.publication_date,
     c.pages,
-    t.name as type_name,
+    t.key as type_key,
     p.name as main_author,
     p.id as author_id,
     c.created_at,
@@ -587,7 +643,7 @@ LEFT JOIN types t ON c.type_id = t.id
 LEFT JOIN x_contents_people_roles cpr ON c.id = cpr.content_id
 LEFT JOIN people p ON cpr.person_id = p.id
 LEFT JOIN roles r ON cpr.role_id = r.id
-WHERE r.name IN ('Autore', 'Author', 'Scrittore')
+WHERE r.key LIKE 'role.author%'
    OR cpr.role_id = (
        SELECT MIN(role_id)
        FROM x_contents_people_roles
@@ -601,10 +657,10 @@ SELECT
     c.publication_date,
     c.pages,
     c.notes AS content_notes,
-    t.name AS type_name,
+    t.key AS type_key,
     GROUP_CONCAT(DISTINCT p.id) AS person_ids,
     GROUP_CONCAT(DISTINCT p.name) AS person_names,
-    GROUP_CONCAT(DISTINCT r.name) AS role_names,
+    GROUP_CONCAT(DISTINCT r.key) AS role_keys,
     GROUP_CONCAT(DISTINCT tag.name) AS tag_names,
     GROUP_CONCAT(DISTINCT rl.official_name || ' (' || rl.language_role || ')') AS language_info
 FROM contents c
@@ -635,10 +691,10 @@ SELECT
     s.name AS series_name,
     b.series_index,
     pub.name AS publisher_name,
-    f.name AS format_name,
+    f.key AS format_key,
     GROUP_CONCAT(DISTINCT p.id) AS person_ids,
     GROUP_CONCAT(DISTINCT p.name) AS person_names,
-    GROUP_CONCAT(DISTINCT r.name) AS role_names,
+    GROUP_CONCAT(DISTINCT r.key) AS role_keys,
     GROUP_CONCAT(DISTINCT tag.name) AS tag_names,
     GROUP_CONCAT(DISTINCT c.id) AS content_ids,
     GROUP_CONCAT(DISTINCT c.name) AS content_names
