@@ -2,6 +2,8 @@
 rust_i18n::i18n!("../locales", fallback = "en");
 
 mod commands;
+mod confirmation;
+mod filter_args;
 mod formatter;
 mod helpers;
 
