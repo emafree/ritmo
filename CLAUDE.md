@@ -276,6 +276,18 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 
 ## Recent Changes
 
+### 2026-02-09 - Session 28: ML Deduplication Critical Bugfixes - COMPLETED
+Fixed three critical bugs in ML deduplication system that prevented correct duplicate detection.
+- **Bugs Fixed**:
+  - Hardcoded threshold (0.85) ignored user's `--threshold` parameter
+  - HashMap collision lost entities with identical canonical keys (e.g., "J.K. Rowling" and "J. K. Rowling")
+  - Duplicate IDs in output due to unrepeated cluster members
+- **Impact**: System was missing 2 out of 3 duplicate groups in testing
+- **Testing**: Comprehensive test with 7 contents and 3 duplicate groups, all 21 unit tests pass
+- **Files Modified**: `ritmo_ml/src/entity_learner.rs`, `ritmo_ml/src/deduplication.rs`
+- **New Test**: `ritmo_ml/tests/test_name_parsing.rs` for name parsing verification
+- **Result**: All deduplication commands now work correctly with configurable thresholds
+
 ### 2026-01-28 - Session 27: Code Cleanup and Test Fixes - COMPLETED
 Fixed compiler warnings and test race conditions for clean builds and reliable test execution.
 - **Issues Resolved**:

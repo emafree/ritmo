@@ -305,10 +305,13 @@ fn clusters_to_duplicate_groups<T: MLProcessable>(
     learner: &MLEntityLearner,
     entities: &[T],
 ) -> Vec<DuplicateGroup> {
-    // Build a map from canonical_key to entity for quick lookup
-    let mut key_to_entity: HashMap<String, &T> = HashMap::new();
+    // Build a map from canonical_key to Vec of entities (to handle duplicate keys)
+    let mut key_to_entities: HashMap<String, Vec<&T>> = HashMap::new();
     for entity in entities {
-        key_to_entity.insert(entity.canonical_key(), entity);
+        key_to_entities
+            .entry(entity.canonical_key())
+            .or_insert_with(Vec::new)
+            .push(entity);
     }
 
     let mut groups = Vec::new();
@@ -318,29 +321,37 @@ fn clusters_to_duplicate_groups<T: MLProcessable>(
             continue; // Not a duplicate if only one member
         }
 
-        // First member is the centroid (primary)
-        let primary_key = &cluster.centroid;
-        let primary_entity = match key_to_entity.get(primary_key) {
-            Some(e) => e,
-            None => continue, // Skip if entity not found
-        };
+        // Collect all entity IDs that belong to this cluster (deduplicated)
+        use std::collections::HashSet;
+        let mut seen_ids = HashSet::new();
+        let mut all_entity_ids: Vec<(i64, String)> = Vec::new(); // (id, canonical_key)
 
-        let primary_id = primary_entity.id();
-        let primary_name = primary_key.clone();
+        for member_key in &cluster.members {
+            if let Some(entities_with_key) = key_to_entities.get(member_key) {
+                for entity in entities_with_key {
+                    let id = entity.id();
+                    if !seen_ids.contains(&id) {
+                        seen_ids.insert(id);
+                        all_entity_ids.push((id, member_key.clone()));
+                    }
+                }
+            }
+        }
+
+        if all_entity_ids.len() < 2 {
+            continue; // Not a duplicate if only one entity found
+        }
+
+        // Use the first entity as primary
+        let (primary_id, primary_name) = all_entity_ids[0].clone();
 
         // Rest are duplicates
         let mut duplicate_ids = Vec::new();
         let mut duplicate_names = Vec::new();
 
-        for member_key in &cluster.members {
-            if member_key == primary_key {
-                continue; // Skip primary itself
-            }
-
-            if let Some(dup_entity) = key_to_entity.get(member_key) {
-                duplicate_ids.push(dup_entity.id());
-                duplicate_names.push(member_key.clone());
-            }
+        for (dup_id, dup_name) in all_entity_ids.iter().skip(1) {
+            duplicate_ids.push(*dup_id);
+            duplicate_names.push(dup_name.clone());
         }
 
         if !duplicate_ids.is_empty() {

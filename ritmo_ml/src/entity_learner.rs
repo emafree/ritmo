@@ -53,7 +53,7 @@ impl MLEntityLearner {
     pub fn create_clusters(&mut self, items: &[String]) {
         let mut clusters = Vec::new();
         let mut used = vec![false; items.len()];
-        let threshold = 0.85;
+        let threshold = self.minimum_confidence;
         for (i, a) in items.iter().enumerate() {
             if used[i] {
                 continue;
