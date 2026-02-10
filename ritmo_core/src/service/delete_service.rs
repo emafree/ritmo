@@ -1,4 +1,4 @@
-use ritmo_db::{Book, Content};
+use ritmo_db::{crud_delete, crud_get, Book, Content};
 use ritmo_db_core::LibraryConfig;
 use ritmo_errors::reporter::RitmoReporter;
 use ritmo_errors::{RitmoErr, RitmoResult};
@@ -56,7 +56,7 @@ pub async fn delete_book(
     reporter: &mut impl RitmoReporter,
 ) -> RitmoResult<()> {
     // 1. Verifica che il libro esista e ottieni i dettagli
-    let book = Book::get(pool, book_id)
+    let book = crud_get::<Book>(pool, book_id)
         .await?
         .ok_or_else(|| RitmoErr::Generic(format!("Libro con ID {} non trovato", book_id)))?;
 
@@ -98,7 +98,7 @@ pub async fn delete_book(
     // 3. Elimina record dal database
     // Le relazioni in x_books_people_roles, x_books_tags, x_books_contents
     // vengono eliminate automaticamente grazie a ON DELETE CASCADE
-    let rows_affected = Book::delete(pool, book_id).await?;
+    let rows_affected = crud_delete::<Book>(pool, book_id).await?;
 
     if rows_affected == 0 {
         return Err(RitmoErr::Generic(format!(
@@ -126,14 +126,13 @@ pub async fn delete_content(
     reporter: &mut impl RitmoReporter,
 ) -> RitmoResult<()> {
     // 1. Verifica che il contenuto esista
-    let content = Content::get(pool, content_id)
+    let content = crud_get::<Content>(pool, content_id)
         .await?
         .ok_or_else(|| RitmoErr::Generic(format!("Contenuto con ID {} non trovato", content_id)))?;
-
     // 2. Elimina record dal database
     // Le relazioni in x_contents_people_roles, x_contents_tags, x_contents_languages,
     // x_books_contents vengono eliminate automaticamente grazie a ON DELETE CASCADE
-    let rows_affected = Content::delete(pool, content_id).await?;
+    let rows_affected = crud_delete::<Content>(pool, content_id).await?;
 
     if rows_affected == 0 {
         return Err(RitmoErr::Generic(format!(

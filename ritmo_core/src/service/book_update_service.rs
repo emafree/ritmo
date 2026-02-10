@@ -1,4 +1,8 @@
-use ritmo_db::{Book, Format, Person, Publisher, Role, Series, Tag};
+use crate::utils::opt_year_to_timestamp;
+use ritmo_db::{
+    crud_get, get_or_create, Book, BookPersonRole, BookTag, Format, Person, Publisher, Role,
+    Series, Tag,
+};
 use ritmo_errors::{RitmoErr, RitmoResult};
 
 /// Metadati opzionali per l'aggiornamento di un libro
@@ -31,8 +35,8 @@ pub async fn update_book(
     book_id: i64,
     metadata: BookUpdateMetadata,
 ) -> RitmoResult<()> {
-    // 1. Verifica che il libro esista e caricalo
-    let mut book = Book::get(pool, book_id)
+    // 1. Verifica che il libro esista e caricalo  crud_get::<Book>(pool, id).await
+    let mut book = crud_get::<Book>(pool, book_id)
         .await?
         .ok_or_else(|| RitmoErr::Generic(format!("Libro con ID {} non trovato", book_id)))?;
 
@@ -58,27 +62,20 @@ pub async fn update_book(
     }
 
     if let Some(year) = metadata.year {
-        book.publication_date = Some(
-            chrono::NaiveDate::from_ymd_opt(year, 1, 1)
-                .unwrap()
-                .and_hms_opt(0, 0, 0)
-                .unwrap()
-                .and_utc()
-                .timestamp(),
-        );
+        book.publication_date = opt_year_to_timestamp(Some(year));
     }
 
     // 3. Aggiorna relazioni foreign key
     if let Some(format_name) = metadata.format {
-        book.format_id = Some(Format::get_or_create_by_key(pool, &format_name).await?);
+        book.format_id = Some(get_or_create::<Format>(pool, &format_name).await?);
     }
 
     if let Some(publisher_name) = metadata.publisher {
-        book.publisher_id = Some(Publisher::get_or_create_by_name(pool, &publisher_name).await?);
+        book.publisher_id = Some(get_or_create::<Publisher>(pool, &publisher_name).await?);
     }
 
     if let Some(series_name) = metadata.series {
-        book.series_id = Some(Series::get_or_create_by_name(pool, &series_name).await?);
+        book.series_id = Some(get_or_create::<Series>(pool, &series_name).await?);
     }
 
     if let Some(series_index) = metadata.series_index {
@@ -98,22 +95,26 @@ pub async fn update_book(
     // 5. Gestisci aggiornamento persone e ruoli se specificato
     if let Some(people) = metadata.people {
         // Rimuovi tutte le relazioni persone-ruoli esistenti
-        sqlx::query!("DELETE FROM x_books_people_roles WHERE book_id = ?", book_id)
-            .execute(pool)
-            .await?;
+        sqlx::query!(
+            "DELETE FROM x_books_people_roles WHERE book_id = ?",
+            book_id
+        )
+        .execute(pool)
+        .await?;
 
         // Aggiungi le nuove persone con i loro ruoli
         for (person_name, role_name) in people {
-            let person_id = Person::get_or_create_by_name(pool, &person_name).await?;
-            let role_id = Role::get_or_create_by_key(pool, &role_name).await?;
+            let person_id = get_or_create::<Person>(pool, &person_name).await?;
+            let role_id = get_or_create::<Role>(pool, &role_name).await?;
 
-            sqlx::query!(
-                "INSERT INTO x_books_people_roles (book_id, person_id, role_id) VALUES (?, ?, ?)",
-                book_id,
-                person_id,
-                role_id
+            BookPersonRole::create(
+                pool,
+                &BookPersonRole {
+                    book_id,
+                    person_id,
+                    role_id,
+                },
             )
-            .execute(pool)
             .await?;
         }
     }
@@ -127,14 +128,8 @@ pub async fn update_book(
 
         // Aggiungi i nuovi tags
         for tag_name in tags {
-            let tag_id = Tag::get_or_create_by_name(pool, &tag_name).await?;
-            sqlx::query!(
-                "INSERT INTO x_books_tags (book_id, tag_id) VALUES (?, ?)",
-                book_id,
-                tag_id
-            )
-            .execute(pool)
-            .await?;
+            let tag_id = get_or_create::<Tag>(pool, &tag_name).await?;
+            BookTag::create(pool, &BookTag { book_id, tag_id }).await?;
         }
     }
 

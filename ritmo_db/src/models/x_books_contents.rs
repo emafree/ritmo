@@ -7,7 +7,20 @@ pub struct BookContent {
 }
 
 impl BookContent {
-    pub async fn create(pool: &sqlx::SqlitePool, new_link: &FullBook) -> Result<(), sqlx::Error> {
+    pub async fn create(pool: &sqlx::SqlitePool, new_link: &BookContent) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            "INSERT INTO x_books_contents (book_id, content_id) VALUES (?, ?)",
+            new_link.book_id,
+            new_link.content_id
+            )
+            .execute(pool)
+            .await?;
+        Ok(())
+    }
+
+    /// Deprecated: use `create(&BookContent)` instead
+    #[deprecated(since = "0.1.0", note = "Use `create(&BookContent)` for consistency")]
+    pub async fn create_from_fullbook(pool: &sqlx::SqlitePool, new_link: &FullBook) -> Result<(), sqlx::Error> {
         sqlx::query!(
             "INSERT INTO x_books_contents (book_id, content_id) VALUES (?, ?)",
             new_link.book_content.book_id,

@@ -1,3 +1,4 @@
+use crate::crud_trait::CrudModel;
 use crate::i18n_trait::I18nDisplayable;
 use ritmo_errors::RitmoResult;
 use sqlx::FromRow;
@@ -29,6 +30,12 @@ impl I18nDisplayable for RunningLanguages {
     }
 }
 
+// ✅ Implementa CrudModel trait - elimina necessità di get/list_all/delete custom
+impl CrudModel for RunningLanguages {
+    const TABLE_NAME: &'static str = "running_languages";
+    const ORDER_BY: &'static str = "name";
+}
+
 impl RunningLanguages {
     pub fn new() -> Self {
         Self {
@@ -49,34 +56,42 @@ impl RunningLanguages {
         self.translate()
     }
 
+    /// Create a new language and save it to the database
+    /// Returns the newly created language ID
+    ///
+    /// # Arguments
+    /// * `pool` - SQLite connection pool
+    ///
+    /// # Returns
+    /// * `Ok(i64)` - The ID of the newly inserted language
+    /// * `Err(RitmoErr)` - Error if insertion fails
     pub async fn save(&self, pool: &sqlx::SqlitePool) -> RitmoResult<i64> {
         let now = chrono::Utc::now().timestamp();
-        let result =
-            sqlx::query!(
-                "INSERT INTO running_languages (official_name, language_role, iso_code_2char, iso_code_3char, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                self.name,
-                self.role,
-                self.iso_code_2char,
-                self.iso_code_3char,
-                now,
-                now
-                )
-                .execute(pool)
-                .await?;
+        let result = sqlx::query!(
+            "INSERT INTO running_languages (official_name, language_role, iso_code_2char, iso_code_3char, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            self.name,
+            self.role,
+            self.iso_code_2char,
+            self.iso_code_3char,
+            now,
+            now
+        )
+        .execute(pool)
+        .await?;
         Ok(result.last_insert_rowid())
     }
 
+    /// ❌ REMOVED: use `crud_get::<RunningLanguages>(pool, id).await` instead
+    /// This is now provided by the CrudModel trait through generic implementation
+    #[deprecated(
+        since = "0.1.0",
+        note = "Use `crud_get::<RunningLanguages>(pool, id).await` instead"
+    )]
     pub async fn get(pool: &sqlx::SqlitePool, id: i64) -> RitmoResult<Option<RunningLanguages>> {
-        let result = sqlx::query_as!(
-            RunningLanguages,
-            r#"SELECT id, official_name as "name", language_role as "role",
-               iso_code_2char, iso_code_3char, created_at, updated_at
-               FROM running_languages WHERE id = ?"#,
-            id
-        )
-        .fetch_optional(pool)
-        .await?;
-        Ok(result)
+        use crate::crud_get;
+        crud_get::<RunningLanguages>(pool, id)
+            .await
+            .map_err(Into::into)
     }
 
     pub async fn get_by_iso_and_role(
@@ -115,7 +130,9 @@ impl RunningLanguages {
         iso_code_3char: &str,
         role: &str,
     ) -> RitmoResult<i64> {
-        if let Some(lang) = Self::get_by_iso_and_role(pool, iso_code_2char, iso_code_3char, role).await? {
+        if let Some(lang) =
+            Self::get_by_iso_and_role(pool, iso_code_2char, iso_code_3char, role).await?
+        {
             return Ok(lang.id.unwrap_or(0));
         }
         let lang = RunningLanguages {
@@ -136,5 +153,16 @@ impl RunningLanguages {
 
     pub async fn delete(_pool: &sqlx::SqlitePool, _id: i64) -> RitmoResult<()> {
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_crud_model_impl() {
+        assert_eq!(RunningLanguages::TABLE_NAME, "running_languages");
+        assert_eq!(RunningLanguages::ORDER_BY, "name");
     }
 }

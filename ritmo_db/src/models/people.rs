@@ -1,3 +1,4 @@
+use crate::GetOrCreateModel;
 use sqlx::FromRow;
 
 #[derive(Debug, Clone, FromRow)]
@@ -20,6 +21,46 @@ pub struct Person {
     pub verified: i64,
     pub created_at: i64,
     pub updated_at: i64,
+}
+
+// ✅ Implement GetOrCreateModel trait
+impl GetOrCreateModel for Person {
+    type LookupKey = str;
+
+    fn id(&self) -> Option<i64> {
+        self.id
+    }
+
+    fn new_from_key(key: &str) -> Self {
+        Person {
+            id: None,
+            name: key.to_string(),
+            display_name: None,
+            given_name: None,
+            surname: None,
+            middle_names: None,
+            title: None,
+            suffix: None,
+            nationality: None,
+            birth_date: None,
+            death_date: None,
+            biography: None,
+            normalized_key: None,
+            confidence: 0.5,
+            source: "manual_import".to_string(),
+            verified: 0,
+            created_at: chrono::Utc::now().timestamp(),
+            updated_at: chrono::Utc::now().timestamp(),
+        }
+    }
+
+    async fn find_by_key(pool: &sqlx::SqlitePool, key: &str) -> Result<Option<Self>, sqlx::Error> {
+        Self::get_by_name(pool, key).await
+    }
+
+    async fn save(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
+        self.save(pool).await
+    }
 }
 
 impl Person {
@@ -136,33 +177,16 @@ impl Person {
         Ok(person)
     }
 
+    /// ❌ DEPRECATED: use `get_or_create::<Person>(pool, name).await` instead
+    #[deprecated(
+        since = "0.1.0",
+        note = "Use `get_or_create::<Person>(pool, name).await` instead"
+    )]
     pub async fn get_or_create_by_name(
         pool: &sqlx::SqlitePool,
         name: &str,
     ) -> Result<i64, sqlx::Error> {
-        if let Some(person) = Self::get_by_name(pool, name).await? {
-            return Ok(person.id.unwrap_or(0));
-        }
-        let person = Person {
-            id: None,
-            name: name.to_string(),
-            display_name: None,
-            given_name: None,
-            surname: None,
-            middle_names: None,
-            title: None,
-            suffix: None,
-            nationality: None,
-            birth_date: None,
-            death_date: None,
-            biography: None,
-            normalized_key: None,
-            confidence: 0.5,
-            source: "manual_import".to_string(),
-            verified: 0,
-            created_at: chrono::Utc::now().timestamp(),
-            updated_at: chrono::Utc::now().timestamp(),
-        };
-        person.save(pool).await
+        use crate::get_or_create;
+        get_or_create::<Person>(pool, name).await
     }
 }
