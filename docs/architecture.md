@@ -43,28 +43,25 @@ The project is organized as a Rust workspace with the following crates:
 ### ritmo_cli
 - Command-line interface with full library management
 - Uses clap for CLI argument parsing with subcommands
-- Commands:
-  - `ritmo init [PATH]`: Initialize/create new library
-  - `ritmo list-libraries`: Show recent libraries (max 10)
-  - `ritmo info`: Display current library information
-  - `ritmo set-library PATH`: Set current library
-  - `ritmo add <file> --title "..." [options]`: Import a book with manual metadata
-  - `ritmo list-books [--preset NAME] [--author ...] [--format ...] [--output table|json|simple]`: List books with filters
-  - `ritmo list-contents [--preset NAME] [--author ...] [--output table|json|simple]`: List contents with filters
-  - `ritmo save-preset books|contents --name NAME [--author ...] [--format ...]`: Save filter preset
-  - `ritmo list-presets [books|contents]`: Show saved presets
-  - `ritmo delete-preset books|contents NAME`: Delete preset
-  - `ritmo update-book <id>`: Update book metadata
-  - `ritmo delete-book <id>`: Delete book with optional file deletion
-  - `ritmo add-content --title "..." [options]`: Create new content
-  - `ritmo update-content <id>`: Update content metadata
-  - `ritmo delete-content <id>`: Delete content from database
-  - `ritmo link-content --content-id <id> --book-id <id>`: Associate content to book
-  - `ritmo unlink-content --content-id <id> --book-id <id>`: Remove content-book association
-  - `ritmo cleanup`: Remove orphaned entities
-  - Global option: `--library PATH` to use specific library temporarily
+- **Architecture**: Presentation layer that delegates to `ritmo_commands` for business logic
+- Commands organized by noun-verb structure (e.g., `books add`, `contents list`)
+- Global option: `--library PATH` to use specific library temporarily
 - Integrates with `ritmo_config` for global settings management
 - Auto-detects portable mode when run from bootstrap/portable_app/
+
+### ritmo_commands
+- **Command Layer**: Separation between presentation (CLI/GUI) and business logic
+- **Command Trait**: Generic trait with typed Input/Output and validation
+- **10 Commands Implemented**:
+  - **Books (4)**: AddBookCommand, ListBooksCommand, UpdateBookCommand, DeleteBookCommand
+  - **Contents (6)**: AddContentCommand, ListContentsCommand, UpdateContentCommand, DeleteContentCommand, LinkContentCommand, UnlinkContentCommand
+- **Structured Types**: All commands have typed Input structs and Result structs (serializable with Serde)
+- **Validation**: Centralized input validation before service calls
+- **Error Handling**: CommandError enum with conversions from service errors
+- **Testability**: Commands testable independently from UI
+- **Reusability**: Same commands shared between CLI and GUI
+- **Architecture**: `Presentation Layer → Command Layer → Service Layer`
+- See [Command Layer Documentation](command-layer.md) for detailed guide
 
 ### ritmo_config
 - Global application configuration management

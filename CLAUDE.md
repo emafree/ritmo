@@ -34,11 +34,69 @@ For complete build and run commands, see [Development Guide](docs/development.md
 Detailed documentation is organized in the `docs/` directory:
 
 - **[Architecture](docs/architecture.md)** - Workspace crates, database schema, directory structure, key patterns
+- **[Command Layer](docs/command-layer.md)** - Command pattern, design principles, usage examples
 - **[Development Guide](docs/development.md)** - Build, test, and run commands
 - **[Filter System](docs/filters.md)** - Comprehensive filter and preset system documentation
 - **[ML System](docs/ml-system.md)** - Entity deduplication with machine learning
 - **[Book Metadata Format](docs/book_metadata_format.md)** - JSON format specification for Levels 2 & 3
 - **[Session History](docs/sessions/)** - Chronological changelog of all development sessions
+
+## Command Layer Architecture
+
+**ritmo** uses a **command pattern** to separate presentation logic (CLI/GUI) from business logic. The `ritmo_commands` crate provides stateless, testable commands that can be shared across frontends.
+
+### Architecture Layers
+
+```
+Presentation (CLI/GUI) → Commands (ritmo_commands) → Services (ritmo_core) → Database
+```
+
+### Benefits
+
+- **Code Reuse**: Same commands for CLI, GUI, and future API
+- **Testability**: Commands testable without UI dependencies
+- **Type Safety**: Structured inputs/outputs with Serde
+- **Separation**: Clean boundaries between layers
+- **Validation**: Centralized input validation
+
+### Available Commands (10 total)
+
+**Books (4)**:
+- `AddBookCommand` - Import book with manual metadata
+- `ListBooksCommand` - Query books with filters
+- `UpdateBookCommand` - Update book metadata
+- `DeleteBookCommand` - Delete book from DB/storage
+
+**Contents (6)**:
+- `AddContentCommand` - Create new content
+- `ListContentsCommand` - Query contents with filters
+- `UpdateContentCommand` - Update content metadata
+- `DeleteContentCommand` - Delete content record
+- `LinkContentCommand` - Associate content to book
+- `UnlinkContentCommand` - Remove content-book link
+
+### Quick Example
+
+```rust
+use ritmo_commands::{Command, books::{AddBookCommand, AddBookInput}};
+
+// Prepare input
+let input = AddBookInput {
+    file_path: PathBuf::from("book.epub"),
+    title: "My Book".to_string(),
+    publisher: Some("Publisher".to_string()),
+    ..Default::default()
+};
+
+// Execute command
+let command = AddBookCommand;
+let result = command.execute(&config, &pool, input).await?;
+
+// Use structured result
+println!("Book added! ID: {}", result.book_id);
+```
+
+See [Command Layer Documentation](docs/command-layer.md) for complete guide, examples, and how to add new commands.
 
 ## Key Features
 
@@ -337,6 +395,46 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 - Supports Slint GUI framework
 
 ## Recent Changes
+
+### 2026-02-10 - Session 31: Command Layer Architecture - COMPLETED
+Implemented complete command layer pattern to separate business logic from presentation layer, enabling code sharing between CLI and GUI.
+
+**Phase 1: Command Infrastructure + Books Add/List**
+- **New Crate**: `ritmo_commands` with Command trait and error types
+- **Command Trait**: Generic trait with typed Input/Output and validation
+- **Structured Types**: AddBookResult, ListBooksResult, BookSummary with Serde
+- **First Commands**: AddBookCommand, ListBooksCommand (proof-of-concept)
+
+**Phase 2: CLI Migration to Commands**
+- **Migrated Handlers**: handle_books_add, handle_books_list
+- **Formatter Extension**: Added format_book_summaries for BookSummary type
+- **Architecture**: CLI → Commands → Services (clean separation)
+
+**Phase 3: Books Update/Delete Commands**
+- **New Commands**: UpdateBookCommand, DeleteBookCommand
+- **Output Types**: UpdateBookResult, DeleteBookResult
+- **Pattern**: CLI handles bulk iteration, commands handle single operations
+
+**Phase 4: Complete Contents Commands**
+- **All 6 Commands**: Add, List, Update, Delete, Link, Unlink
+- **Output Types**: 6 new result types for contents operations
+- **Handler Migration**: All contents handlers migrated to commands
+
+**Final Status**
+- ✅ **10 Commands**: 4 books + 6 contents (complete CRUD)
+- ✅ **11 Unit Tests**: All passing
+- ✅ **Documentation**: Comprehensive command-layer.md with examples
+- ✅ **Architecture**: 3-layer separation (Presentation → Commands → Services)
+
+**Benefits**
+- Code reuse between CLI and GUI
+- Commands testable without UI
+- Type-safe structured outputs
+- Centralized validation
+- Future-ready for API integration
+
+**Files**: 17 new command files, ~1200 lines of command layer code
+See [Command Layer Documentation](docs/command-layer.md) for complete guide.
 
 ### 2026-02-10 - Session 30: GUI Phase 2 + Entity CRUD Commands - COMPLETED
 **Part 1: GUI Nested Data Implementation (Phase 2)**

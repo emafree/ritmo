@@ -4623,6 +4623,7 @@ dependencies = [
  "chrono",
  "clap",
  "dirs 5.0.1",
+ "ritmo_commands",
  "ritmo_config",
  "ritmo_core",
  "ritmo_db",
@@ -4633,6 +4634,24 @@ dependencies = [
  "serde_json",
  "sqlx",
  "tokio",
+]
+
+[[package]]
+name = "ritmo_commands"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "ritmo_core",
+ "ritmo_db",
+ "ritmo_db_core",
+ "ritmo_errors",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.17",
+ "tokio",
+ "tokio-test",
 ]
 
 [[package]]

@@ -1,18 +1,23 @@
 //! Books command handlers
 //!
 //! This module implements all book-related command handlers for the new noun-verb CLI structure.
-//! Each handler function receives parsed arguments and delegates to ritmo_core services.
+//! Each handler function receives parsed arguments and delegates to ritmo_commands.
 
 use crate::confirmation::{confirm_operation, format_book_preview, ConfirmationConfig, ConfirmationResult};
-use crate::formatter::{format_books, OutputFormat};
-use ritmo_config::AppSettings;
-use ritmo_core::service::{
-    batch_import, delete_book, import_book, update_book, BookImportMetadata, BookUpdateMetadata,
-    DeleteOptions,
+use crate::formatter::{format_book_summaries, OutputFormat};
+use ritmo_commands::{
+    Command,
+    books::{
+        AddBookCommand, AddBookInput,
+        ListBooksCommand, ListBooksInput,
+        UpdateBookCommand, UpdateBookInput,
+        DeleteBookCommand, DeleteBookInput,
+    }
 };
+use ritmo_config::AppSettings;
+use ritmo_core::service::batch_import;
 use ritmo_core::dto::BatchImportInput;
 use ritmo_db_core::execute_books_query;
-use ritmo_errors::reporter::SilentReporter;
 use std::path::PathBuf;
 
 /// Handle: books add
@@ -36,12 +41,6 @@ pub async fn handle_books_add(
 ) -> Result<(), Box<dyn std::error::Error>> {
     use super::common::{get_library_and_pool, parse_people};
 
-    // Check file exists
-    if !file.exists() {
-        println!("✗ File non trovato: {}", file.display());
-        return Ok(());
-    }
-
     println!("Importazione libro: {}", file.display());
     println!("  Titolo: {}", title);
 
@@ -51,8 +50,9 @@ pub async fn handle_books_add(
     // Parse people from format "Nome:Ruolo"
     let parsed_people = parse_people(&people);
 
-    // Prepare metadata
-    let metadata = BookImportMetadata {
+    // Prepare command input
+    let input = AddBookInput {
+        file_path: file.clone(),
         title,
         original_title,
         people: parsed_people,
@@ -67,10 +67,11 @@ pub async fn handle_books_add(
         tags: if tags.is_empty() { None } else { Some(tags) },
     };
 
-    // Import book
-    match import_book(&config, &pool, &file, metadata).await {
-        Ok(book_id) => {
-            println!("✓ Libro importato con successo! ID: {}", book_id);
+    // Execute command
+    let command = AddBookCommand;
+    match command.execute(&config, &pool, input).await {
+        Ok(result) => {
+            println!("✓ Libro importato con successo! ID: {}", result.book_id);
         }
         Err(e) => {
             println!("✗ Errore durante l'importazione: {}", e);
@@ -155,17 +156,21 @@ pub async fn handle_books_list(
     use super::common::get_library_and_pool;
 
     // Get library and pool
-    let (_config, pool) = get_library_and_pool(cli_library, app_settings).await?;
+    let (config, pool) = get_library_and_pool(cli_library, app_settings).await?;
 
     // Convert CLI args to filters (handles preset, dates, etc.)
     let filters = filter_args.to_filters();
 
-    // Execute query
-    let books = execute_books_query(&pool, &filters).await?;
+    // Prepare command input
+    let input = ListBooksInput { filters };
+
+    // Execute command
+    let command = ListBooksCommand;
+    let result = command.execute(&config, &pool, input).await?;
 
     // Format output
     let output_format = OutputFormat::from_str(&output);
-    let formatted = format_books(&books, &output_format);
+    let formatted = format_book_summaries(&result.books, &output_format);
 
     println!("{}", formatted);
 
@@ -244,31 +249,33 @@ pub async fn handle_books_update(
     // Parse people from selector
     let parsed_people = parse_people(&selector.set_people);
 
-    let update_metadata = BookUpdateMetadata {
-        title: selector.set_title.clone(),
-        original_title: selector.set_original_title.clone(),
-        people: parsed_people,
-        publisher: selector.set_publisher.clone(),
-        year: selector.set_year,
-        isbn: selector.set_isbn.clone(),
-        format: selector.set_format.clone(),
-        series: selector.set_series.clone(),
-        series_index: selector.set_series_index,
-        notes: selector.set_notes.clone(),
-        pages: selector.set_pages,
-        tags: if selector.set_tags.is_empty() {
-            None
-        } else {
-            Some(selector.set_tags.clone())
-        },
-    };
-
-    // Execute updates
+    // Execute updates using command
     let mut success = 0;
     let mut errors = 0;
+    let command = UpdateBookCommand;
 
     for book in books {
-        match update_book(&pool, book.id, update_metadata.clone()).await {
+        let input = UpdateBookInput {
+            book_id: book.id,
+            title: selector.set_title.clone(),
+            original_title: selector.set_original_title.clone(),
+            people: parsed_people.clone(),
+            publisher: selector.set_publisher.clone(),
+            year: selector.set_year,
+            isbn: selector.set_isbn.clone(),
+            format: selector.set_format.clone(),
+            series: selector.set_series.clone(),
+            series_index: selector.set_series_index,
+            notes: selector.set_notes.clone(),
+            pages: selector.set_pages,
+            tags: if selector.set_tags.is_empty() {
+                None
+            } else {
+                Some(selector.set_tags.clone())
+            },
+        };
+
+        match command.execute(&config, &pool, input).await {
             Ok(_) => {
                 success += 1;
                 println!("✓ Updated book [{}]: {}", book.id, book.name);
@@ -301,7 +308,6 @@ pub async fn handle_books_delete(
     use super::common::{get_library_and_pool, print_summary};
 
     let (config, pool) = get_library_and_pool(cli_library, app_settings).await?;
-    let mut reporter = SilentReporter;
 
     // Get books to delete (by ID or filters)
     let books = if let Some(book_id) = id {
@@ -347,13 +353,19 @@ pub async fn handle_books_delete(
         return Ok(());
     }
 
-    // Execute deletions
+    // Execute deletions using command
     let mut success = 0;
     let mut errors = 0;
-    let options = DeleteOptions { delete_file, force };
+    let command = DeleteBookCommand;
 
     for book in books {
-        match delete_book(&config, &pool, book.id, &options, &mut reporter).await {
+        let input = DeleteBookInput {
+            book_id: book.id,
+            delete_file,
+            force,
+        };
+
+        match command.execute(&config, &pool, input).await {
             Ok(_) => {
                 success += 1;
                 println!("✓ Deleted book [{}]: {}", book.id, book.name);
