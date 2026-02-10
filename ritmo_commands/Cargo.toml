@@ -1,0 +1,31 @@
+[package]
+name = "ritmo_commands"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Async runtime
+async-trait = "0.1"
+tokio = { version = "1.48", features = ["full"] }
+
+# Database
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "sqlite"] }
+
+# Serialization (for structured outputs)
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+thiserror = "2.0"
+
+# Date/time handling
+chrono = "0.4"
+
+# Ritmo dependencies
+ritmo_core = { path = "../ritmo_core" }
+ritmo_db = { path = "../ritmo_db" }
+ritmo_db_core = { path = "../ritmo_db_core" }
+ritmo_errors = { path = "../ritmo_errors" }
+
+[dev-dependencies]
+tokio-test = "0.4"
