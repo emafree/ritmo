@@ -4,6 +4,87 @@ This document provides a summary of development sessions for February 2026.
 
 ## Session Index
 
+### Session 32 - Command Layer Phase 5: Entity Commands (2026-02-10) ✅
+**Type**: Feature Implementation
+**Files**: `ritmo_commands/src/entities/*.rs` (5 new), `ritmo_cli/src/handlers/{tags,publishers,series,people}.rs`, `ritmo_commands/src/types/mod.rs`
+
+Extended command layer architecture with entity list commands:
+
+**Implementation**:
+- Created `ritmo_commands/src/entities/` module with 4 list commands
+- `ListTagsCommand` - Query all tags with ID, name, created_at
+- `ListPublishersCommand` - Query all publishers with country, website
+- `ListSeriesCommand` - Query all series with completion status, total_books
+- `ListPeopleCommand` - Query all people with display_name, verified, confidence
+- Added 8 new result types: TagSummary, PublisherSummary, SeriesSummary, PersonSummary + List results
+- Migrated all 4 CLI entity handlers from direct SQL to command layer
+
+**Testing**:
+- All 15 unit tests passing (11 existing + 4 new entity tests)
+- Verified table, JSON, and simple output formats for all entity types
+- Full workspace build successful with zero errors
+
+**Documentation**:
+- Updated `docs/command-layer.md` with entity commands section
+- Updated crate organization diagram with entities module
+- Updated CLAUDE.md Session 31 with Phase 5 details
+
+**Final Command Layer Status**:
+- ✅ **14 Commands Total**: 4 books + 6 contents + 4 entities
+- ✅ **15 Unit Tests**: All passing
+- ✅ **21 Command Files**: ~1600 lines of command layer code
+- ✅ **Complete Pattern**: All CRUD and list operations migrated
+
+---
+
+### Session 31 - Command Layer Architecture (2026-02-10) ✅
+**Type**: Architectural Refactoring (Multi-phase)
+**Files**: `ritmo_commands/*` (17 new files), `ritmo_cli/src/handlers/{books,contents}.rs`, `ritmo_cli/src/formatter.rs`, `docs/command-layer.md`
+
+Implemented complete command layer pattern to separate business logic from presentation:
+
+**Phase 1: Command Infrastructure + Books Add/List**
+- Created new `ritmo_commands` crate with Command trait and error types
+- Generic trait with typed Input/Output and optional validation
+- Implemented AddBookCommand and ListBooksCommand as proof-of-concept
+- Added structured types: AddBookResult, ListBooksResult, BookSummary
+
+**Phase 2: CLI Migration to Commands**
+- Migrated handle_books_add and handle_books_list to use commands
+- Extended formatter with format_book_summaries for new BookSummary type
+- Established 3-layer architecture: CLI → Commands → Services
+
+**Phase 3: Books Update/Delete Commands**
+- Implemented UpdateBookCommand and DeleteBookCommand
+- Added UpdateBookResult and DeleteBookResult types
+- Pattern: CLI handles bulk iteration, commands handle single operations
+
+**Phase 4: Complete Contents Commands**
+- All 6 commands: Add, List, Update, Delete, Link, Unlink
+- 6 new result types for contents operations
+- All contents handlers migrated to commands
+
+**Architecture Benefits**:
+- Code reuse between CLI and GUI frontends
+- Commands testable without UI dependencies
+- Type-safe structured outputs with Serde
+- Centralized validation in command layer
+- Future-ready for API integration
+
+**Documentation**:
+- Created comprehensive `docs/command-layer.md` (650+ lines)
+- Step-by-step guide for adding new commands
+- Design principles, testing strategies, migration guide
+- Updated CLAUDE.md and architecture.md
+
+**Technical Stats**:
+- 17 new command files
+- ~1200 lines of command layer code
+- 11 unit tests (all passing)
+- Zero breaking changes to existing functionality
+
+---
+
 ### Session 30 - GUI Nested Data & Entity Management (2026-02-10) ✅
 **Type**: Feature Implementation (Multi-part)
 **Files**: `ritmo_db/src/gui_queries.rs` (new), `ritmo_gui/src/main.rs`, `ritmo_cli/src/handlers/{tags,publishers,series,people}.rs` (new), `ritmo_cli/src/main.rs`
@@ -62,28 +143,42 @@ Fixed three critical bugs in ML deduplication system:
 
 ## Monthly Summary
 
-### Features Added: 2
-- **GUI Phase 2**: Nested data queries with complete relational data (Session 30)
-- **Entity Management**: CLI list commands for tags, publishers, series, people (Session 30)
+### Major Features: 2
+1. **Command Layer Architecture** (Sessions 31-32)
+   - Complete separation of presentation and business logic
+   - 14 commands: 4 books + 6 contents + 4 entities
+   - New `ritmo_commands` crate (~1600 lines)
+   - 21 command files with typed Input/Output
+   - Enables code sharing between CLI and GUI
+
+2. **GUI Phase 2 + Entity Management** (Session 30)
+   - Nested data queries with complete relational data
+   - CLI list commands for database entities
 
 ### Bugs Fixed: 1
 - **Critical**: ML deduplication system fixes (Session 28)
 
-### New Files: 5
-- `ritmo_db/src/gui_queries.rs` - Nested query system (~500 lines)
-- `ritmo_cli/src/handlers/tags.rs` - Tags list command
-- `ritmo_cli/src/handlers/publishers.rs` - Publishers list command
-- `ritmo_cli/src/handlers/series.rs` - Series list command
-- `ritmo_cli/src/handlers/people.rs` - People list command
+### New Crate: 1
+- `ritmo_commands` - Command layer with stateless, testable commands
 
-### Tests Added: 1
-- Name parsing integration test with Jaro-Winkler similarity verification (Session 28)
+### New Files: 26
+- `ritmo_commands/src/*` - 21 command files (17 in Session 31, 5 in Session 32)
+- `ritmo_db/src/gui_queries.rs` - Nested query system (~500 lines)
+- `ritmo_cli/src/handlers/{tags,publishers,series,people}.rs` - Entity handlers (4 files)
+
+### Documentation: 2 new guides
+- `docs/command-layer.md` - Comprehensive command pattern guide (650+ lines)
+- Session summaries with architectural decisions
+
+### Tests Added: 16
+- 15 command layer unit tests (Session 31-32)
+- Name parsing integration test (Session 28)
 
 ### Code Quality
-- All tests passing (21 ritmo_ml + entity handlers)
-- Zero compiler warnings
+- All tests passing (36 total: 21 ritmo_ml + 15 ritmo_commands)
+- Zero compiler errors
 - Clean builds across entire workspace
-- GUI fully functional with nested data display
+- Full backward compatibility maintained
 
 ---
 
