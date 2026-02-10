@@ -205,3 +205,134 @@ pub struct PersonSummary {
     pub verified: bool,
     pub confidence: f64,
 }
+
+// ============================================================================
+// Tag CRUD Results
+// ============================================================================
+
+/// Result of creating a tag
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateTagResult {
+    pub tag_id: i64,
+    pub name: String,
+    pub created_at: String,
+    pub message: String,
+}
+
+/// Result of updating a tag
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateTagResult {
+    pub tag_id: i64,
+    pub name: String,
+    pub updated_at: String,
+    pub message: String,
+}
+
+/// Result of deleting a tag
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeleteTagResult {
+    pub tag_id: i64,
+    pub name: String,
+    pub deleted_at: String,
+    pub books_affected: i64,
+    pub warning: Option<String>,
+}
+
+// ============================================================================
+// Publisher CRUD Results
+// ============================================================================
+
+/// Result of creating a publisher
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreatePublisherResult {
+    pub publisher_id: i64,
+    pub name: String,
+    pub created_at: String,
+    pub message: String,
+}
+
+/// Result of updating a publisher
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdatePublisherResult {
+    pub publisher_id: i64,
+    pub name: String,
+    pub updated_at: String,
+    pub message: String,
+}
+
+/// Result of deleting a publisher
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeletePublisherResult {
+    pub publisher_id: i64,
+    pub name: String,
+    pub deleted_at: String,
+    pub books_affected: i64,
+    pub warning: Option<String>,
+}
+
+// ============================================================================
+// Series CRUD Results
+// ============================================================================
+
+/// Result of creating a series
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateSeriesResult {
+    pub series_id: i64,
+    pub name: String,
+    pub created_at: String,
+    pub message: String,
+}
+
+/// Result of updating a series
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateSeriesResult {
+    pub series_id: i64,
+    pub name: String,
+    pub updated_at: String,
+    pub message: String,
+}
+
+/// Result of deleting a series
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeleteSeriesResult {
+    pub series_id: i64,
+    pub name: String,
+    pub deleted_at: String,
+    pub books_affected: i64,
+    pub warning: Option<String>,
+}
+
+// ============================================================================
+// Person CRUD Results
+// ============================================================================
+
+/// Result of creating a person
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreatePersonResult {
+    pub person_id: i64,
+    pub name: String,
+    pub display_name: Option<String>,
+    pub created_at: String,
+    pub message: String,
+}
+
+/// Result of updating a person
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdatePersonResult {
+    pub person_id: i64,
+    pub name: String,
+    pub display_name: Option<String>,
+    pub updated_at: String,
+    pub message: String,
+}
+
+/// Result of deleting a person
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeletePersonResult {
+    pub person_id: i64,
+    pub name: String,
+    pub deleted_at: String,
+    pub books_affected: i64,
+    pub contents_affected: i64,
+    pub warning: Option<String>,
+}
