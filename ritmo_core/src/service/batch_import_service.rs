@@ -1,5 +1,6 @@
 use crate::dto::{BatchImportInput, ContentInput, ImportObject};
 use crate::service::book_import_service::{import_book_with_contents, BookImportMetadata};
+use crate::utils::opt_year_to_timestamp;
 use ritmo_db::{Content, Person, Role, RunningLanguages, Type};
 use ritmo_db_core::LibraryConfig;
 use ritmo_errors::{RitmoErr, RitmoResult};
@@ -242,14 +243,7 @@ async fn create_content_from_input(
     };
 
     // Convert year to timestamp if present
-    let publication_date = content_input.year.map(|y| {
-        chrono::NaiveDate::from_ymd_opt(y, 1, 1)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap()
-            .and_utc()
-            .timestamp()
-    });
+    let publication_date = opt_year_to_timestamp(content_input.year);
 
     // Create Content record
     let now = chrono::Utc::now().timestamp();

@@ -1,6 +1,7 @@
 use crate::dto::ContentInput;
 use crate::epub_opf_modifier;
 use crate::epub_utils::extract_opf;
+use crate::utils::opt_year_to_timestamp;
 use ritmo_db::{Book, Format, Person, Publisher, Role, Series, Tag};
 use ritmo_db_core::LibraryConfig;
 use ritmo_errors::{RitmoErr, RitmoResult};
@@ -108,14 +109,7 @@ pub async fn import_book_with_contents(
 
     // 6. Crea Book
     let now = chrono::Utc::now().timestamp();
-    let publication_date = metadata.year.map(|y| {
-        chrono::NaiveDate::from_ymd_opt(y, 1, 1)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap()
-            .and_utc()
-            .timestamp()
-    });
+    let publication_date = opt_year_to_timestamp(metadata.year);
 
     // Determina estensione file
     let extension = file_path

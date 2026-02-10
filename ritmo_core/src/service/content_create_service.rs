@@ -1,3 +1,4 @@
+use crate::utils::opt_year_to_timestamp;
 use ritmo_db::{crud_get, Content, Person, Role, RunningLanguages, Tag, Type};
 use ritmo_errors::{RitmoErr, RitmoResult};
 
@@ -43,14 +44,7 @@ pub async fn create_content(
     };
 
     // 3. Converti anno in timestamp se presente
-    let publication_date = metadata.year.map(|y| {
-        chrono::NaiveDate::from_ymd_opt(y, 1, 1)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap()
-            .and_utc()
-            .timestamp()
-    });
+    let publication_date = opt_year_to_timestamp(metadata.year);
 
     // 4. Crea Content
     let now = chrono::Utc::now().timestamp();

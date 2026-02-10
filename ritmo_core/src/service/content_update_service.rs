@@ -1,3 +1,4 @@
+use crate::utils::opt_year_to_timestamp;
 use ritmo_db::{crud_get, Content, Person, Role, RunningLanguages, Tag, Type};
 use ritmo_errors::{RitmoErr, RitmoResult};
 
@@ -51,14 +52,7 @@ pub async fn update_content(
     }
 
     if let Some(year) = metadata.year {
-        content.publication_date = Some(
-            chrono::NaiveDate::from_ymd_opt(year, 1, 1)
-                .unwrap()
-                .and_hms_opt(0, 0, 0)
-                .unwrap()
-                .and_utc()
-                .timestamp(),
-        );
+        content.publication_date = opt_year_to_timestamp(Some(year));
     }
 
     // 3. Aggiorna tipo contenuto
