@@ -1,13 +1,14 @@
 //! Books command handlers
 //!
 //! This module implements all book-related command handlers for the new noun-verb CLI structure.
-//! Each handler function receives parsed arguments and delegates to ritmo_core services.
+//! Each handler function receives parsed arguments and delegates to ritmo_commands.
 
 use crate::confirmation::{confirm_operation, format_book_preview, ConfirmationConfig, ConfirmationResult};
-use crate::formatter::{format_books, OutputFormat};
+use crate::formatter::{format_book_summaries, OutputFormat};
+use ritmo_commands::{Command, books::{AddBookCommand, AddBookInput, ListBooksCommand, ListBooksInput}};
 use ritmo_config::AppSettings;
 use ritmo_core::service::{
-    batch_import, delete_book, import_book, update_book, BookImportMetadata, BookUpdateMetadata,
+    batch_import, delete_book, update_book, BookUpdateMetadata,
     DeleteOptions,
 };
 use ritmo_core::dto::BatchImportInput;
@@ -36,12 +37,6 @@ pub async fn handle_books_add(
 ) -> Result<(), Box<dyn std::error::Error>> {
     use super::common::{get_library_and_pool, parse_people};
 
-    // Check file exists
-    if !file.exists() {
-        println!("✗ File non trovato: {}", file.display());
-        return Ok(());
-    }
-
     println!("Importazione libro: {}", file.display());
     println!("  Titolo: {}", title);
 
@@ -51,8 +46,9 @@ pub async fn handle_books_add(
     // Parse people from format "Nome:Ruolo"
     let parsed_people = parse_people(&people);
 
-    // Prepare metadata
-    let metadata = BookImportMetadata {
+    // Prepare command input
+    let input = AddBookInput {
+        file_path: file.clone(),
         title,
         original_title,
         people: parsed_people,
@@ -67,10 +63,11 @@ pub async fn handle_books_add(
         tags: if tags.is_empty() { None } else { Some(tags) },
     };
 
-    // Import book
-    match import_book(&config, &pool, &file, metadata).await {
-        Ok(book_id) => {
-            println!("✓ Libro importato con successo! ID: {}", book_id);
+    // Execute command
+    let command = AddBookCommand;
+    match command.execute(&config, &pool, input).await {
+        Ok(result) => {
+            println!("✓ Libro importato con successo! ID: {}", result.book_id);
         }
         Err(e) => {
             println!("✗ Errore durante l'importazione: {}", e);
@@ -155,17 +152,21 @@ pub async fn handle_books_list(
     use super::common::get_library_and_pool;
 
     // Get library and pool
-    let (_config, pool) = get_library_and_pool(cli_library, app_settings).await?;
+    let (config, pool) = get_library_and_pool(cli_library, app_settings).await?;
 
     // Convert CLI args to filters (handles preset, dates, etc.)
     let filters = filter_args.to_filters();
 
-    // Execute query
-    let books = execute_books_query(&pool, &filters).await?;
+    // Prepare command input
+    let input = ListBooksInput { filters };
+
+    // Execute command
+    let command = ListBooksCommand;
+    let result = command.execute(&config, &pool, input).await?;
 
     // Format output
     let output_format = OutputFormat::from_str(&output);
-    let formatted = format_books(&books, &output_format);
+    let formatted = format_book_summaries(&result.books, &output_format);
 
     println!("{}", formatted);
 

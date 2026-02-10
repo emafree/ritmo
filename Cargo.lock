@@ -4623,6 +4623,7 @@ dependencies = [
  "chrono",
  "clap",
  "dirs 5.0.1",
+ "ritmo_commands",
  "ritmo_config",
  "ritmo_core",
  "ritmo_db",

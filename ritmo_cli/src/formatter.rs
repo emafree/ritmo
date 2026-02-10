@@ -1,3 +1,4 @@
+use ritmo_commands::BookSummary;
 use ritmo_db_core::{BookResult, ContentResult};
 use serde_json;
 
@@ -19,12 +20,21 @@ impl OutputFormat {
     }
 }
 
-/// Formatta i risultati dei libri
+/// Formatta i risultati dei libri (BookResult - legacy)
 pub fn format_books(books: &[BookResult], format: &OutputFormat) -> String {
     match format {
         OutputFormat::Json => format_books_json(books),
         OutputFormat::Table => format_books_table(books),
         OutputFormat::Simple => format_books_simple(books),
+    }
+}
+
+/// Formatta i summary dei libri (BookSummary - new command layer)
+pub fn format_book_summaries(summaries: &[BookSummary], format: &OutputFormat) -> String {
+    match format {
+        OutputFormat::Json => format_book_summaries_json(summaries),
+        OutputFormat::Table => format_book_summaries_table(summaries),
+        OutputFormat::Simple => format_book_summaries_simple(summaries),
     }
 }
 
@@ -102,6 +112,75 @@ fn format_books_simple(books: &[BookResult]) -> String {
     }
 
     output.push_str(&format!("\nTotale: {} libri", books.len()));
+    output
+}
+
+// ============================================================================
+// BookSummary formatting (new command layer)
+// ============================================================================
+
+fn format_book_summaries_json(summaries: &[BookSummary]) -> String {
+    serde_json::to_string_pretty(summaries).unwrap_or_else(|e| format!("Errore JSON: {}", e))
+}
+
+fn format_book_summaries_table(summaries: &[BookSummary]) -> String {
+    if summaries.is_empty() {
+        return "Nessun libro trovato.".to_string();
+    }
+
+    let mut output = String::new();
+
+    // Header
+    output.push_str(&format!(
+        "{:<5} {:<40} {:<20} {:<15} {:<10}\n",
+        "ID", "Titolo", "Editore", "Formato", "Anno"
+    ));
+    output.push_str(&"-".repeat(95));
+    output.push('\n');
+
+    // Rows
+    for book in summaries {
+        let title = truncate(&book.title, 38);
+        let publisher = truncate(&book.publisher.clone().unwrap_or_default(), 18);
+        let format = book.format.clone().unwrap_or_default();
+        let year = book.year.map(|y| y.to_string()).unwrap_or_default();
+
+        output.push_str(&format!(
+            "{:<5} {:<40} {:<20} {:<15} {:<10}\n",
+            book.id, title, publisher, format, year
+        ));
+    }
+
+    output.push_str(&format!("\nTotale: {} libri", summaries.len()));
+    output
+}
+
+fn format_book_summaries_simple(summaries: &[BookSummary]) -> String {
+    if summaries.is_empty() {
+        return "Nessun libro trovato.".to_string();
+    }
+
+    let mut output = String::new();
+
+    for book in summaries {
+        output.push_str(&format!("• {} ", book.title));
+
+        if let Some(publisher) = &book.publisher {
+            output.push_str(&format!("({}) ", publisher));
+        }
+
+        if let Some(year) = book.year {
+            output.push_str(&format!("[{}] ", year));
+        }
+
+        if let Some(format) = &book.format {
+            output.push_str(&format!("- {} ", format));
+        }
+
+        output.push('\n');
+    }
+
+    output.push_str(&format!("\nTotale: {} libri", summaries.len()));
     output
 }
 
