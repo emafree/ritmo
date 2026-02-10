@@ -1,5 +1,6 @@
 use crate::crud_trait::CrudModel;
 use crate::i18n_trait::I18nDisplayable;
+use crate::GetOrCreateModel;
 use sqlx::FromRow;
 
 /// Format with i18n support
@@ -21,6 +22,31 @@ impl I18nDisplayable for Format {
 impl CrudModel for Format {
     const TABLE_NAME: &'static str = "formats";
     const ORDER_BY: &'static str = "key";
+}
+
+// ✅ Implement GetOrCreateModel trait
+impl GetOrCreateModel for Format {
+    type LookupKey = str;
+
+    fn id(&self) -> Option<i64> {
+        self.id
+    }
+
+    fn new_from_key(key: &str) -> Self {
+        Format {
+            id: None,
+            key: key.to_string(),
+            created_at: chrono::Utc::now().timestamp(),
+        }
+    }
+
+    async fn find_by_key(pool: &sqlx::SqlitePool, key: &str) -> Result<Option<Self>, sqlx::Error> {
+        Self::get_by_key(pool, key).await
+    }
+
+    async fn save(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
+        self.save(pool).await
+    }
 }
 
 impl Format {
@@ -97,21 +123,17 @@ impl Format {
         Ok(result)
     }
 
-    /// Get or create format by key (e.g., "format.epub")
-    /// Creates new format if it doesn't exist
+    /// ❌ DEPRECATED: use `get_or_create::<Format>(pool, key).await` instead
+    #[deprecated(
+        since = "0.1.0",
+        note = "Use `get_or_create::<Format>(pool, key).await` instead"
+    )]
     pub async fn get_or_create_by_key(
         pool: &sqlx::SqlitePool,
         key: &str,
     ) -> Result<i64, sqlx::Error> {
-        if let Some(format) = Self::get_by_key(pool, key).await? {
-            return Ok(format.id.unwrap_or(0));
-        }
-        let format = Format {
-            id: None,
-            key: key.to_string(),
-            created_at: chrono::Utc::now().timestamp(),
-        };
-        format.save(pool).await
+        use crate::get_or_create;
+        get_or_create::<Format>(pool, key).await
     }
 }
 

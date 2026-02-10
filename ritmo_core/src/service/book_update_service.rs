@@ -1,5 +1,8 @@
 use crate::utils::opt_year_to_timestamp;
-use ritmo_db::{crud_get, Book, BookPersonRole, BookTag, Format, Person, Publisher, Role, Series, Tag};
+use ritmo_db::{
+    crud_get, get_or_create, Book, BookPersonRole, BookTag, Format, Person, Publisher, Role,
+    Series, Tag,
+};
 use ritmo_errors::{RitmoErr, RitmoResult};
 
 /// Metadati opzionali per l'aggiornamento di un libro
@@ -64,15 +67,15 @@ pub async fn update_book(
 
     // 3. Aggiorna relazioni foreign key
     if let Some(format_name) = metadata.format {
-        book.format_id = Some(Format::get_or_create_by_key(pool, &format_name).await?);
+        book.format_id = Some(get_or_create::<Format>(pool, &format_name).await?);
     }
 
     if let Some(publisher_name) = metadata.publisher {
-        book.publisher_id = Some(Publisher::get_or_create_by_name(pool, &publisher_name).await?);
+        book.publisher_id = Some(get_or_create::<Publisher>(pool, &publisher_name).await?);
     }
 
     if let Some(series_name) = metadata.series {
-        book.series_id = Some(Series::get_or_create_by_name(pool, &series_name).await?);
+        book.series_id = Some(get_or_create::<Series>(pool, &series_name).await?);
     }
 
     if let Some(series_index) = metadata.series_index {
@@ -101,8 +104,8 @@ pub async fn update_book(
 
         // Aggiungi le nuove persone con i loro ruoli
         for (person_name, role_name) in people {
-            let person_id = Person::get_or_create_by_name(pool, &person_name).await?;
-            let role_id = Role::get_or_create_by_key(pool, &role_name).await?;
+            let person_id = get_or_create::<Person>(pool, &person_name).await?;
+            let role_id = get_or_create::<Role>(pool, &role_name).await?;
 
             BookPersonRole::create(
                 pool,
@@ -125,7 +128,7 @@ pub async fn update_book(
 
         // Aggiungi i nuovi tags
         for tag_name in tags {
-            let tag_id = Tag::get_or_create_by_name(pool, &tag_name).await?;
+            let tag_id = get_or_create::<Tag>(pool, &tag_name).await?;
             BookTag::create(pool, &BookTag { book_id, tag_id }).await?;
         }
     }

@@ -1,7 +1,9 @@
 use crate::dto::{BatchImportInput, ContentInput, ImportObject};
 use crate::service::book_import_service::{import_book_with_contents, BookImportMetadata};
 use crate::utils::opt_year_to_timestamp;
-use ritmo_db::{BookContent, Content, ContentPersonRole, Person, Role, RunningLanguages, Type};
+use ritmo_db::{
+    get_or_create, BookContent, Content, ContentPersonRole, Person, Role, RunningLanguages, Type,
+};
 use ritmo_db_core::LibraryConfig;
 use ritmo_errors::{RitmoErr, RitmoResult};
 use std::path::PathBuf;
@@ -183,8 +185,8 @@ async fn import_single(
 
         // Associate content people with roles
         for person_input in &content_input.people {
-            let person_id = Person::get_or_create_by_name(pool, &person_input.name).await?;
-            let role_id = Role::get_or_create_by_key(pool, &person_input.role).await?;
+            let person_id = get_or_create::<Person>(pool, &person_input.name).await?;
+            let role_id = get_or_create::<Role>(pool, &person_input.role).await?;
 
             ContentPersonRole::create(
                 pool,
@@ -232,7 +234,7 @@ async fn create_content_from_input(
 ) -> RitmoResult<i64> {
     // Get or create type if specified
     let type_id = if let Some(type_key) = &content_input.content_type {
-        Some(Type::get_or_create_by_key(pool, type_key).await?)
+        Some(get_or_create::<Type>(pool, type_key).await?)
     } else {
         None
     };

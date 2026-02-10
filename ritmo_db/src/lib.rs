@@ -2,7 +2,9 @@
 
 pub mod crud_trait;
 
-pub use crud_trait::{crud_delete, crud_get, crud_list_all, crud_search, CrudModel};
+pub use crud_trait::{
+    crud_delete, crud_get, crud_list_all, crud_search, get_or_create, CrudModel, GetOrCreateModel,
+};
 
 // Initialize i18n
 rust_i18n::i18n!("../locales", fallback = "en");

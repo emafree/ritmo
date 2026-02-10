@@ -2,7 +2,9 @@ use crate::dto::ContentInput;
 use crate::epub_opf_modifier;
 use crate::epub_utils::extract_opf;
 use crate::utils::opt_year_to_timestamp;
-use ritmo_db::{Book, BookPersonRole, BookTag, Format, Person, Publisher, Role, Series, Tag};
+use ritmo_db::{
+    get_or_create, Book, BookPersonRole, BookTag, Format, Person, Publisher, Role, Series, Tag,
+};
 use ritmo_db_core::LibraryConfig;
 use ritmo_errors::{RitmoErr, RitmoResult};
 use sha2::{Digest, Sha256};
@@ -90,19 +92,19 @@ pub async fn import_book_with_contents(
 
     // 5. Ottieni/crea IDs per entità correlate usando i metodi dei modelli
     let format_id = if let Some(fmt) = format_name {
-        Some(Format::get_or_create_by_key(pool, &fmt).await?)
+        Some(get_or_create::<Format>(pool, &fmt).await?)
     } else {
         None
     };
 
     let publisher_id = if let Some(pub_name) = &metadata.publisher {
-        Some(Publisher::get_or_create_by_name(pool, pub_name).await?)
+        Some(get_or_create::<Publisher>(pool, pub_name).await?)
     } else {
         None
     };
 
     let series_id = if let Some(series_name) = &metadata.series {
-        Some(Series::get_or_create_by_name(pool, series_name).await?)
+        Some(get_or_create::<Series>(pool, series_name).await?)
     } else {
         None
     };
@@ -223,8 +225,8 @@ pub async fn import_book_with_contents(
     // 10. Crea persone e collegamento con i loro ruoli
     if let Some(people) = metadata.people {
         for (person_name, role_name) in people {
-            let person_id = Person::get_or_create_by_name(pool, &person_name).await?;
-            let role_id = Role::get_or_create_by_key(pool, &role_name).await?;
+            let person_id = get_or_create::<Person>(pool, &person_name).await?;
+            let role_id = get_or_create::<Role>(pool, &role_name).await?;
 
             BookPersonRole::create(
                 pool,
@@ -241,7 +243,7 @@ pub async fn import_book_with_contents(
     // 11. Crea e collega tags
     if let Some(tags) = metadata.tags {
         for tag_name in tags {
-            let tag_id = Tag::get_or_create_by_name(pool, &tag_name).await?;
+            let tag_id = get_or_create::<Tag>(pool, &tag_name).await?;
             BookTag::create(pool, &BookTag { book_id, tag_id }).await?;
         }
     }

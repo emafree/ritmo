@@ -1,4 +1,5 @@
 use crate::crud_trait::CrudModel;
+use crate::GetOrCreateModel;
 use sqlx::FromRow;
 
 #[derive(Debug, Clone, FromRow)]
@@ -16,6 +17,35 @@ pub struct Series {
 impl CrudModel for Series {
     const TABLE_NAME: &'static str = "series";
     const ORDER_BY: &'static str = "name";
+}
+
+// ✅ Implement GetOrCreateModel trait
+impl GetOrCreateModel for Series {
+    type LookupKey = str;
+
+    fn id(&self) -> Option<i64> {
+        self.id
+    }
+
+    fn new_from_key(key: &str) -> Self {
+        Series {
+            id: None,
+            name: key.to_string(),
+            description: None,
+            total_books: None,
+            completed: 0,
+            created_at: chrono::Utc::now().timestamp(),
+            updated_at: chrono::Utc::now().timestamp(),
+        }
+    }
+
+    async fn find_by_key(pool: &sqlx::SqlitePool, key: &str) -> Result<Option<Self>, sqlx::Error> {
+        Self::get_by_name(pool, key).await
+    }
+
+    async fn save(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
+        self.save(pool).await
+    }
 }
 
 impl Series {
@@ -146,29 +176,17 @@ impl Series {
         crud_search::<Series>(pool, pattern, &["name", "description"]).await
     }
 
-    /// Get or create a series by name
-    /// If a series with the given name exists, return its ID
-    /// Otherwise create a new series and return its ID
+    /// ❌ DEPRECATED: use `get_or_create::<Series>(pool, name).await` instead
+    #[deprecated(
+        since = "0.1.0",
+        note = "Use `get_or_create::<Series>(pool, name).await` instead"
+    )]
     pub async fn get_or_create_by_name(
         pool: &sqlx::SqlitePool,
         name: &str,
     ) -> Result<i64, sqlx::Error> {
-        // Try to find existing series by exact name match first
-        if let Some(series) = Self::get_by_name(pool, name).await? {
-            return Ok(series.id.unwrap_or(0));
-        }
-
-        // Create new series if not found
-        let series = Series {
-            id: None,
-            name: name.to_string(),
-            description: None,
-            total_books: None,
-            completed: 0,
-            created_at: chrono::Utc::now().timestamp(),
-            updated_at: chrono::Utc::now().timestamp(),
-        };
-        series.save(pool).await
+        use crate::get_or_create;
+        get_or_create::<Series>(pool, name).await
     }
 }
 

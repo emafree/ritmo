@@ -1,7 +1,7 @@
 use crate::utils::opt_year_to_timestamp;
 use ritmo_db::{
-    crud_get, Book, BookContent, Content, ContentPersonRole, ContentTag, Person, Role,
-    RunningLanguages, Tag, Type,
+    crud_get, get_or_create, Book, BookContent, Content, ContentPersonRole, ContentTag, Person,
+    Role, RunningLanguages, Tag, Type,
 };
 use ritmo_errors::{RitmoErr, RitmoResult};
 
@@ -41,7 +41,7 @@ pub async fn create_content(
 
     // 2. Ottieni/crea tipo contenuto se specificato
     let type_id = if let Some(type_name) = &metadata.content_type {
-        Some(Type::get_or_create_by_key(pool, type_name).await?)
+        Some(get_or_create::<Type>(pool, type_name).await?)
     } else {
         None
     };
@@ -69,8 +69,8 @@ pub async fn create_content(
     // 6. Associa persone con i loro ruoli se specificato
     if let Some(people) = metadata.people {
         for (person_name, role_name) in people {
-            let person_id = Person::get_or_create_by_name(pool, &person_name).await?;
-            let role_id = Role::get_or_create_by_key(pool, &role_name).await?;
+            let person_id = get_or_create::<Person>(pool, &person_name).await?;
+            let role_id = get_or_create::<Role>(pool, &role_name).await?;
 
             ContentPersonRole::create(
                 pool,
@@ -101,7 +101,7 @@ pub async fn create_content(
     // 8. Crea e collega tags
     if let Some(tags) = metadata.tags {
         for tag_name in tags {
-            let tag_id = Tag::get_or_create_by_name(pool, &tag_name).await?;
+            let tag_id = get_or_create::<Tag>(pool, &tag_name).await?;
             ContentTag::create(pool, &ContentTag { content_id, tag_id }).await?;
         }
     }

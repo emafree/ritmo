@@ -1,5 +1,6 @@
 use crate::crud_trait::CrudModel;
 use crate::i18n_trait::I18nDisplayable;
+use crate::GetOrCreateModel;
 use ritmo_errors::RitmoResult;
 use sqlx::FromRow;
 use sqlx::SqlitePool;
@@ -24,6 +25,32 @@ impl I18nDisplayable for Type {
 impl CrudModel for Type {
     const TABLE_NAME: &'static str = "types";
     const ORDER_BY: &'static str = "key";
+}
+
+// ✅ Implement GetOrCreateModel trait
+impl GetOrCreateModel for Type {
+    type LookupKey = str;
+
+    fn id(&self) -> Option<i64> {
+        self.id
+    }
+
+    fn new_from_key(key: &str) -> Self {
+        Type {
+            id: None,
+            key: key.to_string(),
+            description: None,
+            created_at: chrono::Utc::now().timestamp(),
+        }
+    }
+
+    async fn find_by_key(pool: &sqlx::SqlitePool, key: &str) -> Result<Option<Self>, sqlx::Error> {
+        Self::get_by_key(pool, key).await
+    }
+
+    async fn save(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
+        self.save(pool).await
+    }
 }
 
 impl Type {
@@ -110,22 +137,17 @@ impl Type {
         Ok(result)
     }
 
-    /// Get or create type by key (e.g., "type.novel")
-    /// Creates new type if it doesn't exist
+    /// ❌ DEPRECATED: use `get_or_create::<Type>(pool, key).await` instead
+    #[deprecated(
+        since = "0.1.0",
+        note = "Use `get_or_create::<Type>(pool, key).await` instead"
+    )]
     pub async fn get_or_create_by_key(
         pool: &sqlx::SqlitePool,
         key: &str,
     ) -> Result<i64, sqlx::Error> {
-        if let Some(type_record) = Self::get_by_key(pool, key).await? {
-            return Ok(type_record.id.unwrap_or(0));
-        }
-        let type_record = Type {
-            id: None,
-            key: key.to_string(),
-            description: None,
-            created_at: chrono::Utc::now().timestamp(),
-        };
-        type_record.save(pool).await
+        use crate::get_or_create;
+        get_or_create::<Type>(pool, key).await
     }
 }
 

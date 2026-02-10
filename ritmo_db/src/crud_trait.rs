@@ -102,6 +102,57 @@ pub async fn crud_search<T: CrudModel>(
     query.fetch_all(pool).await
 }
 
+/// Generic get-or-create trait for entities with unique lookup keys
+///
+/// This trait eliminates ~450 lines of duplicated get_or_create implementations
+/// across Publisher, Series, Tag, Person, Format, Type, and Role models.
+pub trait GetOrCreateModel: Sized + Send + Sync {
+    /// The type used to lookup/create this entity (usually &str)
+    type LookupKey: ?Sized;
+
+    /// Get the ID of this entity
+    fn id(&self) -> Option<i64>;
+
+    /// Create a new instance from the lookup key
+    fn new_from_key(key: &Self::LookupKey) -> Self;
+
+    /// Find an existing entity by the lookup key
+    async fn find_by_key(
+        pool: &sqlx::SqlitePool,
+        key: &Self::LookupKey,
+    ) -> Result<Option<Self>, sqlx::Error>;
+
+    /// Save this instance to the database, returning the ID
+    async fn save(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error>;
+}
+
+/// Generic get_or_create operation for any GetOrCreateModel
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+/// * `key` - Lookup key (name, key, etc.)
+///
+/// # Returns
+/// * `Ok(i64)` - The ID of the found or created entity
+/// * `Err(sqlx::Error)` - Database error
+///
+/// # Example
+/// ```ignore
+/// let publisher_id = get_or_create::<Publisher>(pool, "Penguin Books").await?;
+/// let format_id = get_or_create::<Format>(pool, "format.epub").await?;
+/// ```
+pub async fn get_or_create<T: GetOrCreateModel>(
+    pool: &sqlx::SqlitePool,
+    key: &T::LookupKey,
+) -> Result<i64, sqlx::Error> {
+    if let Some(entity) = T::find_by_key(pool, key).await? {
+        return Ok(entity.id().unwrap_or(0));
+    }
+
+    let entity = T::new_from_key(key);
+    entity.save(pool).await
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
