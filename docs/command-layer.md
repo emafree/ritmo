@@ -105,14 +105,20 @@ ritmo_commands/
 │   │   ├── list.rs         # ListBooksCommand
 │   │   ├── update.rs       # UpdateBookCommand
 │   │   └── delete.rs       # DeleteBookCommand
-│   └── contents/           # Content commands
+│   ├── contents/           # Content commands
+│   │   ├── mod.rs
+│   │   ├── add.rs          # AddContentCommand
+│   │   ├── list.rs         # ListContentsCommand
+│   │   ├── update.rs       # UpdateContentCommand
+│   │   ├── delete.rs       # DeleteContentCommand
+│   │   ├── link.rs         # LinkContentCommand
+│   │   └── unlink.rs       # UnlinkContentCommand
+│   └── entities/           # Entity list commands
 │       ├── mod.rs
-│       ├── add.rs          # AddContentCommand
-│       ├── list.rs         # ListContentsCommand
-│       ├── update.rs       # UpdateContentCommand
-│       ├── delete.rs       # DeleteContentCommand
-│       ├── link.rs         # LinkContentCommand
-│       └── unlink.rs       # UnlinkContentCommand
+│       ├── list_tags.rs    # ListTagsCommand
+│       ├── list_publishers.rs  # ListPublishersCommand
+│       ├── list_series.rs  # ListSeriesCommand
+│       └── list_people.rs  # ListPeopleCommand
 └── Cargo.toml
 ```
 
@@ -262,6 +268,15 @@ pub enum CommandError {
 | `DeleteContentCommand` | `content_id` | `content_id` | Delete content record |
 | `LinkContentCommand` | `content_id` + `book_id` | Both IDs | Associate content to book |
 | `UnlinkContentCommand` | `content_id` + `book_id` | Both IDs | Remove content-book link |
+
+### Entities (4 commands)
+
+| Command | Input | Output | Purpose |
+|---------|-------|--------|---------|
+| `ListTagsCommand` | None | `Vec<TagSummary>` | List all tags |
+| `ListPublishersCommand` | None | `Vec<PublisherSummary>` | List all publishers |
+| `ListSeriesCommand` | None | `Vec<SeriesSummary>` | List all series |
+| `ListPeopleCommand` | None | `Vec<PersonSummary>` | List all people (authors, translators, etc.) |
 
 ---
 

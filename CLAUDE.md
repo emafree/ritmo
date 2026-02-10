@@ -420,10 +420,16 @@ Implemented complete command layer pattern to separate business logic from prese
 - **Output Types**: 6 new result types for contents operations
 - **Handler Migration**: All contents handlers migrated to commands
 
+**Phase 5: Entity List Commands**
+- **All 4 Commands**: ListTagsCommand, ListPublishersCommand, ListSeriesCommand, ListPeopleCommand
+- **New Module**: `ritmo_commands/src/entities/` with list commands for database entities
+- **Output Types**: 8 new types (TagSummary, PublisherSummary, SeriesSummary, PersonSummary + List results)
+- **Handler Migration**: All entity handlers (tags, publishers, series, people) migrated to commands
+
 **Final Status**
-- ✅ **10 Commands**: 4 books + 6 contents (complete CRUD)
-- ✅ **11 Unit Tests**: All passing
-- ✅ **Documentation**: Comprehensive command-layer.md with examples
+- ✅ **14 Commands**: 4 books + 6 contents + 4 entities (complete CRUD + list operations)
+- ✅ **15 Unit Tests**: All passing
+- ✅ **Documentation**: Updated command-layer.md with entity commands
 - ✅ **Architecture**: 3-layer separation (Presentation → Commands → Services)
 
 **Benefits**
@@ -433,7 +439,7 @@ Implemented complete command layer pattern to separate business logic from prese
 - Centralized validation
 - Future-ready for API integration
 
-**Files**: 17 new command files, ~1200 lines of command layer code
+**Files**: 21 new command files, ~1600 lines of command layer code
 See [Command Layer Documentation](docs/command-layer.md) for complete guide.
 
 ### 2026-02-10 - Session 30: GUI Phase 2 + Entity CRUD Commands - COMPLETED
