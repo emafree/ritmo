@@ -5,15 +5,19 @@
 
 use crate::confirmation::{confirm_operation, format_book_preview, ConfirmationConfig, ConfirmationResult};
 use crate::formatter::{format_book_summaries, OutputFormat};
-use ritmo_commands::{Command, books::{AddBookCommand, AddBookInput, ListBooksCommand, ListBooksInput}};
-use ritmo_config::AppSettings;
-use ritmo_core::service::{
-    batch_import, delete_book, update_book, BookUpdateMetadata,
-    DeleteOptions,
+use ritmo_commands::{
+    Command,
+    books::{
+        AddBookCommand, AddBookInput,
+        ListBooksCommand, ListBooksInput,
+        UpdateBookCommand, UpdateBookInput,
+        DeleteBookCommand, DeleteBookInput,
+    }
 };
+use ritmo_config::AppSettings;
+use ritmo_core::service::batch_import;
 use ritmo_core::dto::BatchImportInput;
 use ritmo_db_core::execute_books_query;
-use ritmo_errors::reporter::SilentReporter;
 use std::path::PathBuf;
 
 /// Handle: books add
@@ -245,31 +249,33 @@ pub async fn handle_books_update(
     // Parse people from selector
     let parsed_people = parse_people(&selector.set_people);
 
-    let update_metadata = BookUpdateMetadata {
-        title: selector.set_title.clone(),
-        original_title: selector.set_original_title.clone(),
-        people: parsed_people,
-        publisher: selector.set_publisher.clone(),
-        year: selector.set_year,
-        isbn: selector.set_isbn.clone(),
-        format: selector.set_format.clone(),
-        series: selector.set_series.clone(),
-        series_index: selector.set_series_index,
-        notes: selector.set_notes.clone(),
-        pages: selector.set_pages,
-        tags: if selector.set_tags.is_empty() {
-            None
-        } else {
-            Some(selector.set_tags.clone())
-        },
-    };
-
-    // Execute updates
+    // Execute updates using command
     let mut success = 0;
     let mut errors = 0;
+    let command = UpdateBookCommand;
 
     for book in books {
-        match update_book(&pool, book.id, update_metadata.clone()).await {
+        let input = UpdateBookInput {
+            book_id: book.id,
+            title: selector.set_title.clone(),
+            original_title: selector.set_original_title.clone(),
+            people: parsed_people.clone(),
+            publisher: selector.set_publisher.clone(),
+            year: selector.set_year,
+            isbn: selector.set_isbn.clone(),
+            format: selector.set_format.clone(),
+            series: selector.set_series.clone(),
+            series_index: selector.set_series_index,
+            notes: selector.set_notes.clone(),
+            pages: selector.set_pages,
+            tags: if selector.set_tags.is_empty() {
+                None
+            } else {
+                Some(selector.set_tags.clone())
+            },
+        };
+
+        match command.execute(&config, &pool, input).await {
             Ok(_) => {
                 success += 1;
                 println!("✓ Updated book [{}]: {}", book.id, book.name);
@@ -302,7 +308,6 @@ pub async fn handle_books_delete(
     use super::common::{get_library_and_pool, print_summary};
 
     let (config, pool) = get_library_and_pool(cli_library, app_settings).await?;
-    let mut reporter = SilentReporter;
 
     // Get books to delete (by ID or filters)
     let books = if let Some(book_id) = id {
@@ -348,13 +353,19 @@ pub async fn handle_books_delete(
         return Ok(());
     }
 
-    // Execute deletions
+    // Execute deletions using command
     let mut success = 0;
     let mut errors = 0;
-    let options = DeleteOptions { delete_file, force };
+    let command = DeleteBookCommand;
 
     for book in books {
-        match delete_book(&config, &pool, book.id, &options, &mut reporter).await {
+        let input = DeleteBookInput {
+            book_id: book.id,
+            delete_file,
+            force,
+        };
+
+        match command.execute(&config, &pool, input).await {
             Ok(_) => {
                 success += 1;
                 println!("✓ Deleted book [{}]: {}", book.id, book.name);

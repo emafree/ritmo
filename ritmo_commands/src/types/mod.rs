@@ -15,6 +15,19 @@ pub struct AddBookResult {
     pub warnings: Vec<String>,
 }
 
+/// Result of updating a book
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateBookResult {
+    pub book_id: i64,
+}
+
+/// Result of deleting a book
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeleteBookResult {
+    pub book_id: i64,
+    pub file_deleted: bool,
+}
+
 /// Result of listing books
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListBooksResult {
