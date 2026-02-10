@@ -1,5 +1,8 @@
 use crate::utils::opt_year_to_timestamp;
-use ritmo_db::{crud_get, Content, Person, Role, RunningLanguages, Tag, Type};
+use ritmo_db::{
+    crud_get, Book, BookContent, Content, ContentPersonRole, ContentTag, Person, Role,
+    RunningLanguages, Tag, Type,
+};
 use ritmo_errors::{RitmoErr, RitmoResult};
 
 /// Metadati per la creazione di un nuovo contenuto
@@ -69,13 +72,14 @@ pub async fn create_content(
             let person_id = Person::get_or_create_by_name(pool, &person_name).await?;
             let role_id = Role::get_or_create_by_key(pool, &role_name).await?;
 
-            sqlx::query!(
-                "INSERT INTO x_contents_people_roles (content_id, person_id, role_id) VALUES (?, ?, ?)",
-                content_id,
-                person_id,
-                role_id
+            ContentPersonRole::create(
+                pool,
+                &ContentPersonRole {
+                    content_id,
+                    person_id,
+                    role_id,
+                },
             )
-            .execute(pool)
             .await?;
         }
     }
@@ -83,11 +87,7 @@ pub async fn create_content(
     // 7. Associa a un book se specificato
     if let Some(book_id) = metadata.book_id {
         // Verifica che il book esista
-        let book_exists = sqlx::query!("SELECT id FROM books WHERE id = ?", book_id)
-            .fetch_optional(pool)
-            .await?;
-
-        if book_exists.is_none() {
+        if crud_get::<Book>(pool, book_id).await?.is_none() {
             return Err(RitmoErr::Generic(format!(
                 "Libro con ID {} non trovato",
                 book_id
@@ -95,26 +95,14 @@ pub async fn create_content(
         }
 
         // Crea l'associazione
-        sqlx::query!(
-            "INSERT INTO x_books_contents (book_id, content_id) VALUES (?, ?)",
-            book_id,
-            content_id
-        )
-        .execute(pool)
-        .await?;
+        BookContent::create(pool, &BookContent { book_id, content_id }).await?;
     }
 
     // 8. Crea e collega tags
     if let Some(tags) = metadata.tags {
         for tag_name in tags {
             let tag_id = Tag::get_or_create_by_name(pool, &tag_name).await?;
-            sqlx::query!(
-                "INSERT INTO x_contents_tags (content_id, tag_id) VALUES (?, ?)",
-                content_id,
-                tag_id
-            )
-            .execute(pool)
-            .await?;
+            ContentTag::create(pool, &ContentTag { content_id, tag_id }).await?;
         }
     }
 
@@ -158,11 +146,7 @@ pub async fn link_content_to_book(
     }
 
     // Verifica che il book esista
-    let book_exists = sqlx::query!("SELECT id FROM books WHERE id = ?", book_id)
-        .fetch_optional(pool)
-        .await?;
-
-    if book_exists.is_none() {
+    if crud_get::<Book>(pool, book_id).await?.is_none() {
         return Err(RitmoErr::Generic(format!(
             "Libro con ID {} non trovato",
             book_id
@@ -170,15 +154,8 @@ pub async fn link_content_to_book(
     }
 
     // Verifica se l'associazione esiste già
-    let link_exists = sqlx::query!(
-        "SELECT * FROM x_books_contents WHERE book_id = ? AND content_id = ?",
-        book_id,
-        content_id
-    )
-    .fetch_optional(pool)
-    .await?;
-
-    if link_exists.is_some() {
+    let existing_links = BookContent::list_by_book(pool, book_id).await?;
+    if existing_links.iter().any(|link| link.content_id == content_id) {
         return Err(RitmoErr::Generic(format!(
             "Il contenuto {} è già associato al libro {}",
             content_id, book_id
@@ -186,13 +163,7 @@ pub async fn link_content_to_book(
     }
 
     // Crea l'associazione
-    sqlx::query!(
-        "INSERT INTO x_books_contents (book_id, content_id) VALUES (?, ?)",
-        book_id,
-        content_id
-    )
-    .execute(pool)
-    .await?;
+    BookContent::create(pool, &BookContent { book_id, content_id }).await?;
 
     Ok(())
 }

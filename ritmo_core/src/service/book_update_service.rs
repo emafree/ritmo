@@ -1,5 +1,5 @@
 use crate::utils::opt_year_to_timestamp;
-use ritmo_db::{crud_get, Book, Format, Person, Publisher, Role, Series, Tag};
+use ritmo_db::{crud_get, Book, BookPersonRole, BookTag, Format, Person, Publisher, Role, Series, Tag};
 use ritmo_errors::{RitmoErr, RitmoResult};
 
 /// Metadati opzionali per l'aggiornamento di un libro
@@ -104,13 +104,14 @@ pub async fn update_book(
             let person_id = Person::get_or_create_by_name(pool, &person_name).await?;
             let role_id = Role::get_or_create_by_key(pool, &role_name).await?;
 
-            sqlx::query!(
-                "INSERT INTO x_books_people_roles (book_id, person_id, role_id) VALUES (?, ?, ?)",
-                book_id,
-                person_id,
-                role_id
+            BookPersonRole::create(
+                pool,
+                &BookPersonRole {
+                    book_id,
+                    person_id,
+                    role_id,
+                },
             )
-            .execute(pool)
             .await?;
         }
     }
@@ -125,13 +126,7 @@ pub async fn update_book(
         // Aggiungi i nuovi tags
         for tag_name in tags {
             let tag_id = Tag::get_or_create_by_name(pool, &tag_name).await?;
-            sqlx::query!(
-                "INSERT INTO x_books_tags (book_id, tag_id) VALUES (?, ?)",
-                book_id,
-                tag_id
-            )
-            .execute(pool)
-            .await?;
+            BookTag::create(pool, &BookTag { book_id, tag_id }).await?;
         }
     }
 

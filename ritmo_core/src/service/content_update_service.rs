@@ -1,5 +1,7 @@
 use crate::utils::opt_year_to_timestamp;
-use ritmo_db::{crud_get, Content, Person, Role, RunningLanguages, Tag, Type};
+use ritmo_db::{
+    crud_get, Content, ContentPersonRole, ContentTag, Person, Role, RunningLanguages, Tag, Type,
+};
 use ritmo_errors::{RitmoErr, RitmoResult};
 
 /// Metadati opzionali per l'aggiornamento di un contenuto
@@ -85,13 +87,14 @@ pub async fn update_content(
             let person_id = Person::get_or_create_by_name(pool, &person_name).await?;
             let role_id = Role::get_or_create_by_key(pool, &role_name).await?;
 
-            sqlx::query!(
-                "INSERT INTO x_contents_people_roles (content_id, person_id, role_id) VALUES (?, ?, ?)",
-                content_id,
-                person_id,
-                role_id
+            ContentPersonRole::create(
+                pool,
+                &ContentPersonRole {
+                    content_id,
+                    person_id,
+                    role_id,
+                },
             )
-            .execute(pool)
             .await?;
         }
     }
@@ -109,13 +112,7 @@ pub async fn update_content(
         // Aggiungi i nuovi tags
         for tag_name in tags {
             let tag_id = Tag::get_or_create_by_name(pool, &tag_name).await?;
-            sqlx::query!(
-                "INSERT INTO x_contents_tags (content_id, tag_id) VALUES (?, ?)",
-                content_id,
-                tag_id
-            )
-            .execute(pool)
-            .await?;
+            ContentTag::create(pool, &ContentTag { content_id, tag_id }).await?;
         }
     }
 

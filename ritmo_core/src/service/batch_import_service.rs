@@ -1,7 +1,7 @@
 use crate::dto::{BatchImportInput, ContentInput, ImportObject};
 use crate::service::book_import_service::{import_book_with_contents, BookImportMetadata};
 use crate::utils::opt_year_to_timestamp;
-use ritmo_db::{Content, Person, Role, RunningLanguages, Type};
+use ritmo_db::{BookContent, Content, ContentPersonRole, Person, Role, RunningLanguages, Type};
 use ritmo_db_core::LibraryConfig;
 use ritmo_errors::{RitmoErr, RitmoResult};
 use std::path::PathBuf;
@@ -179,26 +179,21 @@ async fn import_single(
         let content_id = create_content_from_input(pool, &content_input).await?;
 
         // Link content to book
-        sqlx::query!(
-            "INSERT INTO x_books_contents (book_id, content_id) VALUES (?, ?)",
-            book_id,
-            content_id
-        )
-        .execute(pool)
-        .await?;
+        BookContent::create(pool, &BookContent { book_id, content_id }).await?;
 
         // Associate content people with roles
         for person_input in &content_input.people {
             let person_id = Person::get_or_create_by_name(pool, &person_input.name).await?;
             let role_id = Role::get_or_create_by_key(pool, &person_input.role).await?;
 
-            sqlx::query!(
-                "INSERT INTO x_contents_people_roles (content_id, person_id, role_id) VALUES (?, ?, ?)",
-                content_id,
-                person_id,
-                role_id
+            ContentPersonRole::create(
+                pool,
+                &ContentPersonRole {
+                    content_id,
+                    person_id,
+                    role_id,
+                },
             )
-            .execute(pool)
             .await?;
         }
 

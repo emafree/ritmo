@@ -7,7 +7,7 @@ pub struct ContentTag {
 }
 
 impl ContentTag {
-    pub async fn save(pool: &sqlx::SqlitePool, new_link: &ContentTag) -> Result<(), sqlx::Error> {
+    pub async fn create(pool: &sqlx::SqlitePool, new_link: &ContentTag) -> Result<(), sqlx::Error> {
         sqlx::query!(
             "INSERT INTO x_contents_tags (content_id, tag_id) VALUES (?, ?)",
             new_link.content_id,
@@ -16,6 +16,12 @@ impl ContentTag {
             .execute(pool)
             .await?;
         Ok(())
+    }
+
+    /// Deprecated: use `create()` instead
+    #[deprecated(since = "0.1.0", note = "Use `create()` for consistency")]
+    pub async fn save(pool: &sqlx::SqlitePool, new_link: &ContentTag) -> Result<(), sqlx::Error> {
+        Self::create(pool, new_link).await
     }
 
     pub async fn delete(
