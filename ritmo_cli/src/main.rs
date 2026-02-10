@@ -281,6 +281,36 @@ enum TagsCommands {
         #[arg(long, short = 'o', default_value = "table")]
         output: String,
     },
+    /// Create a new tag
+    Create {
+        /// Tag name (required, must be unique)
+        #[arg(long, short = 'n')]
+        name: String,
+        /// Optional description
+        #[arg(long, short = 'd')]
+        description: Option<String>,
+    },
+    /// Update an existing tag
+    Update {
+        /// Tag ID to update
+        #[arg(long)]
+        id: i64,
+        /// New tag name (optional)
+        #[arg(long, short = 'n')]
+        name: Option<String>,
+        /// New description (optional)
+        #[arg(long, short = 'd')]
+        description: Option<String>,
+    },
+    /// Delete a tag
+    Delete {
+        /// Tag ID to delete
+        #[arg(long)]
+        id: i64,
+        /// Skip confirmation prompt
+        #[arg(long, short = 'y')]
+        yes: bool,
+    },
 }
 
 /// Publishers subcommands
@@ -700,6 +730,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Tags(tags_cmd) => match tags_cmd {
             TagsCommands::List { output } => {
                 handlers::tags::handle_tags_list(&cli.library, &app_settings, &output).await?;
+            }
+            TagsCommands::Create { name, description } => {
+                handlers::tags::handle_tags_create(
+                    &cli.library,
+                    &app_settings,
+                    &name,
+                    &description,
+                )
+                .await?;
+            }
+            TagsCommands::Update {
+                id,
+                name,
+                description,
+            } => {
+                handlers::tags::handle_tags_update(
+                    &cli.library,
+                    &app_settings,
+                    &id,
+                    &name,
+                    &description,
+                )
+                .await?;
+            }
+            TagsCommands::Delete { id, yes } => {
+                handlers::tags::handle_tags_delete(&cli.library, &app_settings, &id, &yes).await?;
             }
         },
 
