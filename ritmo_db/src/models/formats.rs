@@ -1,3 +1,4 @@
+use crate::crud_trait::CrudModel;
 use crate::i18n_trait::I18nDisplayable;
 use sqlx::FromRow;
 
@@ -7,7 +8,6 @@ use sqlx::FromRow;
 pub struct Format {
     pub id: Option<i64>,
     pub key: String,
-    pub description: Option<String>,
     pub created_at: i64,
 }
 
@@ -17,55 +17,66 @@ impl I18nDisplayable for Format {
     }
 }
 
+// ✅ Implementa CrudModel trait - elimina necessità di get/list_all/delete custom
+impl CrudModel for Format {
+    const TABLE_NAME: &'static str = "formats";
+    const ORDER_BY: &'static str = "key";
+}
+
 impl Format {
     /// Get the display name for this format in the current UI language
-    /// Uses the i18n system to translate format keys (e.g., "format.epub" -> "EPUB (ebook)")
+    /// Uses the i18n system to translate format keys (e.g., "format.epub" -> "EPUB"/"Epub")
     pub fn display_name(&self) -> String {
         // Delegate to I18nDisplayable trait
         self.translate()
     }
 
-    pub async fn create(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
-        let result = sqlx::query!(
-            "INSERT INTO formats (key, description) VALUES (?, ?)",
-            self.key,
-            self.description
-        )
-        .execute(pool)
-        .await?;
-        Ok(result.last_insert_rowid())
+    /// Create a new format and save it to the database
+    /// Returns the newly created format ID
+    ///
+    /// # Arguments
+    /// * `pool` - SQLite connection pool
+    ///
+    /// # Returns
+    /// * `Ok(i64)` - The ID of the newly inserted format
+    /// * `Err(sqlx::Error)` - Database error if insertion fails
+    pub async fn save(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
+        let rec = sqlx::query!("INSERT INTO formats (key) VALUES (?)", self.key)
+            .execute(pool)
+            .await?;
+        let id = rec.last_insert_rowid();
+        Ok(id)
     }
 
-    pub async fn get(pool: &sqlx::SqlitePool, id: i64) -> Result<Option<Format>, sqlx::Error> {
-        let result = sqlx::query_as!(
-            Format,
-            "SELECT id, key, description, created_at FROM formats WHERE id = ?",
-            id
-        )
-        .fetch_optional(pool)
-        .await?;
-        Ok(result)
+    /// ❌ REMOVED: use `crud_get::<Format>(pool, id).await` instead
+    /// This is now provided by the CrudModel trait through generic implementation
+    #[deprecated(
+        since = "0.1.0",
+        note = "Use `crud_get::<Format>(pool, id).await` instead"
+    )]
+    pub async fn get(pool: &sqlx::SqlitePool, id: i64) -> Result<Option<Self>, sqlx::Error> {
+        use crate::crud_get;
+        crud_get::<Self>(pool, id).await
     }
 
-    pub async fn update(
-        pool: &sqlx::SqlitePool,
-        id: i64,
-        key: &str,
-        description: Option<&str>,
-    ) -> Result<(), sqlx::Error> {
-        sqlx::query!(
-            "UPDATE formats SET key = ?, description = ? WHERE id = ?",
-            key,
-            description,
-            id
-        )
-        .execute(pool)
-        .await?;
+    /// Update an existing format in the database
+    ///
+    /// # Arguments
+    /// * `pool` - SQLite connection pool
+    ///
+    /// # Returns
+    /// * `Ok(())` - Success
+    /// * `Err(sqlx::Error)` - Database error if update fails
+    pub async fn update(&self, pool: &sqlx::SqlitePool, key: &str) -> Result<(), sqlx::Error> {
+        sqlx::query!("UPDATE formats SET key = ? WHERE id = ?", key, self.id)
+            .execute(pool)
+            .await?;
         Ok(())
     }
 
-    pub async fn delete(pool: &sqlx::SqlitePool, id: i64) -> Result<(), sqlx::Error> {
-        sqlx::query!("DELETE FROM formats WHERE id = ?", id)
+    /// Delete a format by ID
+    pub async fn delete(&self, pool: &sqlx::SqlitePool) -> Result<(), sqlx::Error> {
+        sqlx::query!("DELETE FROM formats WHERE id = ?", self.id)
             .execute(pool)
             .await?;
         Ok(())
@@ -75,10 +86,10 @@ impl Format {
     pub async fn get_by_key(
         pool: &sqlx::SqlitePool,
         key: &str,
-    ) -> Result<Option<Format>, sqlx::Error> {
+    ) -> Result<Option<Self>, sqlx::Error> {
         let result = sqlx::query_as!(
-            Format,
-            "SELECT id, key, description, created_at FROM formats WHERE key = ?",
+            Self,
+            "SELECT id, key, created_at FROM formats WHERE key = ?",
             key
         )
         .fetch_optional(pool)
@@ -98,28 +109,19 @@ impl Format {
         let format = Format {
             id: None,
             key: key.to_string(),
-            description: None,
             created_at: chrono::Utc::now().timestamp(),
         };
-        format.create(pool).await
+        format.save(pool).await
     }
+}
 
-    /// Legacy method for backward compatibility
-    /// Use get_by_key instead for new code
-    #[deprecated(since = "0.1.0", note = "Use get_by_key instead")]
-    pub async fn get_by_name(
-        pool: &sqlx::SqlitePool,
-        key: &str,
-    ) -> Result<Option<Format>, sqlx::Error> {
-        Self::get_by_key(pool, key).await
-    }
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    /// Legacy method for backward compatibility
-    #[deprecated(since = "0.1.0", note = "Use get_or_create_by_key instead")]
-    pub async fn get_or_create_by_name(
-        pool: &sqlx::SqlitePool,
-        key: &str,
-    ) -> Result<i64, sqlx::Error> {
-        Self::get_or_create_by_key(pool, key).await
+    #[test]
+    fn test_crud_model_impl() {
+        assert_eq!(Format::TABLE_NAME, "formats");
+        assert_eq!(Format::ORDER_BY, "key");
     }
 }

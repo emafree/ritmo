@@ -1,4 +1,4 @@
-use ritmo_db::{Book, Format, Person, Publisher, Role, Series, Tag};
+use ritmo_db::{crud_get, Book, Format, Person, Publisher, Role, Series, Tag};
 use ritmo_errors::{RitmoErr, RitmoResult};
 
 /// Metadati opzionali per l'aggiornamento di un libro
@@ -31,8 +31,8 @@ pub async fn update_book(
     book_id: i64,
     metadata: BookUpdateMetadata,
 ) -> RitmoResult<()> {
-    // 1. Verifica che il libro esista e caricalo
-    let mut book = Book::get(pool, book_id)
+    // 1. Verifica che il libro esista e caricalo  crud_get::<Book>(pool, id).await
+    let mut book = crud_get::<Book>(pool, book_id)
         .await?
         .ok_or_else(|| RitmoErr::Generic(format!("Libro con ID {} non trovato", book_id)))?;
 
@@ -98,9 +98,12 @@ pub async fn update_book(
     // 5. Gestisci aggiornamento persone e ruoli se specificato
     if let Some(people) = metadata.people {
         // Rimuovi tutte le relazioni persone-ruoli esistenti
-        sqlx::query!("DELETE FROM x_books_people_roles WHERE book_id = ?", book_id)
-            .execute(pool)
-            .await?;
+        sqlx::query!(
+            "DELETE FROM x_books_people_roles WHERE book_id = ?",
+            book_id
+        )
+        .execute(pool)
+        .await?;
 
         // Aggiungi le nuove persone con i loro ruoli
         for (person_name, role_name) in people {

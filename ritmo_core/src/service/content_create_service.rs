@@ -1,4 +1,4 @@
-use ritmo_db::{Content, Person, Role, RunningLanguages, Tag, Type};
+use ritmo_db::{crud_get, Content, Person, Role, RunningLanguages, Tag, Type};
 use ritmo_errors::{RitmoErr, RitmoResult};
 
 /// Metadati per la creazione di un nuovo contenuto
@@ -155,7 +155,7 @@ pub async fn link_content_to_book(
     book_id: i64,
 ) -> RitmoResult<()> {
     // Verifica che il contenuto esista
-    let content_exists = Content::get(pool, content_id).await?;
+    let content_exists = crud_get::<Content>(pool, content_id).await?;
     if content_exists.is_none() {
         return Err(RitmoErr::Generic(format!(
             "Contenuto con ID {} non trovato",

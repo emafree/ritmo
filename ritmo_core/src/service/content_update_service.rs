@@ -1,4 +1,4 @@
-use ritmo_db::{Content, Person, Role, RunningLanguages, Tag, Type};
+use ritmo_db::{crud_get, Content, Person, Role, RunningLanguages, Tag, Type};
 use ritmo_errors::{RitmoErr, RitmoResult};
 
 /// Metadati opzionali per l'aggiornamento di un contenuto
@@ -29,7 +29,7 @@ pub async fn update_content(
     metadata: ContentUpdateMetadata,
 ) -> RitmoResult<()> {
     // 1. Verifica che il contenuto esista e caricalo
-    let mut content = Content::get(pool, content_id)
+    let mut content = crud_get::<Content>(pool, content_id)
         .await?
         .ok_or_else(|| RitmoErr::Generic(format!("Contenuto con ID {} non trovato", content_id)))?;
 
@@ -105,9 +105,12 @@ pub async fn update_content(
     // 6. Gestisci aggiornamento tags se specificato
     if let Some(tags) = metadata.tags {
         // Rimuovi tutti i tags esistenti
-        sqlx::query!("DELETE FROM x_contents_tags WHERE content_id = ?", content_id)
-            .execute(pool)
-            .await?;
+        sqlx::query!(
+            "DELETE FROM x_contents_tags WHERE content_id = ?",
+            content_id
+        )
+        .execute(pool)
+        .await?;
 
         // Aggiungi i nuovi tags
         for tag_name in tags {

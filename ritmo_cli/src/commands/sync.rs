@@ -2,7 +2,7 @@ use crate::helpers::get_library_path;
 use ritmo_config::AppSettings;
 use ritmo_core::service::metadata_sync_service::sync_book_metadata;
 use ritmo_db::pending_sync::{count_pending_sync, get_pending_sync_books};
-use ritmo_db::Book;
+use ritmo_db::{crud_get, Book};
 use ritmo_db_core::LibraryConfig;
 use ritmo_errors::reporter::SilentReporter;
 use std::path::PathBuf;
@@ -47,14 +47,11 @@ pub async fn cmd_sync_dry_run(
         return Ok(());
     }
 
-    println!(
-        "🔍 Dry-run: {} books would be synchronized",
-        book_ids.len()
-    );
+    println!("🔍 Dry-run: {} books would be synchronized", book_ids.len());
     println!("\nBooks that would be updated:");
     for book_id in &book_ids {
         // Get book name for display
-        if let Some(book) = Book::get(&pool, *book_id).await? {
+        if let Some(book) = crud_get::<Book>(&pool, *book_id).await? {
             println!("  • [{}] {}", book_id, book.name);
         }
     }
@@ -106,11 +103,7 @@ pub async fn cmd_sync_metadata(
                 if result.old_hash != result.new_hash {
                     println!(
                         "  Moved: {} → {}",
-                        result
-                            .old_path
-                            .file_name()
-                            .unwrap()
-                            .to_string_lossy(),
+                        result.old_path.file_name().unwrap().to_string_lossy(),
                         result.new_path.file_name().unwrap().to_string_lossy()
                     );
                 }
