@@ -36,6 +36,7 @@ use sqlx::SqlitePool;
 use std::fmt::Debug;
 
 pub mod books;
+pub mod contents;
 pub mod types;
 
 pub use types::*;

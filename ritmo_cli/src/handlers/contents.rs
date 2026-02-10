@@ -1,17 +1,23 @@
 //! Contents command handlers
 //!
 //! This module implements all content-related command handlers for the new noun-verb CLI structure.
-//! Each handler function receives parsed arguments and delegates to ritmo_core services.
+//! Each handler function receives parsed arguments and delegates to ritmo_commands.
 
 use crate::confirmation::{confirm_operation, format_content_preview, ConfirmationConfig, ConfirmationResult};
 use crate::formatter::{format_contents, OutputFormat};
-use ritmo_config::AppSettings;
-use ritmo_core::service::{
-    create_content, delete_content, link_content_to_book, unlink_content_from_book,
-    update_content, ContentCreateMetadata, ContentUpdateMetadata,
+use ritmo_commands::{
+    Command,
+    contents::{
+        AddContentCommand, AddContentInput,
+        ListContentsCommand, ListContentsInput,
+        UpdateContentCommand, UpdateContentInput,
+        DeleteContentCommand, DeleteContentInput,
+        LinkContentCommand, LinkContentInput,
+        UnlinkContentCommand, UnlinkContentInput,
+    }
 };
+use ritmo_config::AppSettings;
 use ritmo_db_core::execute_contents_query;
-use ritmo_errors::reporter::SilentReporter;
 use std::path::PathBuf;
 
 /// Handle: contents add
@@ -81,7 +87,8 @@ pub async fn handle_contents_add(
         None
     };
 
-    let input = ContentCreateMetadata {
+    // Prepare command input
+    let input = AddContentInput {
         title,
         original_title,
         people: parsed_people,
@@ -94,11 +101,13 @@ pub async fn handle_contents_add(
         book_id,
     };
 
-    match create_content(&pool, input).await {
-        Ok(content_id) => {
-            println!("✓ Contenuto creato con successo! ID: {}", content_id);
-            if book_id.is_some() {
-                println!("  Associato al libro ID: {}", book_id.unwrap());
+    // Execute command
+    let command = AddContentCommand;
+    match command.execute(&_config, &pool, input).await {
+        Ok(result) => {
+            println!("✓ Contenuto creato con successo! ID: {}", result.content_id);
+            if let Some(book_id) = result.book_id {
+                println!("  Associato al libro ID: {}", book_id);
             }
         }
         Err(e) => {
@@ -120,15 +129,22 @@ pub async fn handle_contents_list(
 ) -> Result<(), Box<dyn std::error::Error>> {
     use super::common::get_library_and_pool;
 
-    let (_config, pool) = get_library_and_pool(cli_library, app_settings).await?;
+    let (config, pool) = get_library_and_pool(cli_library, app_settings).await?;
 
     // Convert CLI args to filters
     let filters = filter_args.to_filters();
 
-    // Execute query
-    let contents = execute_contents_query(&pool, &filters).await?;
+    // Prepare command input
+    let input = ListContentsInput { filters };
 
-    // Format output
+    // Execute command
+    let command = ListContentsCommand;
+    let result = command.execute(&config, &pool, input).await?;
+
+    // Format output (TODO: create format_content_summaries similar to books)
+    // For now, we need to use execute_contents_query for formatting compatibility
+    let filters_for_display = filter_args.to_filters();
+    let contents = execute_contents_query(&pool, &filters_for_display).await?;
     let output_format = OutputFormat::from_str(&output);
     let formatted = format_contents(&contents, &output_format);
 
@@ -248,28 +264,30 @@ pub async fn handle_contents_update(
         None
     };
 
-    let update_metadata = ContentUpdateMetadata {
-        title: selector.set_title.clone(),
-        original_title: selector.set_original_title.clone(),
-        people: parsed_people,
-        content_type: selector.set_content_type.clone(),
-        year: selector.set_year,
-        notes: selector.set_notes.clone(),
-        pages: selector.set_pages,
-        tags: if selector.set_tags.is_empty() {
-            None
-        } else {
-            Some(selector.set_tags.clone())
-        },
-        languages: parsed_languages,
-    };
-
-    // Execute updates
+    // Execute updates using command
     let mut success = 0;
     let mut errors = 0;
+    let command = UpdateContentCommand;
 
     for content in contents {
-        match update_content(&pool, content.id, update_metadata.clone()).await {
+        let input = UpdateContentInput {
+            content_id: content.id,
+            title: selector.set_title.clone(),
+            original_title: selector.set_original_title.clone(),
+            people: parsed_people.clone(),
+            content_type: selector.set_content_type.clone(),
+            year: selector.set_year,
+            notes: selector.set_notes.clone(),
+            pages: selector.set_pages,
+            tags: if selector.set_tags.is_empty() {
+                None
+            } else {
+                Some(selector.set_tags.clone())
+            },
+            languages: parsed_languages.clone(),
+        };
+
+        match command.execute(&_config, &pool, input).await {
             Ok(_) => {
                 success += 1;
                 println!("✓ Updated content [{}]: {}", content.id, content.name);
@@ -348,13 +366,17 @@ pub async fn handle_contents_delete(
         return Ok(());
     }
 
-    // Execute deletions
+    // Execute deletions using command
     let mut success = 0;
     let mut errors = 0;
-    let mut reporter = SilentReporter;
+    let command = DeleteContentCommand;
 
     for content in contents {
-        match delete_content(&pool, content.id, &mut reporter).await {
+        let input = DeleteContentInput {
+            content_id: content.id,
+        };
+
+        match command.execute(&_config, &pool, input).await {
             Ok(_) => {
                 success += 1;
                 println!("✓ Deleted content [{}]: {}", content.id, content.name);
@@ -382,14 +404,22 @@ pub async fn handle_contents_link(
 ) -> Result<(), Box<dyn std::error::Error>> {
     use super::common::get_library_and_pool;
 
-    let (_config, pool) = get_library_and_pool(cli_library, app_settings).await?;
+    let (config, pool) = get_library_and_pool(cli_library, app_settings).await?;
 
     println!(
         "Associazione contenuto {} al libro {}...",
         content_id, book_id
     );
 
-    match link_content_to_book(&pool, content_id, book_id).await {
+    // Prepare command input
+    let input = LinkContentInput {
+        content_id,
+        book_id,
+    };
+
+    // Execute command
+    let command = LinkContentCommand;
+    match command.execute(&config, &pool, input).await {
         Ok(_) => {
             println!("✓ Contenuto associato con successo!");
         }
@@ -412,14 +442,22 @@ pub async fn handle_contents_unlink(
 ) -> Result<(), Box<dyn std::error::Error>> {
     use super::common::get_library_and_pool;
 
-    let (_config, pool) = get_library_and_pool(cli_library, app_settings).await?;
+    let (config, pool) = get_library_and_pool(cli_library, app_settings).await?;
 
     println!(
         "Rimozione associazione contenuto {} dal libro {}...",
         content_id, book_id
     );
 
-    match unlink_content_from_book(&pool, content_id, book_id).await {
+    // Prepare command input
+    let input = UnlinkContentInput {
+        content_id,
+        book_id,
+    };
+
+    // Execute command
+    let command = UnlinkContentCommand;
+    match command.execute(&config, &pool, input).await {
         Ok(_) => {
             println!("✓ Associazione rimossa con successo!");
         }

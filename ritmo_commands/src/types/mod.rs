@@ -28,6 +28,62 @@ pub struct DeleteBookResult {
     pub file_deleted: bool,
 }
 
+// ============================================================================
+// Content Results
+// ============================================================================
+
+/// Result of adding a content
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AddContentResult {
+    pub content_id: i64,
+    pub title: String,
+    pub book_id: Option<i64>,
+}
+
+/// Result of listing contents
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListContentsResult {
+    pub contents: Vec<ContentSummary>,
+    pub total_count: usize,
+}
+
+/// Summary information for a single content
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ContentSummary {
+    pub id: i64,
+    pub title: String,
+    pub authors: Vec<String>,
+    pub content_type: Option<String>,
+    pub year: Option<i32>,
+    pub pages: Option<i64>,
+}
+
+/// Result of updating a content
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateContentResult {
+    pub content_id: i64,
+}
+
+/// Result of deleting a content
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeleteContentResult {
+    pub content_id: i64,
+}
+
+/// Result of linking content to book
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LinkContentResult {
+    pub content_id: i64,
+    pub book_id: i64,
+}
+
+/// Result of unlinking content from book
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UnlinkContentResult {
+    pub content_id: i64,
+    pub book_id: i64,
+}
+
 /// Result of listing books
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListBooksResult {
