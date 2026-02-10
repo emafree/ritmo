@@ -283,7 +283,7 @@ enum TagsCommands {
     },
     /// Create a new tag
     Create {
-        /// Tag name (required, must be unique)
+        /// Tag name (required)
         #[arg(long, short = 'n')]
         name: String,
         /// Optional description
