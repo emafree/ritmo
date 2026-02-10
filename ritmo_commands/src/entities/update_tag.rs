@@ -126,8 +126,6 @@ impl Command for UpdateTagCommand {
             values.push(description.clone());
         }
 
-        update_fields.push("updated_at = strftime('%s', 'now')");
-
         let query = format!(
             "UPDATE tags SET {} WHERE id = ?",
             update_fields.join(", ")
