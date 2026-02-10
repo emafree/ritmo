@@ -37,6 +37,7 @@ use std::fmt::Debug;
 
 pub mod books;
 pub mod contents;
+pub mod entities;
 pub mod types;
 
 pub use types::*;

@@ -136,3 +136,72 @@ pub enum OperationType {
     Link,
     Unlink,
 }
+
+// ============================================================================
+// Entity Results (Tags, Publishers, Series, People)
+// ============================================================================
+
+/// Result of listing tags
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListTagsResult {
+    pub tags: Vec<TagSummary>,
+    pub total_count: usize,
+}
+
+/// Summary information for a single tag
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TagSummary {
+    pub id: i64,
+    pub name: String,
+    pub created_at: Option<i64>,
+}
+
+/// Result of listing publishers
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListPublishersResult {
+    pub publishers: Vec<PublisherSummary>,
+    pub total_count: usize,
+}
+
+/// Summary information for a single publisher
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PublisherSummary {
+    pub id: i64,
+    pub name: String,
+    pub country: Option<String>,
+    pub website: Option<String>,
+}
+
+/// Result of listing series
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListSeriesResult {
+    pub series: Vec<SeriesSummary>,
+    pub total_count: usize,
+}
+
+/// Summary information for a single series
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SeriesSummary {
+    pub id: i64,
+    pub name: String,
+    pub description: Option<String>,
+    pub total_books: Option<i64>,
+    pub completed: bool,
+}
+
+/// Result of listing people
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListPeopleResult {
+    pub people: Vec<PersonSummary>,
+    pub total_count: usize,
+}
+
+/// Summary information for a single person
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PersonSummary {
+    pub id: i64,
+    pub name: String,
+    pub display_name: Option<String>,
+    pub verified: bool,
+    pub confidence: f64,
+}

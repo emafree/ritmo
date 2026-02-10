@@ -1,4 +1,6 @@
 /// Series management handlers
+use ritmo_commands::entities::{ListSeriesCommand, ListSeriesInput};
+use ritmo_commands::Command;
 use ritmo_config::AppSettings;
 use std::path::PathBuf;
 
@@ -7,18 +9,18 @@ pub async fn handle_series_list(
     app_settings: &AppSettings,
     output: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let (_config, pool) = super::common::get_library_and_pool(library_path, app_settings).await?;
+    let (config, pool) = super::common::get_library_and_pool(library_path, app_settings).await?;
 
-    // Query all series
-    let series_list = sqlx::query!("SELECT id, name, description, total_books, completed FROM series ORDER BY name")
-        .fetch_all(&pool)
-        .await?;
+    // Execute command
+    let command = ListSeriesCommand;
+    let input = ListSeriesInput;
+    let result = command.execute(&config, &pool, input).await?;
 
-    let count = series_list.len();
-
+    // Format output
     match output {
         "json" => {
-            let json_series: Vec<serde_json::Value> = series_list
+            let json_series: Vec<serde_json::Value> = result
+                .series
                 .iter()
                 .map(|series| {
                     serde_json::json!({
@@ -26,14 +28,14 @@ pub async fn handle_series_list(
                         "name": &series.name,
                         "description": &series.description,
                         "total_books": series.total_books,
-                        "completed": series.completed == 1,
+                        "completed": series.completed,
                     })
                 })
                 .collect();
             println!("{}", serde_json::to_string_pretty(&json_series)?);
         }
         "simple" => {
-            for series in &series_list {
+            for series in &result.series {
                 println!("{}", series.name);
             }
         }
@@ -41,12 +43,12 @@ pub async fn handle_series_list(
             // table format
             println!("{:<6} {:<40} {:<10} {}", "ID", "Name", "Completed", "Total Books");
             println!("{}", "-".repeat(80));
-            for series in &series_list {
-                let completed_str = if series.completed == 1 { "Yes" } else { "No" };
+            for series in &result.series {
+                let completed_str = if series.completed { "Yes" } else { "No" };
                 let total_books = series.total_books.unwrap_or(0);
                 println!("{:<6} {:<40} {:<10} {}", series.id, series.name, completed_str, total_books);
             }
-            println!("\nTotal: {} series", count);
+            println!("\nTotal: {} series", result.total_count);
         }
     }
 
