@@ -4,9 +4,11 @@
 rust_i18n::i18n!("../locales", fallback = "en");
 
 pub mod error_i18n;
+pub mod gui_queries;
 pub mod i18n_trait;
 pub mod i18n_utils;
 pub mod models;
 
 // Re-export delle funzioni più comuni per comodità
+pub use gui_queries::*;
 pub use models::*;

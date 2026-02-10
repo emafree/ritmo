@@ -14,6 +14,13 @@ pub mod books;
 
 // Phase 3: Contents handlers
 pub mod contents;
+
+// Entity CRUD handlers
+pub mod people;
+pub mod publishers;
+pub mod series;
+pub mod tags;
+
 // pub mod deduplication;
 // pub mod language;
 // pub mod libraries;

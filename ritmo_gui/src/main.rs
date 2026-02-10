@@ -1,7 +1,11 @@
 slint::include_modules!();
 
+use ritmo_config::{config_dir, settings_file, AppSettings};
+use ritmo_db::{get_books_with_nested_data, get_contents_with_nested_data};
 use ritmo_db_core::LibraryConfig;
+use ritmo_errors::reporter::SilentReporter;
 use slint::{Model, ModelRc, SharedString, VecModel};
+use std::path::PathBuf;
 use std::rc::Rc;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -11,322 +15,244 @@ fn to_model<T: Clone + 'static>(v: Vec<T>) -> ModelRc<T> {
     ModelRc::from(Rc::new(VecModel::from(v)))
 }
 
-// Struttura per gestire lo stato dell'applicazione
+// Application state with multi-library support
 struct AppState {
-    config: LibraryConfig,
+    app_settings: AppSettings,
+    settings_path: PathBuf,
+    current_library: Option<LibraryConfig>,
     runtime: tokio::runtime::Runtime,
 }
 
 impl AppState {
-    fn new(library_path: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        let config = LibraryConfig::new(library_path);
+    fn new() -> Result<Self, Box<dyn std::error::Error>> {
+        // Initialize config directory
+        let config_dir = config_dir()?;
+        std::fs::create_dir_all(&config_dir)?;
+
+        let settings_path = settings_file()?;
+        let app_settings = AppSettings::load_or_create(&settings_path)
+            .map_err(|e| format!("Failed to load settings: {}", e))?;
+
         let runtime = tokio::runtime::Runtime::new()?;
 
-        Ok(Self { config, runtime })
+        Ok(Self {
+            app_settings,
+            settings_path,
+            current_library: None,
+            runtime,
+        })
     }
 
-    fn initialize_library(&self) -> Result<(), Box<dyn std::error::Error>> {
-        self.config.initialize()?;
-        self.runtime.block_on(async {
-            self.config.initialize_database().await
-        })?;
+    fn load_library(&mut self, library_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let path = PathBuf::from(library_path);
+        let config = LibraryConfig::new(&path);
+
+        // Check if library exists
+        if !config.exists() {
+            return Err(format!("Library does not exist: {}", library_path).into());
+        }
+
+        self.current_library = Some(config);
+        self.app_settings.last_library_path = Some(path);
+        self.app_settings
+            .save(&self.settings_path)
+            .map_err(|e| format!("Failed to save settings: {}", e))?;
+
         Ok(())
     }
 
-    // Vista LIBRI: libri con i loro contenuti
-    fn get_books_with_contents(&self) -> Result<Vec<BookWithContents>, Box<dyn std::error::Error>> {
-        // TODO: Query database reale
-        // Per ora dati di esempio realistici
-        Ok(vec![
-            BookWithContents {
-                id: 1,
-                name: "I romanzi di Italo Calvino - Volume 1".into(),
-                original_title: "".into(),
-                publisher: "Mondadori".into(),
-                format: "EPUB".into(),
-                series: "Opere di Calvino".into(),
-                publication_date: "2010".into(),
-                isbn: "978-8804597659".into(),
-                file_link: "/books/calvino_vol1.epub".into(),
-                contents: to_model(vec![
-                    ContentInfo {
-                        id: 1,
-                        name: "Il visconte dimezzato".into(),
-                        original_title: "".into(),
-                        type_name: "Romanzo".into(),
-                        publication_date: "1952".into(),
-                        people: to_model(vec![
-                            PersonWithRole {
-                                person_id: 1,
-                                person_name: "Italo Calvino".into(),
-                                role_name: "Autore".into(),
-                            }
-]),
-                    },
-                    ContentInfo {
-                        id: 2,
-                        name: "Il barone rampante".into(),
-                        original_title: "".into(),
-                        type_name: "Romanzo".into(),
-                        publication_date: "1957".into(),
-                        people: to_model(vec![
-                            PersonWithRole {
-                                person_id: 1,
-                                person_name: "Italo Calvino".into(),
-                                role_name: "Autore".into(),
-                            }
-]),
-                    },
-                    ContentInfo {
-                        id: 3,
-                        name: "Il cavaliere inesistente".into(),
-                        original_title: "".into(),
-                        type_name: "Romanzo".into(),
-                        publication_date: "1959".into(),
-                        people: to_model(vec![
-                            PersonWithRole {
-                                person_id: 1,
-                                person_name: "Italo Calvino".into(),
-                                role_name: "Autore".into(),
-                            }
-]),
-                    },
-]),
-            },
-            BookWithContents {
-                id: 2,
-                name: "Antologia della letteratura italiana moderna".into(),
-                original_title: "".into(),
-                publisher: "Einaudi".into(),
-                format: "PDF".into(),
-                series: "".into(),
-                publication_date: "2015".into(),
-                isbn: "978-8806223458".into(),
-                file_link: "/books/antologia_moderna.pdf".into(),
-                contents: to_model(vec![
-                    ContentInfo {
-                        id: 1,
-                        name: "Il visconte dimezzato".into(),
-                        original_title: "".into(),
-                        type_name: "Romanzo".into(),
-                        publication_date: "1952".into(),
-                        people: to_model(vec![
-                            PersonWithRole {
-                                person_id: 1,
-                                person_name: "Italo Calvino".into(),
-                                role_name: "Autore".into(),
-                            }
-]),
-                    },
-                    ContentInfo {
-                        id: 4,
-                        name: "Il deserto dei Tartari".into(),
-                        original_title: "".into(),
-                        type_name: "Romanzo".into(),
-                        publication_date: "1940".into(),
-                        people: to_model(vec![
-                            PersonWithRole {
-                                person_id: 2,
-                                person_name: "Dino Buzzati".into(),
-                                role_name: "Autore".into(),
-                            }
-]),
-                    },
-                    ContentInfo {
-                        id: 5,
-                        name: "La coscienza di Zeno".into(),
-                        original_title: "".into(),
-                        type_name: "Romanzo".into(),
-                        publication_date: "1923".into(),
-                        people: to_model(vec![
-                            PersonWithRole {
-                                person_id: 3,
-                                person_name: "Italo Svevo".into(),
-                                role_name: "Autore".into(),
-                            }
-]),
-                    },
-]),
-            },
-            BookWithContents {
-                id: 3,
-                name: "Il deserto dei Tartari - Edizione integrale".into(),
-                original_title: "".into(),
-                publisher: "Bompiani".into(),
-                format: "EPUB".into(),
-                series: "".into(),
-                publication_date: "2018".into(),
-                isbn: "978-8845297229".into(),
-                file_link: "/books/deserto_tartari.epub".into(),
-                contents: to_model(vec![
-                    ContentInfo {
-                        id: 4,
-                        name: "Il deserto dei Tartari".into(),
-                        original_title: "".into(),
-                        type_name: "Romanzo".into(),
-                        publication_date: "1940".into(),
-                        people: to_model(vec![
-                            PersonWithRole {
-                                person_id: 2,
-                                person_name: "Dino Buzzati".into(),
-                                role_name: "Autore".into(),
-                            }
-]),
-                    },
-]),
-            },
-        ])
+    fn initialize_current_library(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        if let Some(ref config) = self.current_library {
+            config.initialize()?;
+            self.runtime
+                .block_on(async { config.initialize_database().await })
+                .map_err(|e| format!("Failed to initialize database: {}", e))?;
+            Ok(())
+        } else {
+            Err("No library loaded".into())
+        }
     }
 
-    // Vista CONTENUTI: contenuti con i libri che li contengono
-    fn get_contents_with_books(&self) -> Result<Vec<ContentWithBooks>, Box<dyn std::error::Error>> {
-        // TODO: Query database reale
-        // Per ora dati di esempio realistici
-        Ok(vec![
-            ContentWithBooks {
-                id: 1,
-                name: "Il visconte dimezzato".into(),
-                original_title: "".into(),
-                type_name: "Romanzo".into(),
-                publication_date: "1952".into(),
-                people: to_model(vec![
-                    PersonWithRole {
-                        person_id: 1,
-                        person_name: "Italo Calvino".into(),
-                        role_name: "Autore".into(),
-                    }
-]),
-                books: to_model(vec![
-                    BookInfo {
-                        id: 1,
-                        name: "I romanzi di Italo Calvino - Volume 1".into(),
-                        publisher: "Mondadori".into(),
-                        format: "EPUB".into(),
-                        publication_date: "2010".into(),
-                    },
-                    BookInfo {
-                        id: 2,
-                        name: "Antologia della letteratura italiana moderna".into(),
-                        publisher: "Einaudi".into(),
-                        format: "PDF".into(),
-                        publication_date: "2015".into(),
-                    },
-]),
-            },
-            ContentWithBooks {
-                id: 2,
-                name: "Il barone rampante".into(),
-                original_title: "".into(),
-                type_name: "Romanzo".into(),
-                publication_date: "1957".into(),
-                people: to_model(vec![
-                    PersonWithRole {
-                        person_id: 1,
-                        person_name: "Italo Calvino".into(),
-                        role_name: "Autore".into(),
-                    }
-]),
-                books: to_model(vec![
-                    BookInfo {
-                        id: 1,
-                        name: "I romanzi di Italo Calvino - Volume 1".into(),
-                        publisher: "Mondadori".into(),
-                        format: "EPUB".into(),
-                        publication_date: "2010".into(),
-                    },
-]),
-            },
-            ContentWithBooks {
-                id: 3,
-                name: "Il cavaliere inesistente".into(),
-                original_title: "".into(),
-                type_name: "Romanzo".into(),
-                publication_date: "1959".into(),
-                people: to_model(vec![
-                    PersonWithRole {
-                        person_id: 1,
-                        person_name: "Italo Calvino".into(),
-                        role_name: "Autore".into(),
-                    }
-]),
-                books: to_model(vec![
-                    BookInfo {
-                        id: 1,
-                        name: "I romanzi di Italo Calvino - Volume 1".into(),
-                        publisher: "Mondadori".into(),
-                        format: "EPUB".into(),
-                        publication_date: "2010".into(),
-                    },
-]),
-            },
-            ContentWithBooks {
-                id: 4,
-                name: "Il deserto dei Tartari".into(),
-                original_title: "".into(),
-                type_name: "Romanzo".into(),
-                publication_date: "1940".into(),
-                people: to_model(vec![
-                    PersonWithRole {
-                        person_id: 2,
-                        person_name: "Dino Buzzati".into(),
-                        role_name: "Autore".into(),
-                    }
-]),
-                books: to_model(vec![
-                    BookInfo {
-                        id: 2,
-                        name: "Antologia della letteratura italiana moderna".into(),
-                        publisher: "Einaudi".into(),
-                        format: "PDF".into(),
-                        publication_date: "2015".into(),
-                    },
-                    BookInfo {
-                        id: 3,
-                        name: "Il deserto dei Tartari - Edizione integrale".into(),
-                        publisher: "Bompiani".into(),
-                        format: "EPUB".into(),
-                        publication_date: "2018".into(),
-                    },
-]),
-            },
-            ContentWithBooks {
-                id: 5,
-                name: "La coscienza di Zeno".into(),
-                original_title: "".into(),
-                type_name: "Romanzo".into(),
-                publication_date: "1923".into(),
-                people: to_model(vec![
-                    PersonWithRole {
-                        person_id: 3,
-                        person_name: "Italo Svevo".into(),
-                        role_name: "Autore".into(),
-                    }
-]),
-                books: to_model(vec![
-                    BookInfo {
-                        id: 2,
-                        name: "Antologia della letteratura italiana moderna".into(),
-                        publisher: "Einaudi".into(),
-                        format: "PDF".into(),
-                        publication_date: "2015".into(),
-                    },
-]),
-            },
-        ])
+    fn get_books_with_contents(
+        &self,
+        search: Option<&str>,
+    ) -> Result<Vec<BookWithContents>, Box<dyn std::error::Error>> {
+        let config = self
+            .current_library
+            .as_ref()
+            .ok_or("No library loaded")?;
+
+        let mut reporter = SilentReporter;
+        let books = self
+            .runtime
+            .block_on(async {
+                let pool = config
+                    .create_pool(&mut reporter)
+                    .await
+                    .map_err(|e| format!("Failed to create pool: {}", e))?;
+                get_books_with_nested_data(&pool, search)
+                    .await
+                    .map_err(|e| format!("Query failed: {}", e))
+            })
+            .map_err(|e: String| -> Box<dyn std::error::Error> { e.into() })?;
+
+        // Convert ritmo_db::BookWithDetails to Slint BookWithContents
+        let slint_books: Vec<BookWithContents> = books
+            .into_iter()
+            .map(|book| {
+                // Convert contents with people
+                let contents: Vec<ContentInfo> = book
+                    .contents
+                    .into_iter()
+                    .map(|content| {
+                        // Convert people with roles
+                        let people: Vec<PersonWithRole> = content
+                            .people
+                            .into_iter()
+                            .map(|person| PersonWithRole {
+                                person_id: person.person_id as i32,
+                                person_name: person.person_name.into(),
+                                role_name: person.role_key.into(), // Phase 2: Could translate here
+                            })
+                            .collect();
+
+                        ContentInfo {
+                            id: content.content_id as i32,
+                            name: content.content_name.into(),
+                            original_title: content.content_original_title.unwrap_or_default().into(),
+                            type_name: content.content_type_key.unwrap_or_default().into(),
+                            publication_date: content
+                                .content_publication_date
+                                .map(|ts| {
+                                    use chrono::{DateTime, Utc};
+                                    DateTime::<Utc>::from_timestamp(ts, 0)
+                                        .map(|dt| dt.format("%Y-%m-%d").to_string())
+                                        .unwrap_or_default()
+                                })
+                                .unwrap_or_default()
+                                .into(),
+                            people: to_model(people),
+                        }
+                    })
+                    .collect();
+
+                BookWithContents {
+                    id: book.book_id as i32,
+                    name: book.book_name.into(),
+                    original_title: book.book_original_title.unwrap_or_default().into(),
+                    publisher: book.book_publisher.unwrap_or_default().into(),
+                    format: book.book_format_key.unwrap_or_default().into(),
+                    series: book.book_series.unwrap_or_default().into(),
+                    publication_date: book
+                        .book_publication_date
+                        .map(|ts| {
+                            use chrono::{DateTime, Utc};
+                            DateTime::<Utc>::from_timestamp(ts, 0)
+                                .map(|dt| dt.format("%Y-%m-%d").to_string())
+                                .unwrap_or_default()
+                        })
+                        .unwrap_or_default()
+                        .into(),
+                    isbn: book.book_isbn.unwrap_or_default().into(),
+                    file_link: book.book_file_link.unwrap_or_default().into(),
+                    contents: to_model(contents),
+                }
+            })
+            .collect();
+
+        Ok(slint_books)
+    }
+
+    fn get_contents_with_books(
+        &self,
+        search: Option<&str>,
+    ) -> Result<Vec<ContentWithBooks>, Box<dyn std::error::Error>> {
+        let config = self
+            .current_library
+            .as_ref()
+            .ok_or("No library loaded")?;
+
+        let mut reporter = SilentReporter;
+        let contents = self
+            .runtime
+            .block_on(async {
+                let pool = config
+                    .create_pool(&mut reporter)
+                    .await
+                    .map_err(|e| format!("Failed to create pool: {}", e))?;
+                get_contents_with_nested_data(&pool, search)
+                    .await
+                    .map_err(|e| format!("Query failed: {}", e))
+            })
+            .map_err(|e: String| -> Box<dyn std::error::Error> { e.into() })?;
+
+        // Convert ritmo_db::ContentWithDetails to Slint ContentWithBooks
+        let slint_contents: Vec<ContentWithBooks> = contents
+            .into_iter()
+            .map(|content| {
+                // Convert people with roles
+                let people: Vec<PersonWithRole> = content
+                    .people
+                    .into_iter()
+                    .map(|person| PersonWithRole {
+                        person_id: person.person_id as i32,
+                        person_name: person.person_name.into(),
+                        role_name: person.role_key.into(), // Phase 2: Could translate here
+                    })
+                    .collect();
+
+                // Convert books
+                let books: Vec<BookInfo> = content
+                    .books
+                    .into_iter()
+                    .map(|book| BookInfo {
+                        id: book.book_id as i32,
+                        name: book.book_name.into(),
+                        publisher: book.book_publisher.unwrap_or_default().into(),
+                        format: book.book_format_key.unwrap_or_default().into(),
+                        publication_date: book
+                            .book_publication_date
+                            .map(|ts| {
+                                use chrono::{DateTime, Utc};
+                                DateTime::<Utc>::from_timestamp(ts, 0)
+                                    .map(|dt| dt.format("%Y-%m-%d").to_string())
+                                    .unwrap_or_default()
+                            })
+                            .unwrap_or_default()
+                            .into(),
+                    })
+                    .collect();
+
+                ContentWithBooks {
+                    id: content.content_id as i32,
+                    name: content.content_name.into(),
+                    original_title: content.content_original_title.unwrap_or_default().into(),
+                    type_name: content.content_type_key.unwrap_or_default().into(),
+                    publication_date: content
+                        .content_publication_date
+                        .map(|ts| {
+                            use chrono::{DateTime, Utc};
+                            DateTime::<Utc>::from_timestamp(ts, 0)
+                                .map(|dt| dt.format("%Y-%m-%d").to_string())
+                                .unwrap_or_default()
+                        })
+                        .unwrap_or_default()
+                        .into(),
+                    people: to_model(people),
+                    books: to_model(books),
+                }
+            })
+            .collect();
+
+        Ok(slint_contents)
     }
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ui = MainWindow::new()?;
 
-    // Percorso libreria
-    let library_path = dirs::home_dir()
-        .map(|p| p.join("RitmoLibrary"))
-        .unwrap_or_else(|| std::path::PathBuf::from("./ritmo_library"));
-    let library_path_str = library_path.to_string_lossy().to_string();
-
-    // Inizializza stato applicazione
-    let app_state = match AppState::new(&library_path_str) {
+    // Initialize application state with ritmo_config
+    let app_state = match AppState::new() {
         Ok(state) => Arc::new(Mutex::new(state)),
         Err(e) => {
             eprintln!("Errore nell'inizializzazione: {}", e);
@@ -334,19 +260,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
-    // Inizializza libreria
-    {
+    // Determine library path
+    let library_path = {
         let state = app_state.blocking_lock();
-        match state.initialize_library() {
+        state
+            .app_settings
+            .last_library_path
+            .clone()
+            .or_else(|| dirs::home_dir().map(|p| p.join("RitmoLibrary")))
+            .unwrap_or_else(|| PathBuf::from("./ritmo_library"))
+    };
+
+    // Load library
+    {
+        let mut state = app_state.blocking_lock();
+        match state.load_library(&library_path.to_string_lossy()) {
             Ok(_) => {
-                ui.set_status_message(StatusMessage {
-                    text: format!("Libreria inizializzata: {}", library_path_str).into(),
-                    is_error: false,
-                });
+                // Try to initialize if it doesn't exist
+                if let Err(_e) = state.initialize_current_library() {
+                    ui.set_status_message(StatusMessage {
+                        text: format!("Libreria inizializzata: {}", library_path.display()).into(),
+                        is_error: false,
+                    });
+                } else {
+                    ui.set_status_message(StatusMessage {
+                        text: format!("Libreria caricata: {}", library_path.display()).into(),
+                        is_error: false,
+                    });
+                }
             }
             Err(e) => {
                 ui.set_status_message(StatusMessage {
-                    text: format!("Errore: {}", e).into(),
+                    text: format!("Errore caricamento libreria: {}", e).into(),
                     is_error: true,
                 });
             }
@@ -362,18 +307,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let ui = ui_weak.unwrap();
             let state = app_state.blocking_lock();
 
-            match state.get_books_with_contents() {
+            match state.get_books_with_contents(None) {
                 Ok(books) => {
                     let books_model = Rc::new(VecModel::from(books));
                     ui.set_books(ModelRc::from(books_model));
                     ui.set_status_message(StatusMessage {
-                        text: "Libri caricati".into(),
+                        text: format!("Caricati {} libri", ui.get_books().row_count()).into(),
                         is_error: false,
                     });
                 }
                 Err(e) => {
                     ui.set_status_message(StatusMessage {
-                        text: format!("Errore: {}", e).into(),
+                        text: format!("Errore caricamento libri: {}", e).into(),
                         is_error: true,
                     });
                 }
@@ -390,18 +335,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let ui = ui_weak.unwrap();
             let state = app_state.blocking_lock();
 
-            match state.get_contents_with_books() {
+            match state.get_contents_with_books(None) {
                 Ok(contents) => {
                     let contents_model = Rc::new(VecModel::from(contents));
                     ui.set_contents(ModelRc::from(contents_model));
                     ui.set_status_message(StatusMessage {
-                        text: "Contenuti caricati".into(),
+                        text: format!("Caricati {} contenuti", ui.get_contents().row_count()).into(),
                         is_error: false,
                     });
                 }
                 Err(e) => {
                     ui.set_status_message(StatusMessage {
-                        text: format!("Errore: {}", e).into(),
+                        text: format!("Errore caricamento contenuti: {}", e).into(),
                         is_error: true,
                     });
                 }
@@ -409,7 +354,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         });
     }
 
-    // Callback: Search
+    // Callback: Search with real database query
     {
         let ui_weak = ui.as_weak();
         let app_state = app_state.clone();
@@ -418,99 +363,104 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let ui = ui_weak.unwrap();
             let state = app_state.blocking_lock();
 
-            // TODO: Implementare ricerca vera nel database
-            // Per ora filtriamo i dati di esempio
+            if search_text.is_empty() {
+                // Empty search = show all
+                if ui.get_view_mode() == 0 {
+                    ui.invoke_refresh_books();
+                } else {
+                    ui.invoke_refresh_contents();
+                }
+                return;
+            }
+
+            let search_query = search_text.to_string();
+
             if ui.get_view_mode() == 0 {
-                // Vista libri
-                match state.get_books_with_contents() {
-                    Ok(mut books) => {
-                        if !search_text.is_empty() {
-                            let search_lower = search_text.to_lowercase();
-                            books.retain(|book| {
-                                book.name.to_lowercase().contains(&search_lower)
-                                    || book.publisher.to_lowercase().contains(&search_lower)
-                                    || book.contents.iter().any(|c| {
-                                        c.name.to_lowercase().contains(&search_lower)
-                                            || c.people.iter().any(|p| {
-                                                p.person_name.to_lowercase().contains(&search_lower)
-                                            })
-                                    })
-                            });
-                        }
+                // Books view - search in database
+                match state.get_books_with_contents(Some(&search_query)) {
+                    Ok(books) => {
+                        let count = books.len();
                         let books_model = Rc::new(VecModel::from(books));
                         ui.set_books(ModelRc::from(books_model));
+                        ui.set_status_message(StatusMessage {
+                            text: format!("Trovati {} libri", count).into(),
+                            is_error: false,
+                        });
                     }
-                    Err(_) => {}
+                    Err(e) => {
+                        ui.set_status_message(StatusMessage {
+                            text: format!("Errore ricerca: {}", e).into(),
+                            is_error: true,
+                        });
+                    }
                 }
             } else {
-                // Vista contenuti
-                match state.get_contents_with_books() {
-                    Ok(mut contents) => {
-                        if !search_text.is_empty() {
-                            let search_lower = search_text.to_lowercase();
-                            contents.retain(|content| {
-                                content.name.to_lowercase().contains(&search_lower)
-                                    || content.people.iter().any(|p| {
-                                        p.person_name.to_lowercase().contains(&search_lower)
-                                    })
-                                    || content.books.iter().any(|b| {
-                                        b.name.to_lowercase().contains(&search_lower)
-                                    })
-                            });
-                        }
+                // Contents view - search in database
+                match state.get_contents_with_books(Some(&search_query)) {
+                    Ok(contents) => {
+                        let count = contents.len();
                         let contents_model = Rc::new(VecModel::from(contents));
                         ui.set_contents(ModelRc::from(contents_model));
+                        ui.set_status_message(StatusMessage {
+                            text: format!("Trovati {} contenuti", count).into(),
+                            is_error: false,
+                        });
                     }
-                    Err(_) => {}
+                    Err(e) => {
+                        ui.set_status_message(StatusMessage {
+                            text: format!("Errore ricerca: {}", e).into(),
+                            is_error: true,
+                        });
+                    }
                 }
             }
         });
     }
 
-    // Callback: Add new book
+    // Callback: Add new book (placeholder for Phase 2)
     {
         let ui_weak = ui.as_weak();
 
         ui.on_add_new_book(move || {
             let ui = ui_weak.unwrap();
             ui.set_status_message(StatusMessage {
-                text: "Funzione 'Aggiungi' in sviluppo...".into(),
+                text: "Funzione 'Aggiungi Libro' in sviluppo (Fase 2)...".into(),
                 is_error: false,
             });
         });
     }
 
-    // Callback: Show book detail
+    // Callback: Show book detail (placeholder for Phase 2)
     {
         let ui_weak = ui.as_weak();
 
         ui.on_show_book_detail(move |book_id: i32| {
             let ui = ui_weak.unwrap();
             ui.set_status_message(StatusMessage {
-                text: format!("Dettaglio libro ID: {}", book_id).into(),
+                text: format!("Dettaglio libro ID: {} (Fase 2)", book_id).into(),
                 is_error: false,
             });
         });
     }
 
-    // Callback: Show content detail
+    // Callback: Show content detail (placeholder for Phase 2)
     {
         let ui_weak = ui.as_weak();
 
         ui.on_show_content_detail(move |content_id: i32| {
             let ui = ui_weak.unwrap();
             ui.set_status_message(StatusMessage {
-                text: format!("Dettaglio contenuto ID: {}", content_id).into(),
+                text: format!("Dettaglio contenuto ID: {} (Fase 2)", content_id).into(),
                 is_error: false,
             });
         });
     }
 
-    // Carica dati iniziali
+    // Load initial data
     ui.invoke_refresh_books();
     ui.invoke_refresh_contents();
 
-    // Avvia UI
+    // Run UI
     ui.run()?;
 
     Ok(())

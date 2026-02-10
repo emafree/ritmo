@@ -55,6 +55,22 @@ enum Commands {
     /// Metadata synchronization
     #[command(subcommand)]
     Sync(SyncCommands),
+
+    /// Tag management (CRUD)
+    #[command(subcommand)]
+    Tags(TagsCommands),
+
+    /// Publisher management (CRUD)
+    #[command(subcommand)]
+    Publishers(PublishersCommands),
+
+    /// Series management (CRUD)
+    #[command(subcommand)]
+    Series(SeriesCommands),
+
+    /// People management (CRUD)
+    #[command(subcommand)]
+    People(PeopleCommands),
 }
 
 /// Libraries subcommands
@@ -253,6 +269,50 @@ enum SyncCommands {
         /// Preview changes without applying
         #[arg(long)]
         dry_run: bool,
+    },
+}
+
+/// Tags subcommands
+#[derive(Subcommand)]
+enum TagsCommands {
+    /// List all tags
+    List {
+        /// Formato output (table, json, simple)
+        #[arg(long, short = 'o', default_value = "table")]
+        output: String,
+    },
+}
+
+/// Publishers subcommands
+#[derive(Subcommand)]
+enum PublishersCommands {
+    /// List all publishers
+    List {
+        /// Formato output (table, json, simple)
+        #[arg(long, short = 'o', default_value = "table")]
+        output: String,
+    },
+}
+
+/// Series subcommands
+#[derive(Subcommand)]
+enum SeriesCommands {
+    /// List all series
+    List {
+        /// Formato output (table, json, simple)
+        #[arg(long, short = 'o', default_value = "table")]
+        output: String,
+    },
+}
+
+/// People subcommands
+#[derive(Subcommand)]
+enum PeopleCommands {
+    /// List all people
+    List {
+        /// Formato output (table, json, simple)
+        #[arg(long, short = 'o', default_value = "table")]
+        output: String,
     },
 }
 
@@ -634,6 +694,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 } else {
                     cmd_sync_metadata(&cli.library, &app_settings).await?;
                 }
+            }
+        },
+
+        Commands::Tags(tags_cmd) => match tags_cmd {
+            TagsCommands::List { output } => {
+                handlers::tags::handle_tags_list(&cli.library, &app_settings, &output).await?;
+            }
+        },
+
+        Commands::Publishers(publishers_cmd) => match publishers_cmd {
+            PublishersCommands::List { output } => {
+                handlers::publishers::handle_publishers_list(&cli.library, &app_settings, &output).await?;
+            }
+        },
+
+        Commands::Series(series_cmd) => match series_cmd {
+            SeriesCommands::List { output } => {
+                handlers::series::handle_series_list(&cli.library, &app_settings, &output).await?;
+            }
+        },
+
+        Commands::People(people_cmd) => match people_cmd {
+            PeopleCommands::List { output } => {
+                handlers::people::handle_people_list(&cli.library, &app_settings, &output).await?;
             }
         },
 

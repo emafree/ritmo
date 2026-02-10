@@ -4717,7 +4717,9 @@ name = "ritmo_gui"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "dirs 6.0.0",
+ "ritmo_config",
  "ritmo_core",
  "ritmo_db",
  "ritmo_db_core",

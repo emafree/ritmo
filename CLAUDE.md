@@ -308,6 +308,26 @@ cargo run -p ritmo_cli -- presets delete "my_preset"
 cargo run -p ritmo_cli -- presets set-default "my_preset" book
 ```
 
+### Entity Management Operations
+```bash
+# List all tags (with optional output format)
+cargo run -p ritmo_cli -- tags list
+cargo run -p ritmo_cli -- tags list --output json
+cargo run -p ritmo_cli -- tags list --output simple
+
+# List all publishers
+cargo run -p ritmo_cli -- publishers list
+cargo run -p ritmo_cli -- publishers list --output json
+
+# List all series
+cargo run -p ritmo_cli -- series list
+cargo run -p ritmo_cli -- series list --output json
+
+# List all people (authors, translators, etc.)
+cargo run -p ritmo_cli -- people list
+cargo run -p ritmo_cli -- people list --output json
+```
+
 For complete command reference, see [Development Guide](docs/development.md).
 
 ## Rust Version
@@ -317,6 +337,27 @@ Required: **stable** (currently 1.91+) as specified in `rust-toolchain.toml`
 - Supports Slint GUI framework
 
 ## Recent Changes
+
+### 2026-02-10 - Session 30: GUI Phase 2 + Entity CRUD Commands - COMPLETED
+**Part 1: GUI Nested Data Implementation (Phase 2)**
+Implemented complete nested queries for GUI with books+contents+people relationships.
+- **New Module**: `ritmo_db/src/gui_queries.rs` (~500 lines) with optimized 3-step queries
+- **Functions**: `get_books_with_nested_data()`, `get_contents_with_nested_data()`
+- **i18n Helpers**: `translate_format_key()`, `translate_type_key()`, `translate_role_key()`
+- **GUI Integration**: Updated `ritmo_gui/src/main.rs` to populate all nested arrays
+- **Performance**: Limit 100 records, 3 queries max (books → contents → people)
+- **Data Structures**: BookWithDetails, ContentWithDetails, PersonWithRole, BookBasicInfo
+- **Result**: GUI now displays complete relational data (books with contents and people)
+
+**Part 2: CLI Entity Management Commands**
+Added list commands for direct database entity inspection.
+- **New Commands**: `tags list`, `publishers list`, `series list`, `people list`
+- **Output Formats**: table (default), json, simple (for scripting)
+- **Handlers**: 4 new handler modules (tags.rs, publishers.rs, series.rs, people.rs)
+- **Implementation**: Direct SQL queries for optimal performance
+- **CLI Structure**: Added 4 new command groups (Tags, Publishers, Series, People)
+- **Testing**: Verified with empty and populated databases
+- **Total Commands**: 27 commands (23 from Session 29 + 4 entity list commands)
 
 ### 2026-02-09 - Session 29: CLI Refactoring + Database Optimizations - COMPLETED
 **Part 1: CLI Refactoring v2.0.0**

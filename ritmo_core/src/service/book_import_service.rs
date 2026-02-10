@@ -75,7 +75,7 @@ pub async fn import_book_with_contents(
     if let Some(dup) = existing {
         return Err(RitmoErr::Generic(format!(
             "File già importato: {} (ID: {})",
-            dup.name, dup.id
+            dup.name, dup.id.unwrap_or(0)
         )));
     }
 
