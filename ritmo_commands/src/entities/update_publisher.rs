@@ -129,19 +129,19 @@ impl Command for UpdatePublisherCommand {
             values.push(name.clone());
         }
 
-        if input.country.is_some() {
+        if let Some(ref country) = input.country {
             update_fields.push("country = ?");
-            values.push(input.country.clone().unwrap_or_default());
+            values.push(country.clone());
         }
 
-        if input.website.is_some() {
+        if let Some(ref website) = input.website {
             update_fields.push("website = ?");
-            values.push(input.website.clone().unwrap_or_default());
+            values.push(website.clone());
         }
 
-        if input.notes.is_some() {
+        if let Some(ref notes) = input.notes {
             update_fields.push("notes = ?");
-            values.push(input.notes.clone().unwrap_or_default());
+            values.push(notes.clone());
         }
 
         update_fields.push("updated_at = strftime('%s', 'now')");

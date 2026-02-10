@@ -121,9 +121,9 @@ impl Command for UpdateTagCommand {
             values.push(name.clone());
         }
 
-        if input.description.is_some() {
+        if let Some(ref description) = input.description {
             update_fields.push("description = ?");
-            values.push(input.description.clone().unwrap_or_default());
+            values.push(description.clone());
         }
 
         update_fields.push("updated_at = strftime('%s', 'now')");
@@ -142,7 +142,7 @@ impl Command for UpdateTagCommand {
 
         query_builder.execute(pool).await?;
 
-        // Get updated tag (no updated_at column in tags table)
+        // Get updated tag
         let updated = sqlx::query!("SELECT name FROM tags WHERE id = ?", input.tag_id)
             .fetch_one(pool)
             .await?;
