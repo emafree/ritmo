@@ -7,9 +7,63 @@ use ritmo_db_core::LibraryConfig;
 use ritmo_errors::reporter::SilentReporter;
 use ritmo_ml::deduplication::{
     deduplicate_people, deduplicate_publishers, deduplicate_roles, deduplicate_series,
-    deduplicate_tags, DeduplicationConfig, DeduplicationResult,
+    deduplicate_tags, filter_duplicate_groups_by_entity, DeduplicationConfig, DeduplicationResult,
+    DuplicateGroup,
 };
+use std::io::{self, Write};
 use std::path::PathBuf;
+
+/// Show interactive menu for selecting canonical entity from a duplicate group
+///
+/// Returns the ID of the selected entity, or None if cancelled
+fn show_interactive_menu(group: &DuplicateGroup) -> Option<i64> {
+    println!("\n┌─────────────────────────────────────────────────────────");
+    println!("│ 🔍 Duplicate entities detected!");
+    println!("│ Please select which entity to keep as canonical:");
+    println!("├─────────────────────────────────────────────────────────");
+    
+    // Show all options with indices
+    let mut all_options = vec![(group.primary_id, group.primary_name.clone())];
+    all_options.extend(
+        group.duplicate_ids.iter()
+            .zip(group.duplicate_names.iter())
+            .map(|(id, name)| (*id, name.clone()))
+    );
+    
+    for (i, (id, name)) in all_options.iter().enumerate() {
+        println!("│ {}. {} (ID: {})", i + 1, name, id);
+    }
+    
+    println!("│ 0. Cancel merge");
+    println!("└─────────────────────────────────────────────────────────");
+    
+    // Get user input
+    loop {
+        print!("Select option (0-{}): ", all_options.len());
+        io::stdout().flush().ok()?;
+        
+        let mut input = String::new();
+        if io::stdin().read_line(&mut input).is_err() {
+            return None;
+        }
+        
+        let input = input.trim();
+        if let Ok(choice) = input.parse::<usize>() {
+            if choice == 0 {
+                println!("❌ Merge cancelled");
+                return None;
+            }
+            
+            if choice > 0 && choice <= all_options.len() {
+                let (selected_id, selected_name) = &all_options[choice - 1];
+                println!("✓ Selected: {} (ID: {})", selected_name, selected_id);
+                return Some(*selected_id);
+            }
+        }
+        
+        println!("❌ Invalid choice. Please enter a number between 0 and {}", all_options.len());
+    }
+}
 
 /// Print deduplication results in a user-friendly format
 fn print_deduplication_results(result: &DeduplicationResult, entity_type: &str, dry_run: bool) {
@@ -73,13 +127,58 @@ fn print_deduplication_results(result: &DeduplicationResult, entity_type: &str, 
     }
 }
 
+/// Process duplicate groups interactively, allowing user to select canonical entity
+///
+/// Returns the processed groups with user-selected primary entities, or an empty vector
+/// if all merges were cancelled.
+fn process_groups_interactively(groups: &[DuplicateGroup]) -> Vec<DuplicateGroup> {
+    println!("\n🎯 Interactive mode enabled");
+    
+    let mut processed_groups = Vec::new();
+    
+    for group in groups {
+        if let Some(selected_id) = show_interactive_menu(group) {
+            // Create a new group with the selected entity as primary
+            let mut new_group = group.clone();
+            
+            // If selected_id is not already primary, swap it
+            if selected_id != group.primary_id {
+                // Find the selected entity in duplicates
+                if let Some(pos) = group.duplicate_ids.iter().position(|&id| id == selected_id) {
+                    // Swap primary with selected duplicate
+                    new_group.primary_id = selected_id;
+                    new_group.primary_name = group.duplicate_names[pos].clone();
+                    
+                    // Add old primary to duplicates
+                    new_group.duplicate_ids = vec![group.primary_id];
+                    new_group.duplicate_names = vec![group.primary_name.clone()];
+                    
+                    // Add remaining duplicates
+                    for (i, &dup_id) in group.duplicate_ids.iter().enumerate() {
+                        if i != pos {
+                            new_group.duplicate_ids.push(dup_id);
+                            new_group.duplicate_names.push(group.duplicate_names[i].clone());
+                        }
+                    }
+                }
+            }
+            
+            processed_groups.push(new_group);
+        }
+    }
+    
+    processed_groups
+}
+
 /// Command: deduplicate-people - Find and merge duplicate people (authors, translators, etc.)
 pub async fn cmd_deduplicate_people(
     cli_library: &Option<PathBuf>,
     app_settings: &AppSettings,
+    entity_name: Option<String>,
     threshold: f64,
     auto_merge: bool,
     dry_run: bool,
+    interactive: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let library_path = get_library_path(cli_library, app_settings)?;
 
@@ -108,7 +207,54 @@ pub async fn cmd_deduplicate_people(
     };
 
     match deduplicate_people(&pool, &dedup_config).await {
-        Ok(result) => {
+        Ok(mut result) => {
+            // Filter by entity name if provided
+            if let Some(ref name) = entity_name {
+                let original_count = result.duplicate_groups.len();
+                result.duplicate_groups = filter_duplicate_groups_by_entity(&result.duplicate_groups, name);
+                
+                if result.duplicate_groups.is_empty() {
+                    println!("✓ No duplicates found for entity: {}", name);
+                    return Ok(());
+                }
+                
+                println!("📋 Filtered {} -> {} groups matching '{}'", 
+                    original_count, result.duplicate_groups.len(), name);
+            }
+
+            // Interactive mode: let user choose canonical entity
+            if interactive && !result.duplicate_groups.is_empty() {
+                let processed_groups = process_groups_interactively(&result.duplicate_groups);
+                
+                if processed_groups.is_empty() {
+                    println!("\n⚠️  All merges were cancelled");
+                    return Ok(());
+                }
+                
+                // Replace duplicate_groups with processed ones
+                result.duplicate_groups = processed_groups;
+                
+                // Now perform the merge if not in dry-run
+                if !actual_dry_run {
+                    use ritmo_ml::merge::merge_people;
+                    let mut merged_groups = Vec::new();
+                    
+                    for group in &result.duplicate_groups {
+                        match merge_people(&pool, group.primary_id, &group.duplicate_ids).await {
+                            Ok(stats) => {
+                                merged_groups.push(stats);
+                                println!("✓ Merged group with primary ID: {}", group.primary_id);
+                            }
+                            Err(e) => {
+                                eprintln!("✗ Error merging group (primary={}): {}", group.primary_id, e);
+                            }
+                        }
+                    }
+                    
+                    result.merged_groups = merged_groups;
+                }
+            }
+
             print_deduplication_results(&result, "People", dry_run);
 
             // Mark affected books for sync if not dry-run
@@ -140,9 +286,11 @@ pub async fn cmd_deduplicate_people(
 pub async fn cmd_deduplicate_publishers(
     cli_library: &Option<PathBuf>,
     app_settings: &AppSettings,
+    entity_name: Option<String>,
     threshold: f64,
     auto_merge: bool,
     dry_run: bool,
+    interactive: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let library_path = get_library_path(cli_library, app_settings)?;
 
@@ -171,7 +319,54 @@ pub async fn cmd_deduplicate_publishers(
     };
 
     match deduplicate_publishers(&pool, &dedup_config).await {
-        Ok(result) => {
+        Ok(mut result) => {
+            // Filter by entity name if provided
+            if let Some(ref name) = entity_name {
+                let original_count = result.duplicate_groups.len();
+                result.duplicate_groups = filter_duplicate_groups_by_entity(&result.duplicate_groups, name);
+                
+                if result.duplicate_groups.is_empty() {
+                    println!("✓ No duplicates found for entity: {}", name);
+                    return Ok(());
+                }
+                
+                println!("📋 Filtered {} -> {} groups matching '{}'", 
+                    original_count, result.duplicate_groups.len(), name);
+            }
+
+            // Interactive mode: let user choose canonical entity
+            if interactive && !result.duplicate_groups.is_empty() {
+                let processed_groups = process_groups_interactively(&result.duplicate_groups);
+                
+                if processed_groups.is_empty() {
+                    println!("\n⚠️  All merges were cancelled");
+                    return Ok(());
+                }
+                
+                // Replace duplicate_groups with processed ones
+                result.duplicate_groups = processed_groups;
+                
+                // Now perform the merge if not in dry-run
+                if !actual_dry_run {
+                    use ritmo_ml::merge::merge_publishers;
+                    let mut merged_groups = Vec::new();
+                    
+                    for group in &result.duplicate_groups {
+                        match merge_publishers(&pool, group.primary_id, &group.duplicate_ids).await {
+                            Ok(stats) => {
+                                merged_groups.push(stats);
+                                println!("✓ Merged group with primary ID: {}", group.primary_id);
+                            }
+                            Err(e) => {
+                                eprintln!("✗ Error merging group (primary={}): {}", group.primary_id, e);
+                            }
+                        }
+                    }
+                    
+                    result.merged_groups = merged_groups;
+                }
+            }
+
             print_deduplication_results(&result, "Publishers", dry_run);
 
             // Mark affected books for sync if not dry-run
@@ -203,9 +398,11 @@ pub async fn cmd_deduplicate_publishers(
 pub async fn cmd_deduplicate_series(
     cli_library: &Option<PathBuf>,
     app_settings: &AppSettings,
+    entity_name: Option<String>,
     threshold: f64,
     auto_merge: bool,
     dry_run: bool,
+    interactive: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let library_path = get_library_path(cli_library, app_settings)?;
 
@@ -234,7 +431,54 @@ pub async fn cmd_deduplicate_series(
     };
 
     match deduplicate_series(&pool, &dedup_config).await {
-        Ok(result) => {
+        Ok(mut result) => {
+            // Filter by entity name if provided
+            if let Some(ref name) = entity_name {
+                let original_count = result.duplicate_groups.len();
+                result.duplicate_groups = filter_duplicate_groups_by_entity(&result.duplicate_groups, name);
+                
+                if result.duplicate_groups.is_empty() {
+                    println!("✓ No duplicates found for entity: {}", name);
+                    return Ok(());
+                }
+                
+                println!("📋 Filtered {} -> {} groups matching '{}'", 
+                    original_count, result.duplicate_groups.len(), name);
+            }
+
+            // Interactive mode: let user choose canonical entity
+            if interactive && !result.duplicate_groups.is_empty() {
+                let processed_groups = process_groups_interactively(&result.duplicate_groups);
+                
+                if processed_groups.is_empty() {
+                    println!("\n⚠️  All merges were cancelled");
+                    return Ok(());
+                }
+                
+                // Replace duplicate_groups with processed ones
+                result.duplicate_groups = processed_groups;
+                
+                // Now perform the merge if not in dry-run
+                if !actual_dry_run {
+                    use ritmo_ml::merge::merge_series;
+                    let mut merged_groups = Vec::new();
+                    
+                    for group in &result.duplicate_groups {
+                        match merge_series(&pool, group.primary_id, &group.duplicate_ids).await {
+                            Ok(stats) => {
+                                merged_groups.push(stats);
+                                println!("✓ Merged group with primary ID: {}", group.primary_id);
+                            }
+                            Err(e) => {
+                                eprintln!("✗ Error merging group (primary={}): {}", group.primary_id, e);
+                            }
+                        }
+                    }
+                    
+                    result.merged_groups = merged_groups;
+                }
+            }
+
             print_deduplication_results(&result, "Series", dry_run);
 
             // Mark affected books for sync if not dry-run
@@ -266,9 +510,11 @@ pub async fn cmd_deduplicate_series(
 pub async fn cmd_deduplicate_tags(
     cli_library: &Option<PathBuf>,
     app_settings: &AppSettings,
+    entity_name: Option<String>,
     threshold: f64,
     auto_merge: bool,
     dry_run: bool,
+    interactive: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let library_path = get_library_path(cli_library, app_settings)?;
 
@@ -297,7 +543,54 @@ pub async fn cmd_deduplicate_tags(
     };
 
     match deduplicate_tags(&pool, &dedup_config).await {
-        Ok(result) => {
+        Ok(mut result) => {
+            // Filter by entity name if provided
+            if let Some(ref name) = entity_name {
+                let original_count = result.duplicate_groups.len();
+                result.duplicate_groups = filter_duplicate_groups_by_entity(&result.duplicate_groups, name);
+                
+                if result.duplicate_groups.is_empty() {
+                    println!("✓ No duplicates found for entity: {}", name);
+                    return Ok(());
+                }
+                
+                println!("📋 Filtered {} -> {} groups matching '{}'", 
+                    original_count, result.duplicate_groups.len(), name);
+            }
+
+            // Interactive mode: let user choose canonical entity
+            if interactive && !result.duplicate_groups.is_empty() {
+                let processed_groups = process_groups_interactively(&result.duplicate_groups);
+                
+                if processed_groups.is_empty() {
+                    println!("\n⚠️  All merges were cancelled");
+                    return Ok(());
+                }
+                
+                // Replace duplicate_groups with processed ones
+                result.duplicate_groups = processed_groups;
+                
+                // Now perform the merge if not in dry-run
+                if !actual_dry_run {
+                    use ritmo_ml::merge::merge_tags;
+                    let mut merged_groups = Vec::new();
+                    
+                    for group in &result.duplicate_groups {
+                        match merge_tags(&pool, group.primary_id, &group.duplicate_ids).await {
+                            Ok(stats) => {
+                                merged_groups.push(stats);
+                                println!("✓ Merged group with primary ID: {}", group.primary_id);
+                            }
+                            Err(e) => {
+                                eprintln!("✗ Error merging group (primary={}): {}", group.primary_id, e);
+                            }
+                        }
+                    }
+                    
+                    result.merged_groups = merged_groups;
+                }
+            }
+
             print_deduplication_results(&result, "Tags", dry_run);
 
             // Mark affected books for sync if not dry-run
@@ -329,9 +622,11 @@ pub async fn cmd_deduplicate_tags(
 pub async fn cmd_deduplicate_roles(
     cli_library: &Option<PathBuf>,
     app_settings: &AppSettings,
+    entity_name: Option<String>,
     threshold: f64,
     auto_merge: bool,
     dry_run: bool,
+    interactive: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let library_path = get_library_path(cli_library, app_settings)?;
 
@@ -360,7 +655,54 @@ pub async fn cmd_deduplicate_roles(
     };
 
     match deduplicate_roles(&pool, &dedup_config).await {
-        Ok(result) => {
+        Ok(mut result) => {
+            // Filter by entity name if provided
+            if let Some(ref name) = entity_name {
+                let original_count = result.duplicate_groups.len();
+                result.duplicate_groups = filter_duplicate_groups_by_entity(&result.duplicate_groups, name);
+                
+                if result.duplicate_groups.is_empty() {
+                    println!("✓ No duplicates found for entity: {}", name);
+                    return Ok(());
+                }
+                
+                println!("📋 Filtered {} -> {} groups matching '{}'", 
+                    original_count, result.duplicate_groups.len(), name);
+            }
+
+            // Interactive mode: let user choose canonical entity
+            if interactive && !result.duplicate_groups.is_empty() {
+                let processed_groups = process_groups_interactively(&result.duplicate_groups);
+                
+                if processed_groups.is_empty() {
+                    println!("\n⚠️  All merges were cancelled");
+                    return Ok(());
+                }
+                
+                // Replace duplicate_groups with processed ones
+                result.duplicate_groups = processed_groups;
+                
+                // Now perform the merge if not in dry-run
+                if !actual_dry_run {
+                    use ritmo_ml::merge::merge_roles;
+                    let mut merged_groups = Vec::new();
+                    
+                    for group in &result.duplicate_groups {
+                        match merge_roles(&pool, group.primary_id, &group.duplicate_ids).await {
+                            Ok(stats) => {
+                                merged_groups.push(stats);
+                                println!("✓ Merged group with primary ID: {}", group.primary_id);
+                            }
+                            Err(e) => {
+                                eprintln!("✗ Error merging group (primary={}): {}", group.primary_id, e);
+                            }
+                        }
+                    }
+                    
+                    result.merged_groups = merged_groups;
+                }
+            }
+
             print_deduplication_results(&result, "Roles", dry_run);
 
             // Mark affected books for sync if not dry-run
