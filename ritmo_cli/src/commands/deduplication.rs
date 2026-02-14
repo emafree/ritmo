@@ -127,6 +127,49 @@ fn print_deduplication_results(result: &DeduplicationResult, entity_type: &str, 
     }
 }
 
+/// Process duplicate groups interactively, allowing user to select canonical entity
+///
+/// Returns the processed groups with user-selected primary entities, or an empty vector
+/// if all merges were cancelled.
+fn process_groups_interactively(groups: &[DuplicateGroup]) -> Vec<DuplicateGroup> {
+    println!("\n🎯 Interactive mode enabled");
+    
+    let mut processed_groups = Vec::new();
+    
+    for group in groups {
+        if let Some(selected_id) = show_interactive_menu(group) {
+            // Create a new group with the selected entity as primary
+            let mut new_group = group.clone();
+            
+            // If selected_id is not already primary, swap it
+            if selected_id != group.primary_id {
+                // Find the selected entity in duplicates
+                if let Some(pos) = group.duplicate_ids.iter().position(|&id| id == selected_id) {
+                    // Swap primary with selected duplicate
+                    new_group.primary_id = selected_id;
+                    new_group.primary_name = group.duplicate_names[pos].clone();
+                    
+                    // Add old primary to duplicates
+                    new_group.duplicate_ids = vec![group.primary_id];
+                    new_group.duplicate_names = vec![group.primary_name.clone()];
+                    
+                    // Add remaining duplicates
+                    for (i, &dup_id) in group.duplicate_ids.iter().enumerate() {
+                        if i != pos {
+                            new_group.duplicate_ids.push(dup_id);
+                            new_group.duplicate_names.push(group.duplicate_names[i].clone());
+                        }
+                    }
+                }
+            }
+            
+            processed_groups.push(new_group);
+        }
+    }
+    
+    processed_groups
+}
+
 /// Command: deduplicate-people - Find and merge duplicate people (authors, translators, etc.)
 pub async fn cmd_deduplicate_people(
     cli_library: &Option<PathBuf>,
@@ -181,41 +224,7 @@ pub async fn cmd_deduplicate_people(
 
             // Interactive mode: let user choose canonical entity
             if interactive && !result.duplicate_groups.is_empty() {
-                println!("\n🎯 Interactive mode enabled");
-                
-                // Process each group interactively
-                let mut processed_groups = Vec::new();
-                
-                for group in &result.duplicate_groups {
-                    if let Some(selected_id) = show_interactive_menu(group) {
-                        // Create a new group with the selected entity as primary
-                        let mut new_group = group.clone();
-                        
-                        // If selected_id is not already primary, swap it
-                        if selected_id != group.primary_id {
-                            // Find the selected entity in duplicates
-                            if let Some(pos) = group.duplicate_ids.iter().position(|&id| id == selected_id) {
-                                // Swap primary with selected duplicate
-                                new_group.primary_id = selected_id;
-                                new_group.primary_name = group.duplicate_names[pos].clone();
-                                
-                                // Add old primary to duplicates
-                                new_group.duplicate_ids = vec![group.primary_id];
-                                new_group.duplicate_names = vec![group.primary_name.clone()];
-                                
-                                // Add remaining duplicates
-                                for (i, &dup_id) in group.duplicate_ids.iter().enumerate() {
-                                    if i != pos {
-                                        new_group.duplicate_ids.push(dup_id);
-                                        new_group.duplicate_names.push(group.duplicate_names[i].clone());
-                                    }
-                                }
-                            }
-                        }
-                        
-                        processed_groups.push(new_group);
-                    }
-                }
+                let processed_groups = process_groups_interactively(&result.duplicate_groups);
                 
                 if processed_groups.is_empty() {
                     println!("\n⚠️  All merges were cancelled");
@@ -327,41 +336,7 @@ pub async fn cmd_deduplicate_publishers(
 
             // Interactive mode: let user choose canonical entity
             if interactive && !result.duplicate_groups.is_empty() {
-                println!("\n🎯 Interactive mode enabled");
-                
-                // Process each group interactively
-                let mut processed_groups = Vec::new();
-                
-                for group in &result.duplicate_groups {
-                    if let Some(selected_id) = show_interactive_menu(group) {
-                        // Create a new group with the selected entity as primary
-                        let mut new_group = group.clone();
-                        
-                        // If selected_id is not already primary, swap it
-                        if selected_id != group.primary_id {
-                            // Find the selected entity in duplicates
-                            if let Some(pos) = group.duplicate_ids.iter().position(|&id| id == selected_id) {
-                                // Swap primary with selected duplicate
-                                new_group.primary_id = selected_id;
-                                new_group.primary_name = group.duplicate_names[pos].clone();
-                                
-                                // Add old primary to duplicates
-                                new_group.duplicate_ids = vec![group.primary_id];
-                                new_group.duplicate_names = vec![group.primary_name.clone()];
-                                
-                                // Add remaining duplicates
-                                for (i, &dup_id) in group.duplicate_ids.iter().enumerate() {
-                                    if i != pos {
-                                        new_group.duplicate_ids.push(dup_id);
-                                        new_group.duplicate_names.push(group.duplicate_names[i].clone());
-                                    }
-                                }
-                            }
-                        }
-                        
-                        processed_groups.push(new_group);
-                    }
-                }
+                let processed_groups = process_groups_interactively(&result.duplicate_groups);
                 
                 if processed_groups.is_empty() {
                     println!("\n⚠️  All merges were cancelled");
@@ -473,41 +448,7 @@ pub async fn cmd_deduplicate_series(
 
             // Interactive mode: let user choose canonical entity
             if interactive && !result.duplicate_groups.is_empty() {
-                println!("\n🎯 Interactive mode enabled");
-                
-                // Process each group interactively
-                let mut processed_groups = Vec::new();
-                
-                for group in &result.duplicate_groups {
-                    if let Some(selected_id) = show_interactive_menu(group) {
-                        // Create a new group with the selected entity as primary
-                        let mut new_group = group.clone();
-                        
-                        // If selected_id is not already primary, swap it
-                        if selected_id != group.primary_id {
-                            // Find the selected entity in duplicates
-                            if let Some(pos) = group.duplicate_ids.iter().position(|&id| id == selected_id) {
-                                // Swap primary with selected duplicate
-                                new_group.primary_id = selected_id;
-                                new_group.primary_name = group.duplicate_names[pos].clone();
-                                
-                                // Add old primary to duplicates
-                                new_group.duplicate_ids = vec![group.primary_id];
-                                new_group.duplicate_names = vec![group.primary_name.clone()];
-                                
-                                // Add remaining duplicates
-                                for (i, &dup_id) in group.duplicate_ids.iter().enumerate() {
-                                    if i != pos {
-                                        new_group.duplicate_ids.push(dup_id);
-                                        new_group.duplicate_names.push(group.duplicate_names[i].clone());
-                                    }
-                                }
-                            }
-                        }
-                        
-                        processed_groups.push(new_group);
-                    }
-                }
+                let processed_groups = process_groups_interactively(&result.duplicate_groups);
                 
                 if processed_groups.is_empty() {
                     println!("\n⚠️  All merges were cancelled");
@@ -619,41 +560,7 @@ pub async fn cmd_deduplicate_tags(
 
             // Interactive mode: let user choose canonical entity
             if interactive && !result.duplicate_groups.is_empty() {
-                println!("\n🎯 Interactive mode enabled");
-                
-                // Process each group interactively
-                let mut processed_groups = Vec::new();
-                
-                for group in &result.duplicate_groups {
-                    if let Some(selected_id) = show_interactive_menu(group) {
-                        // Create a new group with the selected entity as primary
-                        let mut new_group = group.clone();
-                        
-                        // If selected_id is not already primary, swap it
-                        if selected_id != group.primary_id {
-                            // Find the selected entity in duplicates
-                            if let Some(pos) = group.duplicate_ids.iter().position(|&id| id == selected_id) {
-                                // Swap primary with selected duplicate
-                                new_group.primary_id = selected_id;
-                                new_group.primary_name = group.duplicate_names[pos].clone();
-                                
-                                // Add old primary to duplicates
-                                new_group.duplicate_ids = vec![group.primary_id];
-                                new_group.duplicate_names = vec![group.primary_name.clone()];
-                                
-                                // Add remaining duplicates
-                                for (i, &dup_id) in group.duplicate_ids.iter().enumerate() {
-                                    if i != pos {
-                                        new_group.duplicate_ids.push(dup_id);
-                                        new_group.duplicate_names.push(group.duplicate_names[i].clone());
-                                    }
-                                }
-                            }
-                        }
-                        
-                        processed_groups.push(new_group);
-                    }
-                }
+                let processed_groups = process_groups_interactively(&result.duplicate_groups);
                 
                 if processed_groups.is_empty() {
                     println!("\n⚠️  All merges were cancelled");
@@ -765,41 +672,7 @@ pub async fn cmd_deduplicate_roles(
 
             // Interactive mode: let user choose canonical entity
             if interactive && !result.duplicate_groups.is_empty() {
-                println!("\n🎯 Interactive mode enabled");
-                
-                // Process each group interactively
-                let mut processed_groups = Vec::new();
-                
-                for group in &result.duplicate_groups {
-                    if let Some(selected_id) = show_interactive_menu(group) {
-                        // Create a new group with the selected entity as primary
-                        let mut new_group = group.clone();
-                        
-                        // If selected_id is not already primary, swap it
-                        if selected_id != group.primary_id {
-                            // Find the selected entity in duplicates
-                            if let Some(pos) = group.duplicate_ids.iter().position(|&id| id == selected_id) {
-                                // Swap primary with selected duplicate
-                                new_group.primary_id = selected_id;
-                                new_group.primary_name = group.duplicate_names[pos].clone();
-                                
-                                // Add old primary to duplicates
-                                new_group.duplicate_ids = vec![group.primary_id];
-                                new_group.duplicate_names = vec![group.primary_name.clone()];
-                                
-                                // Add remaining duplicates
-                                for (i, &dup_id) in group.duplicate_ids.iter().enumerate() {
-                                    if i != pos {
-                                        new_group.duplicate_ids.push(dup_id);
-                                        new_group.duplicate_names.push(group.duplicate_names[i].clone());
-                                    }
-                                }
-                            }
-                        }
-                        
-                        processed_groups.push(new_group);
-                    }
-                }
+                let processed_groups = process_groups_interactively(&result.duplicate_groups);
                 
                 if processed_groups.is_empty() {
                     println!("\n⚠️  All merges were cancelled");
