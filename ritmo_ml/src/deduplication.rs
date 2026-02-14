@@ -706,4 +706,60 @@ mod tests {
             .unwrap();
         assert_eq!(count, 8);
     }
+
+    #[test]
+    fn test_filter_duplicate_groups_by_entity() {
+        // Create test duplicate groups
+        let groups = vec![
+            DuplicateGroup {
+                primary_id: 1,
+                primary_name: "Stephen King".to_string(),
+                duplicate_ids: vec![2, 3],
+                duplicate_names: vec!["Steve King".to_string(), "S. King".to_string()],
+                confidence: 0.95,
+            },
+            DuplicateGroup {
+                primary_id: 4,
+                primary_name: "J.K. Rowling".to_string(),
+                duplicate_ids: vec![5],
+                duplicate_names: vec!["Joanne Rowling".to_string()],
+                confidence: 0.92,
+            },
+            DuplicateGroup {
+                primary_id: 6,
+                primary_name: "George R.R. Martin".to_string(),
+                duplicate_ids: vec![7],
+                duplicate_names: vec!["George Martin".to_string()],
+                confidence: 0.88,
+            },
+        ];
+
+        // Test filtering by primary name
+        let filtered = filter_duplicate_groups_by_entity(&groups, "Stephen King");
+        assert_eq!(filtered.len(), 1);
+        assert_eq!(filtered[0].primary_id, 1);
+
+        // Test filtering by duplicate name
+        let filtered = filter_duplicate_groups_by_entity(&groups, "Rowling");
+        assert_eq!(filtered.len(), 1);
+        assert_eq!(filtered[0].primary_id, 4);
+
+        // Test case-insensitive matching
+        let filtered = filter_duplicate_groups_by_entity(&groups, "GEORGE");
+        assert_eq!(filtered.len(), 1);
+        assert_eq!(filtered[0].primary_id, 6);
+
+        // Test partial match
+        let filtered = filter_duplicate_groups_by_entity(&groups, "King");
+        assert_eq!(filtered.len(), 1); // Should only match Stephen King group
+        assert_eq!(filtered[0].primary_id, 1);
+
+        // Test no match
+        let filtered = filter_duplicate_groups_by_entity(&groups, "Tolkien");
+        assert_eq!(filtered.len(), 0);
+
+        // Test empty string - should return all groups that contain empty string (all)
+        let filtered = filter_duplicate_groups_by_entity(&groups, "");
+        assert_eq!(filtered.len(), 3);
+    }
 }
