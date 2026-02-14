@@ -168,6 +168,9 @@ enum PresetsCommands {
 enum DeduplicateCommands {
     /// Find and merge duplicate people (authors, translators, etc.)
     People {
+        /// Entity name to filter duplicates (optional)
+        entity_name: Option<String>,
+
         /// Similarity threshold (0.0-1.0)
         #[arg(long, default_value = "0.85")]
         threshold: f64,
@@ -179,10 +182,17 @@ enum DeduplicateCommands {
         /// Preview duplicates without merging
         #[arg(long)]
         dry_run: bool,
+
+        /// Enable interactive mode to choose canonical entity
+        #[arg(short = 'i', long)]
+        interactive: bool,
     },
 
     /// Find and merge duplicate publishers
     Publishers {
+        /// Entity name to filter duplicates (optional)
+        entity_name: Option<String>,
+
         /// Similarity threshold (0.0-1.0)
         #[arg(long, default_value = "0.85")]
         threshold: f64,
@@ -194,10 +204,17 @@ enum DeduplicateCommands {
         /// Preview duplicates without merging
         #[arg(long)]
         dry_run: bool,
+
+        /// Enable interactive mode to choose canonical entity
+        #[arg(short = 'i', long)]
+        interactive: bool,
     },
 
     /// Find and merge duplicate series
     Series {
+        /// Entity name to filter duplicates (optional)
+        entity_name: Option<String>,
+
         /// Similarity threshold (0.0-1.0)
         #[arg(long, default_value = "0.85")]
         threshold: f64,
@@ -209,10 +226,17 @@ enum DeduplicateCommands {
         /// Preview duplicates without merging
         #[arg(long)]
         dry_run: bool,
+
+        /// Enable interactive mode to choose canonical entity
+        #[arg(short = 'i', long)]
+        interactive: bool,
     },
 
     /// Find and merge duplicate tags
     Tags {
+        /// Entity name to filter duplicates (optional)
+        entity_name: Option<String>,
+
         /// Similarity threshold (0.0-1.0)
         #[arg(long, default_value = "0.85")]
         threshold: f64,
@@ -224,10 +248,17 @@ enum DeduplicateCommands {
         /// Preview duplicates without merging
         #[arg(long)]
         dry_run: bool,
+
+        /// Enable interactive mode to choose canonical entity
+        #[arg(short = 'i', long)]
+        interactive: bool,
     },
 
     /// Find and merge duplicate roles
     Roles {
+        /// Entity name to filter duplicates (optional)
+        entity_name: Option<String>,
+
         /// Similarity threshold (0.0-1.0)
         #[arg(long, default_value = "0.85")]
         threshold: f64,
@@ -239,6 +270,10 @@ enum DeduplicateCommands {
         /// Preview duplicates without merging
         #[arg(long)]
         dry_run: bool,
+
+        /// Enable interactive mode to choose canonical entity
+        #[arg(short = 'i', long)]
+        interactive: bool,
     },
 
     /// Find and merge all duplicate entities
@@ -672,39 +707,49 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         Commands::Deduplicate(dedup_cmd) => match dedup_cmd {
             DeduplicateCommands::People {
+                entity_name,
                 threshold,
                 auto_merge,
                 dry_run,
+                interactive,
             } => {
-                cmd_deduplicate_people(&cli.library, &app_settings, threshold, auto_merge, dry_run).await?;
+                cmd_deduplicate_people(&cli.library, &app_settings, entity_name, threshold, auto_merge, dry_run, interactive).await?;
             }
             DeduplicateCommands::Publishers {
+                entity_name,
                 threshold,
                 auto_merge,
                 dry_run,
+                interactive,
             } => {
-                cmd_deduplicate_publishers(&cli.library, &app_settings, threshold, auto_merge, dry_run).await?;
+                cmd_deduplicate_publishers(&cli.library, &app_settings, entity_name, threshold, auto_merge, dry_run, interactive).await?;
             }
             DeduplicateCommands::Series {
+                entity_name,
                 threshold,
                 auto_merge,
                 dry_run,
+                interactive,
             } => {
-                cmd_deduplicate_series(&cli.library, &app_settings, threshold, auto_merge, dry_run).await?;
+                cmd_deduplicate_series(&cli.library, &app_settings, entity_name, threshold, auto_merge, dry_run, interactive).await?;
             }
             DeduplicateCommands::Tags {
+                entity_name,
                 threshold,
                 auto_merge,
                 dry_run,
+                interactive,
             } => {
-                cmd_deduplicate_tags(&cli.library, &app_settings, threshold, auto_merge, dry_run).await?;
+                cmd_deduplicate_tags(&cli.library, &app_settings, entity_name, threshold, auto_merge, dry_run, interactive).await?;
             }
             DeduplicateCommands::Roles {
+                entity_name,
                 threshold,
                 auto_merge,
                 dry_run,
+                interactive,
             } => {
-                cmd_deduplicate_roles(&cli.library, &app_settings, threshold, auto_merge, dry_run).await?;
+                cmd_deduplicate_roles(&cli.library, &app_settings, entity_name, threshold, auto_merge, dry_run, interactive).await?;
             }
             DeduplicateCommands::All {
                 threshold,

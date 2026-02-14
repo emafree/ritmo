@@ -368,6 +368,37 @@ fn clusters_to_duplicate_groups<T: MLProcessable>(
     groups
 }
 
+/// Filter duplicate groups by entity name
+///
+/// Returns only the groups where either the primary name or one of the duplicate names
+/// matches the given entity name (case-insensitive comparison).
+///
+/// # Arguments
+/// * `groups` - All duplicate groups
+/// * `entity_name` - Name to filter by
+pub fn filter_duplicate_groups_by_entity(
+    groups: &[DuplicateGroup],
+    entity_name: &str,
+) -> Vec<DuplicateGroup> {
+    let search_name = entity_name.to_lowercase();
+    
+    groups
+        .iter()
+        .filter(|group| {
+            // Check if primary name matches
+            if group.primary_name.to_lowercase().contains(&search_name) {
+                return true;
+            }
+            
+            // Check if any duplicate name matches
+            group.duplicate_names.iter().any(|name| {
+                name.to_lowercase().contains(&search_name)
+            })
+        })
+        .cloned()
+        .collect()
+}
+
 /// Merge duplicate people based on duplicate groups
 async fn merge_duplicate_people(
     pool: &SqlitePool,
