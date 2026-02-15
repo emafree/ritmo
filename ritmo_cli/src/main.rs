@@ -357,6 +357,48 @@ enum PublishersCommands {
         #[arg(long, short = 'o', default_value = "table")]
         output: String,
     },
+    /// Create a new publisher
+    Create {
+        /// Publisher name (required)
+        #[arg(long, short = 'n')]
+        name: String,
+        /// Country (optional)
+        #[arg(long, short = 'c')]
+        country: Option<String>,
+        /// Website (optional)
+        #[arg(long, short = 'w')]
+        website: Option<String>,
+        /// Notes (optional)
+        #[arg(long)]
+        notes: Option<String>,
+    },
+    /// Update an existing publisher
+    Update {
+        /// Publisher ID to update
+        #[arg(long)]
+        id: i64,
+        /// New publisher name (optional)
+        #[arg(long, short = 'n')]
+        name: Option<String>,
+        /// New country (optional)
+        #[arg(long, short = 'c')]
+        country: Option<String>,
+        /// New website (optional)
+        #[arg(long, short = 'w')]
+        website: Option<String>,
+        /// New notes (optional)
+        #[arg(long)]
+        notes: Option<String>,
+    },
+    /// Delete a publisher
+    Delete {
+        /// Publisher ID to delete
+        #[arg(long)]
+        id: i64,
+        /// Skip confirmation prompt
+        #[arg(long, short = 'y')]
+        yes: bool,
+    },
 }
 
 /// Series subcommands
@@ -368,6 +410,48 @@ enum SeriesCommands {
         #[arg(long, short = 'o', default_value = "table")]
         output: String,
     },
+    /// Create a new series
+    Create {
+        /// Series name (required)
+        #[arg(long, short = 'n')]
+        name: String,
+        /// Description (optional)
+        #[arg(long, short = 'd')]
+        description: Option<String>,
+        /// Total number of books in series (optional)
+        #[arg(long, short = 't')]
+        total_books: Option<i64>,
+        /// Whether the series is completed
+        #[arg(long, short = 'c')]
+        completed: bool,
+    },
+    /// Update an existing series
+    Update {
+        /// Series ID to update
+        #[arg(long)]
+        id: i64,
+        /// New series name (optional)
+        #[arg(long, short = 'n')]
+        name: Option<String>,
+        /// New description (optional)
+        #[arg(long, short = 'd')]
+        description: Option<String>,
+        /// New total books (optional)
+        #[arg(long, short = 't')]
+        total_books: Option<i64>,
+        /// New completion status (optional)
+        #[arg(long, short = 'c')]
+        completed: Option<bool>,
+    },
+    /// Delete a series
+    Delete {
+        /// Series ID to delete
+        #[arg(long)]
+        id: i64,
+        /// Skip confirmation prompt
+        #[arg(long, short = 'y')]
+        yes: bool,
+    },
 }
 
 /// People subcommands
@@ -378,6 +462,60 @@ enum PeopleCommands {
         /// Formato output (table, json, simple)
         #[arg(long, short = 'o', default_value = "table")]
         output: String,
+    },
+    /// Create a new person
+    Create {
+        /// Person name (required)
+        #[arg(long, short = 'n')]
+        name: String,
+        /// Display name (optional)
+        #[arg(long)]
+        display_name: Option<String>,
+        /// Given name (optional)
+        #[arg(long)]
+        given_name: Option<String>,
+        /// Surname (optional)
+        #[arg(long)]
+        surname: Option<String>,
+        /// Nationality (optional)
+        #[arg(long)]
+        nationality: Option<String>,
+        /// Biography (optional)
+        #[arg(long)]
+        biography: Option<String>,
+    },
+    /// Update an existing person
+    Update {
+        /// Person ID to update
+        #[arg(long)]
+        id: i64,
+        /// New person name (optional)
+        #[arg(long, short = 'n')]
+        name: Option<String>,
+        /// New display name (optional)
+        #[arg(long)]
+        display_name: Option<String>,
+        /// New given name (optional)
+        #[arg(long)]
+        given_name: Option<String>,
+        /// New surname (optional)
+        #[arg(long)]
+        surname: Option<String>,
+        /// New nationality (optional)
+        #[arg(long)]
+        nationality: Option<String>,
+        /// New biography (optional)
+        #[arg(long)]
+        biography: Option<String>,
+    },
+    /// Delete a person
+    Delete {
+        /// Person ID to delete
+        #[arg(long)]
+        id: i64,
+        /// Skip confirmation prompt
+        #[arg(long, short = 'y')]
+        yes: bool,
     },
 }
 
@@ -808,17 +946,44 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             PublishersCommands::List { output } => {
                 handlers::publishers::handle_publishers_list(&cli.library, &app_settings, &output).await?;
             }
+            PublishersCommands::Create { name, country, website, notes } => {
+                handlers::publishers::handle_publishers_create(&cli.library, &app_settings, &name, &country, &website, &notes).await?;
+            }
+            PublishersCommands::Update { id, name, country, website, notes } => {
+                handlers::publishers::handle_publishers_update(&cli.library, &app_settings, &id, &name, &country, &website, &notes).await?;
+            }
+            PublishersCommands::Delete { id, yes } => {
+                handlers::publishers::handle_publishers_delete(&cli.library, &app_settings, &id, &yes).await?;
+            }
         },
 
         Commands::Series(series_cmd) => match series_cmd {
             SeriesCommands::List { output } => {
                 handlers::series::handle_series_list(&cli.library, &app_settings, &output).await?;
             }
+            SeriesCommands::Create { name, description, total_books, completed } => {
+                handlers::series::handle_series_create(&cli.library, &app_settings, &name, &description, &total_books, &completed).await?;
+            }
+            SeriesCommands::Update { id, name, description, total_books, completed } => {
+                handlers::series::handle_series_update(&cli.library, &app_settings, &id, &name, &description, &total_books, &completed).await?;
+            }
+            SeriesCommands::Delete { id, yes } => {
+                handlers::series::handle_series_delete(&cli.library, &app_settings, &id, &yes).await?;
+            }
         },
 
         Commands::People(people_cmd) => match people_cmd {
             PeopleCommands::List { output } => {
                 handlers::people::handle_people_list(&cli.library, &app_settings, &output).await?;
+            }
+            PeopleCommands::Create { name, display_name, given_name, surname, nationality, biography } => {
+                handlers::people::handle_people_create(&cli.library, &app_settings, &name, &display_name, &given_name, &surname, &nationality, &biography).await?;
+            }
+            PeopleCommands::Update { id, name, display_name, given_name, surname, nationality, biography } => {
+                handlers::people::handle_people_update(&cli.library, &app_settings, &id, &name, &display_name, &given_name, &surname, &nationality, &biography).await?;
+            }
+            PeopleCommands::Delete { id, yes } => {
+                handlers::people::handle_people_delete(&cli.library, &app_settings, &id, &yes).await?;
             }
         },
 

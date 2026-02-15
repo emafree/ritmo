@@ -1,8 +1,13 @@
 /// People management handlers
-use ritmo_commands::entities::{ListPeopleCommand, ListPeopleInput};
+use ritmo_commands::entities::{
+    CreatePersonCommand, CreatePersonInput, DeletePersonCommand, DeletePersonInput,
+    ListPeopleCommand, ListPeopleInput, UpdatePersonCommand, UpdatePersonInput,
+};
 use ritmo_commands::Command;
 use ritmo_config::AppSettings;
 use std::path::PathBuf;
+
+use crate::confirmation::{confirm_operation, ConfirmationConfig, ConfirmationResult, PreviewItem};
 
 pub async fn handle_people_list(
     library_path: &Option<PathBuf>,
@@ -54,6 +59,160 @@ pub async fn handle_people_list(
             }
             println!("\nTotal: {} people", result.total_count);
         }
+    }
+
+    Ok(())
+}
+
+/// Handle people create command
+pub async fn handle_people_create(
+    library_path: &Option<PathBuf>,
+    app_settings: &AppSettings,
+    name: &str,
+    display_name: &Option<String>,
+    given_name: &Option<String>,
+    surname: &Option<String>,
+    nationality: &Option<String>,
+    biography: &Option<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let (config, pool) = super::common::get_library_and_pool(library_path, app_settings).await?;
+
+    // Execute command
+    let command = CreatePersonCommand;
+    let input = CreatePersonInput {
+        name: name.to_string(),
+        display_name: display_name.clone(),
+        given_name: given_name.clone(),
+        surname: surname.clone(),
+        middle_names: None,
+        title: None,
+        suffix: None,
+        nationality: nationality.clone(),
+        birth_date: None,
+        death_date: None,
+        biography: biography.clone(),
+    };
+    let result = command.execute(&config, &pool, input).await?;
+
+    // Display success message
+    println!("\n✅ {}", result.message);
+    println!("   Person ID: {}", result.person_id);
+    println!("   Name: {}", result.name);
+    if let Some(display) = &result.display_name {
+        println!("   Display Name: {}", display);
+    }
+    println!("   Created: {}", result.created_at);
+
+    Ok(())
+}
+
+/// Handle people update command
+pub async fn handle_people_update(
+    library_path: &Option<PathBuf>,
+    app_settings: &AppSettings,
+    id: &i64,
+    name: &Option<String>,
+    display_name: &Option<String>,
+    given_name: &Option<String>,
+    surname: &Option<String>,
+    nationality: &Option<String>,
+    biography: &Option<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let (config, pool) = super::common::get_library_and_pool(library_path, app_settings).await?;
+
+    // Execute command
+    let command = UpdatePersonCommand;
+    let input = UpdatePersonInput {
+        person_id: *id,
+        name: name.clone(),
+        display_name: display_name.clone(),
+        given_name: given_name.clone(),
+        surname: surname.clone(),
+        middle_names: None,
+        title: None,
+        suffix: None,
+        nationality: nationality.clone(),
+        birth_date: None,
+        death_date: None,
+        biography: biography.clone(),
+    };
+    let result = command.execute(&config, &pool, input).await?;
+
+    // Display success message
+    println!("\n✅ {}", result.message);
+    println!("   Person ID: {}", result.person_id);
+    println!("   Name: {}", result.name);
+    if let Some(display) = &result.display_name {
+        println!("   Display Name: {}", display);
+    }
+    println!("   Updated: {}", result.updated_at);
+
+    Ok(())
+}
+
+/// Handle people delete command
+pub async fn handle_people_delete(
+    library_path: &Option<PathBuf>,
+    app_settings: &AppSettings,
+    id: &i64,
+    yes: &bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let (config, pool) = super::common::get_library_and_pool(library_path, app_settings).await?;
+
+    // First, get the person information for preview
+    let person_info = sqlx::query!(
+        "SELECT id, name, display_name FROM people WHERE id = ?",
+        id
+    )
+    .fetch_optional(&pool)
+    .await?;
+
+    let person = match person_info {
+        Some(p) => p,
+        None => {
+            eprintln!("❌ Error: Person with ID {} not found", id);
+            return Ok(());
+        }
+    };
+
+    let display_text = person
+        .display_name
+        .unwrap_or_else(|| person.name.clone());
+
+    // Show confirmation for delete operation
+    let preview_items = vec![PreviewItem {
+        id: person.id,
+        display_text,
+    }];
+
+    let confirmation = confirm_operation(ConfirmationConfig {
+        items: preview_items,
+        operation: "delete",
+        entity_type: "person",
+        force_yes: *yes,
+        dry_run: false,
+        warning: None,
+    })?;
+
+    if matches!(confirmation, ConfirmationResult::Declined) {
+        println!("Operation cancelled");
+        return Ok(());
+    }
+
+    // Execute command
+    let command = DeletePersonCommand;
+    let input = DeletePersonInput { person_id: *id };
+    let result = command.execute(&config, &pool, input).await?;
+
+    // Display success message
+    println!("\n✅ Person deleted successfully");
+    println!("   Person ID: {}", result.person_id);
+    println!("   Name: {}", result.name);
+    println!("   Books affected: {}", result.books_affected);
+    println!("   Deleted: {}", result.deleted_at);
+
+    if let Some(warning) = result.warning {
+        println!("\n⚠️  {}", warning);
     }
 
     Ok(())
