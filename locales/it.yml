@@ -54,12 +54,12 @@ cli:
     warning: "⚠ Attenzione"
     info: "ℹ Informazione"
     no_library_configured: "✗ Nessuna libreria configurata"
-    use_init: "  Usa 'ritmo init' per inizializzare una libreria"
+    use_init: "  Usa 'ritmo libraries new' per inizializzare una libreria"
     library_not_exist: "✗ La libreria non esiste"
     portable_mode_detected: "ℹ Modalità portabile rilevata"
 
-  # Comando Init
-  init:
+  # Comando New
+  new:
     initializing: "Inizializzazione libreria: %{path}"
     directories_created: "✓ Directory create"
     database_initialized: "✓ Database inizializzato"
@@ -72,8 +72,6 @@ cli:
     success: "\n✓ Libreria inizializzata con successo!"
     path_label: "  Path: %{path}"
     use_list_presets: "\nUsa 'ritmo list-presets' per vedere i preset disponibili."
-    already_portable: "✗ Impossibile inizializzare una nuova libreria in modalità portabile"
-    use_duplicate: "  Usa 'ritmo libraries duplicate <path>' per creare una copia della libreria portabile corrente"
 
   # Comando Duplicate
   duplicate:
@@ -84,7 +82,7 @@ cli:
     success: "\n✓ Libreria duplicata con successo!"
     path_label: "  Percorso nuova libreria: %{path}"
     error_not_portable: "✗ Non in esecuzione in modalità portabile. Il comando duplicate funziona solo da librerie portatili."
-    use_init_instead: "  Usa 'ritmo libraries init <path>' per creare una nuova libreria"
+    use_init_instead: "  Usa 'ritmo libraries new <path>' per creare una nuova libreria"
 
   # Comando Info
   info:
@@ -98,7 +96,7 @@ cli:
     structure_invalid: "✗ Struttura non valida"
     no_issues: "✓ Nessun problema rilevato"
     issues_detected: "⚠ Problemi rilevati:"
-    use_init_to_create: "  Usa 'ritmo init %{path}' per crearla"
+    use_init_to_create: "  Usa 'ritmo libraries new %{path}' per crearla"
 
   # Comando List Libraries
   list_libraries:
@@ -110,7 +108,7 @@ cli:
   set_library:
     success: "✓ Libreria impostata come corrente: %{path}"
     not_exist: "✗ La libreria non esiste: %{path}"
-    use_init: "  Usa 'ritmo init %{path}' per crearla"
+    use_init: "  Usa 'ritmo libraries new %{path}' per crearla"
 
   # Comando Language
   language:

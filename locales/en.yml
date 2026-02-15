@@ -54,12 +54,12 @@ cli:
     warning: "⚠ Warning"
     info: "ℹ Info"
     no_library_configured: "✗ No library configured"
-    use_init: "  Use 'ritmo init' to initialize a library"
+    use_init: "  Use 'ritmo libraries new' to initialize a library"
     library_not_exist: "✗ Library does not exist"
     portable_mode_detected: "ℹ Portable mode detected"
 
-  # Init command
-  init:
+  # New command
+  new:
     initializing: "Initializing library: %{path}"
     directories_created: "✓ Directories created"
     database_initialized: "✓ Database initialized"
@@ -72,8 +72,6 @@ cli:
     success: "\n✓ Library initialized successfully!"
     path_label: "  Path: %{path}"
     use_list_presets: "\nUse 'ritmo list-presets' to see available presets."
-    already_portable: "✗ Cannot initialize a new library while running in portable mode"
-    use_duplicate: "  Use 'ritmo libraries duplicate <path>' to create a copy of the current portable library"
 
   # Duplicate command
   duplicate:
@@ -84,7 +82,7 @@ cli:
     success: "\n✓ Library duplicated successfully!"
     path_label: "  New library path: %{path}"
     error_not_portable: "✗ Not running in portable mode. Duplicate command only works from portable libraries."
-    use_init_instead: "  Use 'ritmo libraries init <path>' to create a new library"
+    use_init_instead: "  Use 'ritmo libraries new <path>' to create a new library"
 
   # Info command
   info:
@@ -98,7 +96,7 @@ cli:
     structure_invalid: "✗ Invalid structure"
     no_issues: "✓ No issues detected"
     issues_detected: "⚠ Issues detected:"
-    use_init_to_create: "  Use 'ritmo init %{path}' to create it"
+    use_init_to_create: "  Use 'ritmo libraries new %{path}' to create it"
 
   # List Libraries command
   list_libraries:
@@ -110,7 +108,7 @@ cli:
   set_library:
     success: "✓ Library set as current: %{path}"
     not_exist: "✗ Library does not exist: %{path}"
-    use_init: "  Use 'ritmo init %{path}' to create it"
+    use_init: "  Use 'ritmo libraries new %{path}' to create it"
 
   language:
     unsupported: "✗ Unsupported language: %{language}. Supported languages: %{supported}"
