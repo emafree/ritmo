@@ -1,114 +1,87 @@
-# Ritmo GUI
+# ritmo_gui - egui-based GUI
 
-Modern and minimalist graphical interface for Ritmo, built with [Slint](https://slint.dev/).
+The GUI for ritmo built with the egui framework. Provides a contents-centric interface for managing your library.
 
-## Features
+## Architecture
 
-- **Minimalist Design**: Clean and modern interface focused on simplicity
-- **Lightweight**: Native build without heavy dependencies, works completely offline
-- **Cross-platform**: Works on Linux, Windows, and macOS
-- **Async**: Full integration with Tokio for non-blocking database operations
+### Contents-Centric Design
 
-## Structure
+The GUI follows a contents-centric paradigm:
+- **TAB BOOKS**: Browse books and see their contents
+- **TAB CONTENTS**: Browse contents directly - same content can appear in multiple books
+
+### Structure
 
 ```
 ritmo_gui/
 ├── src/
-│   └── main.rs          # Entry point and application logic
-├── ui/
-│   └── main_window.slint # UI definition in Slint language
-├── build.rs             # Build script to compile .slint files
-└── Cargo.toml           # Dependencies
+│   ├── main.rs              # Entry point + eframe setup
+│   ├── app.rs               # App state + main logic
+│   ├── ui/
+│   │   ├── main_window.rs    # Main layout + tab selector
+│   │   ├── tabs/
+│   │   │   ├── books_tab.rs
+│   │   │   └── contents_tab.rs
+│   │   ├── filters_panel.rs
+│   │   ├── menu.rs
+│   │   └── widgets/
+│   ├── state/
+│   │   ├── library_state.rs      # Manages library data
+│   │   ├── books_filter_state.rs
+│   │   └── contents_filter_state.rs
+│   ├── config/
+│   │   ├── theme.rs              # Dark/Light themes
+│   │   └── settings.rs           # Settings persistence
+│   └── events/
+│       └── message.rs            # UI messages
 ```
+
+## Features
+
+### Filter System
+
+3-level filtering:
+1. Click filter field button (Author, Publisher, etc.)
+2. Select filter value:
+   - **NESSUNO**: Exclude items without this field
+   - **ALMENO UNO**: Include items that have this field  
+   - **Specific value**: e.g., "Tolkien", "epub"
+
+### Settings Persistence
+
+Settings are saved to `~/.ritmo/gui_config.toml`:
+- Last active tab (Books or Contents)
+- Last used filters for each tab
+- Theme preference (Dark/Light)
+- Window size
 
 ## Building
 
 ```bash
-# Build in debug mode
 cargo build -p ritmo_gui
-
-# Optimized build (release)
-cargo build -p ritmo_gui --release
 ```
 
 ## Running
 
 ```bash
-# Run directly
 cargo run -p ritmo_gui
-
-# Or run the compiled binary
-./target/release/ritmo_gui
 ```
 
-## Interface
+## Testing
 
-### Sidebar
-- 📖 **Books**: Main view with list of all books
-- ✍️ **Authors**: Author management (in development)
-- 🏢 **Publishers**: Publisher management (in development)
-- 📚 **Series**: Book series management (in development)
-- ⚙️ **Settings**: Application configuration (in development)
+```bash
+cargo test -p ritmo_gui
+```
 
-### Main Area
-- **Search bar**: Search books, authors, publishers in real-time
-- **Book list**: Card view of books with title, author, publisher, year
-- **Add button**: To add new books (in development)
-- **Status messages**: Visual feedback for operations
+## Integration
 
-## Initialization
-
-On startup, the application:
-1. Automatically creates the library directory in `~/RitmoLibrary`
-2. Initializes the SQLite database if it doesn't exist
-3. Creates the necessary directory structure (database, storage, config, bootstrap)
-4. Loads books from the library (currently sample data)
+Uses ritmo_commands for all business logic:
+- `ListBooksCommand` - List books with filters
+- `ListContentsCommand` - List contents with filters
 
 ## Technologies
 
-- **Slint 1.7.2**: Native and performant UI framework
-- **Tokio**: Asynchronous runtime for I/O operations
-- **SQLx**: Asynchronous database access layer
-- **Rust**: Safe and performant language
-
-## Current Status
-
-✅ Base interface implemented
-✅ Sidebar navigation working
-✅ Book search with real-time filtering
-✅ Integration with LibraryConfig
-✅ Automatic library initialization
-
-🚧 In development:
-- Real database integration (SQL queries)
-- Dialogs to add/edit books
-- Book detail view
-- Author, publisher, series management
-- EPUB file import
-- Cover management
-
-## Dependencies
-
-Main dependencies are:
-- `slint = "1.7.2"` - UI framework
-- `slint-build = "1.7.2"` - Build script for .slint files
-- `tokio` - Async runtime
-- `dirs` - To find user home directory
-- `ritmo_db_core` - Database and config management
-- `ritmo_db` - Database models
-- `ritmo_core` - Business logic
-
-## Development Notes
-
-### .slint Files
-`.slint` files define the graphical interface using a declarative language similar to QML. During build, `slint-build` compiles these files into Rust code.
-
-### Async/Sync Bridge
-The application uses `tokio::runtime::Runtime` to handle async operations from the synchronous UI thread. Database operations are executed via `runtime.block_on()`.
-
-### Callbacks
-UI callbacks are defined in Slint and implemented in Rust:
-- `initialize-library`: Initialize the library
-- `refresh-books`: Reload the book list
-- `search-books`: Filter books based on search text
-- `add-new-book`: Open dialog to add book (TODO)
+- **egui 0.27**: Immediate mode GUI framework
+- **eframe 0.27**: Application framework
+- **Tokio**: Asynchronous runtime
+- **ritmo_commands**: Business logic layer
