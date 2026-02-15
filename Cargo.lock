@@ -3799,6 +3799,7 @@ dependencies = [
  "sha2",
  "tar",
  "toml 0.8.23",
+ "zip",
 ]
 
 [[package]]

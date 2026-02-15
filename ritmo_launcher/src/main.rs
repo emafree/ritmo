@@ -149,10 +149,7 @@ fn launch_gui(library_path: &PathBuf) -> Result<()> {
         ).into());
     }
     
-    // Set environment variable for GUI to find library
-    std::env::set_var("RITMO_LIBRARY_PATH", library_path);
-    
-    // Execute GUI
+    // Execute GUI with environment variable and command line argument
     let status = Command::new(&gui_path)
         .env("RITMO_LIBRARY_PATH", library_path)
         .arg("--library-path")

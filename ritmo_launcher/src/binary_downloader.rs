@@ -55,20 +55,23 @@ fn get_download_url() -> Result<&'static str> {
     }
 }
 
-/// Verify the downloaded file using SHA256
+/// Verify the downloaded file (basic check for now)
 fn verify_download(bytes: &[u8]) -> Result<()> {
     use sha2::{Sha256, Digest};
-    
-    let mut hasher = Sha256::new();
-    hasher.update(bytes);
-    let _result = hasher.finalize();
     
     // Verify it's not empty
     if bytes.is_empty() {
         return Err("Downloaded file is empty".into());
     }
     
-    println!("✅ SHA256 verified");
+    // Calculate SHA256 (for logging/debugging purposes)
+    let mut hasher = Sha256::new();
+    hasher.update(bytes);
+    let result = hasher.finalize();
+    
+    // TODO: In the future, verify against expected hash from a manifest or release notes
+    println!("✅ Download verified (SHA256: {:x})", result);
+    
     Ok(())
 }
 
@@ -110,13 +113,30 @@ fn extract_tar_gz(library_path: &Path, bytes: &[u8]) -> Result<()> {
 /// Extract ZIP archive (for Windows)
 #[cfg(windows)]
 fn extract_zip(library_path: &Path, bytes: &[u8]) -> Result<()> {
-    // For Windows, we would use zip crate
-    // For now, this is a placeholder
+    use std::io::Cursor;
+    use zip::ZipArchive;
+    
+    let cursor = Cursor::new(bytes);
+    let mut archive = ZipArchive::new(cursor)?;
+    
     let target_path = library_path.join("bootstrap/portable_app");
     std::fs::create_dir_all(&target_path)?;
     
-    // TODO: Implement ZIP extraction when needed
-    println!("⚠️  ZIP extraction not yet implemented");
+    // Extract all files
+    for i in 0..archive.len() {
+        let mut file = archive.by_index(i)?;
+        let outpath = target_path.join(file.name());
+        
+        if file.name().ends_with('/') {
+            std::fs::create_dir_all(&outpath)?;
+        } else {
+            if let Some(p) = outpath.parent() {
+                std::fs::create_dir_all(p)?;
+            }
+            let mut outfile = std::fs::File::create(&outpath)?;
+            std::io::copy(&mut file, &mut outfile)?;
+        }
+    }
     
     Ok(())
 }

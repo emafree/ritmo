@@ -11,10 +11,17 @@ pub fn ask_download_binaries() -> bool {
     println!("ℹ️  The binaries are not included in your library.");
     println!("They need to be downloaded from GitHub to continue.");
     print!("\n📥 Do you want to download the binaries now? (y/n): ");
-    io::stdout().flush().unwrap();
+    
+    if io::stdout().flush().is_err() {
+        eprintln!("Warning: Failed to flush stdout");
+        return false;
+    }
     
     let mut input = String::new();
-    io::stdin().read_line(&mut input).unwrap();
+    if io::stdin().read_line(&mut input).is_err() {
+        eprintln!("Error: Failed to read user input");
+        return false;
+    }
     
     input.trim().to_lowercase() == "y"
 }
@@ -25,10 +32,17 @@ pub fn confirm_repair() -> bool {
     println!("ℹ️  Your library will be repaired.");
     println!("All your books will be preserved.");
     print!("\n🔧 Continue? (y/n): ");
-    io::stdout().flush().unwrap();
+    
+    if io::stdout().flush().is_err() {
+        eprintln!("Warning: Failed to flush stdout");
+        return false;
+    }
     
     let mut input = String::new();
-    io::stdin().read_line(&mut input).unwrap();
+    if io::stdin().read_line(&mut input).is_err() {
+        eprintln!("Error: Failed to read user input");
+        return false;
+    }
     
     input.trim().to_lowercase() == "y"
 }
