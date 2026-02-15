@@ -39,11 +39,16 @@ fn main() -> Result<()> {
     println!("📚 Found library at: {}", library_path.display());
     
     // 2. Verify library structure
-    if !library_verifier::verify_library_structure(&library_path) {
-        println!("⚠️  Library structure incomplete or corrupted");
+    let structure_valid = library_verifier::verify_library_structure(&library_path);
+    let binaries_present = library_verifier::binaries_exist(&library_path);
+    
+    if !structure_valid || !binaries_present {
+        if !structure_valid {
+            println!("⚠️  Library structure incomplete or corrupted");
+        }
         
         // 3. Check if binaries are missing
-        if !library_verifier::binaries_exist(&library_path) {
+        if !binaries_present {
             println!("❌ Binaries not found in library");
             
             // Ask user if they want to download
@@ -60,9 +65,11 @@ fn main() -> Result<()> {
         }
         
         // 4. Auto-repair library (preserves books!)
-        println!("🔧 Repairing library...");
-        library_repairer::repair_library(&library_path)?;
-        println!("✅ Library repaired successfully");
+        if !structure_valid {
+            println!("🔧 Repairing library...");
+            library_repairer::repair_library(&library_path)?;
+            println!("✅ Library repaired successfully");
+        }
     }
     
     // 5. Verify books are preserved
