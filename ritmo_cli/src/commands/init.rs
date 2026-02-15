@@ -1,16 +1,27 @@
 //! Init command - Initialize a new library
 
-use ritmo_config::AppSettings;
+use ritmo_config::{detect_portable_library, AppSettings};
 use ritmo_db_core::LibraryConfig;
 use rust_i18n::t;
 use std::path::PathBuf;
 
-/// Comando: init - Inizializza una nuova libreria
+/// Command: init - Initialize a new library
 pub async fn cmd_init(
     path: Option<PathBuf>,
     app_settings: &mut AppSettings,
     settings_path: &PathBuf,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    // Check if running in portable mode
+    if let Some(portable_path) = detect_portable_library() {
+        println!("{}", t!("cli.init.already_portable"));
+        println!("{}", t!("cli.init.use_duplicate"));
+        return Err(format!(
+            "Cannot initialize library from portable mode (running from {})",
+            portable_path.display()
+        )
+        .into());
+    }
+
     // Determina il path della libreria
     let library_path = path.unwrap_or_else(|| {
         dirs::home_dir()

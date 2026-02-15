@@ -82,6 +82,12 @@ enum LibrariesCommands {
         path: Option<PathBuf>,
     },
 
+    /// Duplicate the current portable library to a new location
+    Duplicate {
+        /// Output path for the duplicated library
+        path: PathBuf,
+    },
+
     /// Show current library information
     Info,
 
@@ -776,6 +782,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Libraries(lib_cmd) => match lib_cmd {
             LibrariesCommands::Init { path } => {
                 cmd_init(path, &mut app_settings, &settings_path).await?;
+            }
+            LibrariesCommands::Duplicate { path } => {
+                cmd_duplicate(path, &mut app_settings, &settings_path).await?;
             }
             LibrariesCommands::Info => {
                 cmd_info(&cli.library, &app_settings).await?;

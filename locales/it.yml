@@ -72,6 +72,19 @@ cli:
     success: "\n✓ Libreria inizializzata con successo!"
     path_label: "  Path: %{path}"
     use_list_presets: "\nUsa 'ritmo list-presets' per vedere i preset disponibili."
+    already_portable: "✗ Impossibile inizializzare una nuova libreria in modalità portabile"
+    use_duplicate: "  Usa 'ritmo libraries duplicate <path>' per creare una copia della libreria portabile corrente"
+
+  # Comando Duplicate
+  duplicate:
+    initializing: "Duplicazione libreria portabile in: %{path}"
+    copying_files: "✓ Copia dei file della libreria..."
+    resetting_database: "✓ Ripristino database al template..."
+    updating_config: "✓ Aggiornamento configurazione libreria..."
+    success: "\n✓ Libreria duplicata con successo!"
+    path_label: "  Percorso nuova libreria: %{path}"
+    error_not_portable: "✗ Non in esecuzione in modalità portabile. Il comando duplicate funziona solo da librerie portatili."
+    use_init_instead: "  Usa 'ritmo libraries init <path>' per creare una nuova libreria"
 
   # Comando Info
   info:

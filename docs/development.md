@@ -77,6 +77,10 @@ cargo check --workspace
 cargo run -p ritmo_cli -- libraries init
 cargo run -p ritmo_cli -- libraries init /path/to/library
 
+# Duplicate a portable library (only works from portable mode)
+# Run from within bootstrap/portable_app/ directory
+./ritmo_cli libraries duplicate /path/to/new/library
+
 # Show current library info
 cargo run -p ritmo_cli -- libraries info
 
@@ -89,6 +93,21 @@ cargo run -p ritmo_cli -- libraries set /path/to/library
 # Use specific library temporarily (doesn't change default)
 cargo run -p ritmo_cli -- --library /path/to/library libraries info
 ```
+
+**Portable Mode vs Standard Mode:**
+
+Ritmo supports two distribution models:
+
+1. **Portable Mode**: Executables in `bootstrap/portable_app/` directory within a library
+   - Library is self-contained and portable
+   - Use `duplicate` command to create additional libraries
+   - `init` command is blocked to prevent confusion
+
+2. **Standard Mode**: System-wide installation
+   - Use `init` command to create new libraries
+   - Libraries stored separately from executables
+
+For more details, see [Distribution Documentation](distribution.md).
 
 #### Book Management
 ```bash

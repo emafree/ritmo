@@ -72,6 +72,19 @@ cli:
     success: "\n✓ Library initialized successfully!"
     path_label: "  Path: %{path}"
     use_list_presets: "\nUse 'ritmo list-presets' to see available presets."
+    already_portable: "✗ Cannot initialize a new library while running in portable mode"
+    use_duplicate: "  Use 'ritmo libraries duplicate <path>' to create a copy of the current portable library"
+
+  # Duplicate command
+  duplicate:
+    initializing: "Duplicating portable library to: %{path}"
+    copying_files: "✓ Copying library files..."
+    resetting_database: "✓ Resetting database to template..."
+    updating_config: "✓ Updating library configuration..."
+    success: "\n✓ Library duplicated successfully!"
+    path_label: "  New library path: %{path}"
+    error_not_portable: "✗ Not running in portable mode. Duplicate command only works from portable libraries."
+    use_init_instead: "  Use 'ritmo libraries init <path>' to create a new library"
 
   # Info command
   info:
