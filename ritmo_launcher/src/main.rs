@@ -153,7 +153,7 @@ fn launch_gui(library_path: &PathBuf) -> Result<()> {
     let status = Command::new(&gui_path)
         .env("RITMO_LIBRARY_PATH", library_path)
         .arg("--library-path")
-        .arg(&library_path.join("ritmo_library"))
+        .arg(library_path.join("ritmo_library"))
         .spawn()?
         .wait()?;
     

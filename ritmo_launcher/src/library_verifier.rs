@@ -9,14 +9,12 @@ pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 /// Verify that the library structure contains all required directories
 pub fn verify_library_structure(library_path: &Path) -> bool {
-    let required_dirs = vec![
-        "ritmo_library",
+    let required_dirs = ["ritmo_library",
         "ritmo_library/config",
         "ritmo_library/database",
         "ritmo_library/storage",
         "bootstrap",
-        "bootstrap/portable_app",
-    ];
+        "bootstrap/portable_app"];
     
     required_dirs.iter().all(|dir| {
         library_path.join(dir).exists()
@@ -55,7 +53,7 @@ pub fn count_books(library_path: &Path) -> Result<usize> {
     let count = std::fs::read_dir(storage_path)?
         .filter_map(std::result::Result::ok)
         .filter(|entry| {
-            entry.path().extension().map_or(false, |ext| ext == "toml")
+            entry.path().extension().is_some_and(|ext| ext == "toml")
         })
         .count();
     

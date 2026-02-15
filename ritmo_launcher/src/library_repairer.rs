@@ -98,7 +98,7 @@ fn backup_books_if_exist(library_path: &Path) -> Result<Option<Vec<BookData>>> {
         let entry = entry?;
         let path = entry.path();
         
-        if path.extension().map_or(false, |ext| ext == "toml") {
+        if path.extension().is_some_and(|ext| ext == "toml") {
             let content = std::fs::read_to_string(&path)?;
             books.push(BookData {
                 filename: path.file_name().unwrap().to_string_lossy().to_string(),
