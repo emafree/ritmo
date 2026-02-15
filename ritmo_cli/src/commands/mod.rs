@@ -6,7 +6,7 @@
 // Command modules
 pub mod deduplication;
 pub mod duplicate;
-pub mod init;
+pub mod new;
 pub mod language;
 pub mod libraries;
 pub mod presets;
@@ -18,7 +18,7 @@ pub use deduplication::{
     cmd_deduplicate_roles, cmd_deduplicate_series, cmd_deduplicate_tags,
 };
 pub use duplicate::cmd_duplicate;
-pub use init::cmd_init;
+pub use new::cmd_new;
 pub use language::{cmd_get_language, cmd_set_language};
 pub use libraries::{cmd_info, cmd_list_libraries, cmd_set_library};
 pub use presets::{cmd_delete_preset, cmd_list_presets, cmd_save_preset, cmd_set_default_filter};

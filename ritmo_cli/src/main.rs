@@ -77,7 +77,7 @@ enum Commands {
 #[derive(Subcommand)]
 enum LibrariesCommands {
     /// Initialize a new library
-    Init {
+    New {
         /// Library path (default: ~/RitmoLibrary)
         path: Option<PathBuf>,
     },
@@ -780,8 +780,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match cli.command {
         // === NEW NESTED COMMANDS ===
         Commands::Libraries(lib_cmd) => match lib_cmd {
-            LibrariesCommands::Init { path } => {
-                cmd_init(path, &mut app_settings, &settings_path).await?;
+            LibrariesCommands::New { path } => {
+                cmd_new(path, &mut app_settings, &settings_path).await?;
             }
             LibrariesCommands::Duplicate { path } => {
                 cmd_duplicate(path, &mut app_settings, &settings_path).await?;
