@@ -1,0 +1,13 @@
+[package]
+name = "ritmo_launcher"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "ritmo_launcher"
+path = "src/main.rs"
+
+[dependencies]

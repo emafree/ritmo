@@ -4749,6 +4749,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "ritmo_launcher"
+version = "2.0.0"
+
+[[package]]
 name = "ritmo_mapping"
 version = "0.1.0"
 dependencies = [
