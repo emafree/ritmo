@@ -160,7 +160,7 @@ After duplication:
 Both commands support English and Italian locales:
 - Messages automatically display in user's preferred language
 - Set via `RITMO_LANG` environment variable or AppSettings
-- Defaults to Italian if not specified
+- Language detection follows rust_i18n conventions
 
 ## Benefits of This Model
 

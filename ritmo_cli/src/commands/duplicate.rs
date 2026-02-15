@@ -6,7 +6,7 @@ use rust_i18n::t;
 use std::fs;
 use std::path::PathBuf;
 
-/// Comando: duplicate - Duplica la libreria portabile corrente in una nuova posizione
+/// Command: duplicate - Duplicates the current portable library to a new location
 pub async fn cmd_duplicate(
     output_path: PathBuf,
     app_settings: &mut AppSettings,
@@ -49,7 +49,7 @@ pub async fn cmd_duplicate(
     config.save(config.main_config_file())?;
 
     // Create library presets
-    let _library_presets = config.load_library_presets()?;
+    config.load_library_presets()?;
 
     // Step 4: Update AppSettings with new library as last_library
     app_settings.update_last_library(&output_path);

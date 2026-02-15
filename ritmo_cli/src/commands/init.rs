@@ -5,7 +5,7 @@ use ritmo_db_core::LibraryConfig;
 use rust_i18n::t;
 use std::path::PathBuf;
 
-/// Comando: init - Inizializza una nuova libreria
+/// Command: init - Initialize a new library
 pub async fn cmd_init(
     path: Option<PathBuf>,
     app_settings: &mut AppSettings,
