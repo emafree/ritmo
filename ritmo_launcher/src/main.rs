@@ -19,6 +19,9 @@
 use std::env;
 use std::process::{Command, exit};
 
+/// Name of the GUI binary (without extension)
+const GUI_BINARY_NAME: &str = "ritmo_gui";
+
 fn main() {
     // 1. Get launcher executable path
     let launcher_path = match env::current_exe() {
@@ -87,24 +90,24 @@ fn main() {
 
     // 4. Find and execute ritmo_gui
     let ritmo_gui_name = if cfg!(windows) {
-        "ritmo_gui.exe"
+        format!("{}.exe", GUI_BINARY_NAME)
     } else {
-        "ritmo_gui"
+        GUI_BINARY_NAME.to_string()
     };
     
     let ritmo_gui_path = portable_app_dir.join(ritmo_gui_name);
     
     if !ritmo_gui_path.exists() {
-        eprintln!("Error: Cannot find ritmo_gui executable");
+        eprintln!("Error: Cannot find {} executable", GUI_BINARY_NAME);
         eprintln!("Expected at: {}", ritmo_gui_path.display());
-        eprintln!("Please ensure ritmo_gui is installed in the same directory as the launcher");
+        eprintln!("Please ensure {} is installed in the same directory as the launcher", GUI_BINARY_NAME);
         exit(1);
     }
 
-    // Print info (can be disabled in production)
+    // Print info for user feedback
     println!("Ritmo Launcher");
     println!("Library path: {}", library_path.display());
-    println!("Launching ritmo_gui...\n");
+    println!("Launching {}...\n", GUI_BINARY_NAME);
 
     // Launch ritmo_gui with --library-path argument
     let status = Command::new(&ritmo_gui_path)
@@ -119,7 +122,7 @@ fn main() {
             exit(code);
         }
         Err(e) => {
-            eprintln!("Error: Failed to launch ritmo_gui");
+            eprintln!("Error: Failed to launch {}", GUI_BINARY_NAME);
             eprintln!("Path: {}", ritmo_gui_path.display());
             eprintln!("Details: {}", e);
             exit(1);
