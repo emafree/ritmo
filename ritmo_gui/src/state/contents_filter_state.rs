@@ -76,12 +76,49 @@ impl ContentsFilterState {
     
     /// Serialize to JSON string for persistence
     pub fn to_json(&self) -> Option<String> {
-        serde_json::to_string(&self.filters).ok()
+        // Convert to a simpler serializable format
+        let simple_filters: Vec<SimpleFilter> = self.filters.iter().map(|f| SimpleFilter {
+            field: format!("{:?}", f.field),
+            value: match &f.value {
+                FilterValue::Nessuno => "NESSUNO".to_string(),
+                FilterValue::AlmenoUno => "ALMENO_UNO".to_string(),
+                FilterValue::Specific(s) => format!("SPECIFIC:{}", s),
+            },
+        }).collect();
+        
+        serde_json::to_string(&simple_filters).ok()
     }
     
     /// Deserialize from JSON string
     pub fn from_json(json: &str) -> Self {
-        let filters = serde_json::from_str(json).unwrap_or_default();
+        let simple_filters: Vec<SimpleFilter> = serde_json::from_str(json).unwrap_or_default();
+        
+        let filters = simple_filters.into_iter().filter_map(|sf| {
+            let field = match sf.field.as_str() {
+                "ContentAuthor" => FilterField::ContentAuthor,
+                "ContentType" => FilterField::ContentType,
+                "ContentYear" => FilterField::ContentYear,
+                _ => return None,
+            };
+            
+            let value = match sf.value.as_str() {
+                "NESSUNO" => FilterValue::Nessuno,
+                "ALMENO_UNO" => FilterValue::AlmenoUno,
+                s if s.starts_with("SPECIFIC:") => {
+                    FilterValue::Specific(s.strip_prefix("SPECIFIC:").unwrap().to_string())
+                }
+                _ => return None,
+            };
+            
+            Some(ActiveFilter { field, value })
+        }).collect();
+        
         Self { filters }
     }
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct SimpleFilter {
+    field: String,
+    value: String,
 }

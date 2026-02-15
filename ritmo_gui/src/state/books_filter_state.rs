@@ -91,70 +91,51 @@ impl BooksFilterState {
     
     /// Serialize to JSON string for persistence
     pub fn to_json(&self) -> Option<String> {
-        serde_json::to_string(&self.filters).ok()
+        // Convert to a simpler serializable format
+        let simple_filters: Vec<SimpleFilter> = self.filters.iter().map(|f| SimpleFilter {
+            field: format!("{:?}", f.field),
+            value: match &f.value {
+                FilterValue::Nessuno => "NESSUNO".to_string(),
+                FilterValue::AlmenoUno => "ALMENO_UNO".to_string(),
+                FilterValue::Specific(s) => format!("SPECIFIC:{}", s),
+            },
+        }).collect();
+        
+        serde_json::to_string(&simple_filters).ok()
     }
     
     /// Deserialize from JSON string
     pub fn from_json(json: &str) -> Self {
-        let filters = serde_json::from_str(json).unwrap_or_default();
+        let simple_filters: Vec<SimpleFilter> = serde_json::from_str(json).unwrap_or_default();
+        
+        let filters = simple_filters.into_iter().filter_map(|sf| {
+            let field = match sf.field.as_str() {
+                "BookAuthor" => FilterField::BookAuthor,
+                "BookPublisher" => FilterField::BookPublisher,
+                "BookSeries" => FilterField::BookSeries,
+                "BookFormat" => FilterField::BookFormat,
+                "BookYear" => FilterField::BookYear,
+                _ => return None,
+            };
+            
+            let value = match sf.value.as_str() {
+                "NESSUNO" => FilterValue::Nessuno,
+                "ALMENO_UNO" => FilterValue::AlmenoUno,
+                s if s.starts_with("SPECIFIC:") => {
+                    FilterValue::Specific(s.strip_prefix("SPECIFIC:").unwrap().to_string())
+                }
+                _ => return None,
+            };
+            
+            Some(ActiveFilter { field, value })
+        }).collect();
+        
         Self { filters }
     }
 }
 
-// Implement Serialize/Deserialize for ActiveFilter
-impl serde::Serialize for ActiveFilter {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use serde::ser::SerializeStruct;
-        let mut state = serializer.serialize_struct("ActiveFilter", 2)?;
-        state.serialize_field("field", &format!("{:?}", self.field))?;
-        state.serialize_field("value", &self.value)?;
-        state.end()
-    }
-}
-
-impl<'de> serde::Deserialize<'de> for ActiveFilter {
-    fn deserialize<D>(_deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        // Simple implementation - in production, properly deserialize
-        Ok(ActiveFilter {
-            field: FilterField::BookAuthor,
-            value: FilterValue::AlmenoUno,
-        })
-    }
-}
-
-impl serde::Serialize for FilterValue {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let s = match self {
-            FilterValue::Nessuno => "NESSUNO".to_string(),
-            FilterValue::AlmenoUno => "ALMENO_UNO".to_string(),
-            FilterValue::Specific(v) => format!("SPECIFIC:{}", v),
-        };
-        serializer.serialize_str(&s)
-    }
-}
-
-impl<'de> serde::Deserialize<'de> for FilterValue {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        Ok(match s.as_str() {
-            "NESSUNO" => FilterValue::Nessuno,
-            "ALMENO_UNO" => FilterValue::AlmenoUno,
-            _ if s.starts_with("SPECIFIC:") => {
-                FilterValue::Specific(s.strip_prefix("SPECIFIC:").unwrap().to_string())
-            }
-            _ => FilterValue::AlmenoUno,
-        })
-    }
+#[derive(serde::Serialize, serde::Deserialize)]
+struct SimpleFilter {
+    field: String,
+    value: String,
 }

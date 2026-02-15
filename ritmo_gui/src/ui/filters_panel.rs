@@ -67,7 +67,7 @@ pub fn render(app: &mut App, ui: &mut egui::Ui) {
 
 fn show_value_selector(app: &mut App, ui: &mut egui::Ui, field: FilterField) {
     // Get available values based on field
-    let values: Vec<String> = match field {
+    let values: Vec<String> = match &field {
         FilterField::BookAuthor => app.library_state.get_book_authors(),
         FilterField::BookPublisher => app.library_state.get_publishers(),
         FilterField::BookFormat => app.library_state.get_formats(),
@@ -79,12 +79,12 @@ fn show_value_selector(app: &mut App, ui: &mut egui::Ui, field: FilterField) {
     ui.menu_button("Select Value", |ui| {
         // Special values
         if ui.button("NESSUNO").clicked() {
-            add_filter(app, field.clone(), FilterValue::Nessuno);
+            add_filter(app, field, FilterValue::Nessuno);
             ui.close_menu();
         }
         
         if ui.button("ALMENO UNO").clicked() {
-            add_filter(app, field.clone(), FilterValue::AlmenoUno);
+            add_filter(app, field, FilterValue::AlmenoUno);
             ui.close_menu();
         }
         
@@ -93,7 +93,7 @@ fn show_value_selector(app: &mut App, ui: &mut egui::Ui, field: FilterField) {
         // Specific values
         for value in values {
             if ui.button(&value).clicked() {
-                add_filter(app, field.clone(), FilterValue::Specific(value));
+                add_filter(app, field, FilterValue::Specific(value));
                 ui.close_menu();
             }
         }

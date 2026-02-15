@@ -83,4 +83,39 @@ mod tests {
         state.clear();
         assert_eq!(state.get_filters().len(), 0);
     }
+
+    #[test]
+    fn test_filter_serialization() {
+        let mut state = BooksFilterState::default();
+        state.add_filter(FilterField::BookAuthor, FilterValue::Specific("Tolkien".to_string()));
+        state.add_filter(FilterField::BookFormat, FilterValue::AlmenoUno);
+        state.add_filter(FilterField::BookPublisher, FilterValue::Nessuno);
+        
+        // Serialize
+        let json = state.to_json().expect("Should serialize");
+        
+        // Deserialize
+        let restored = BooksFilterState::from_json(&json);
+        
+        // Verify
+        assert_eq!(restored.get_filters().len(), 3);
+        assert_eq!(restored.get_filters()[0].field, FilterField::BookAuthor);
+        assert_eq!(restored.get_filters()[1].field, FilterField::BookFormat);
+        assert_eq!(restored.get_filters()[2].field, FilterField::BookPublisher);
+        
+        match &restored.get_filters()[0].value {
+            FilterValue::Specific(s) => assert_eq!(s, "Tolkien"),
+            _ => panic!("Expected Specific value"),
+        }
+        
+        match &restored.get_filters()[1].value {
+            FilterValue::AlmenoUno => {},
+            _ => panic!("Expected AlmenoUno value"),
+        }
+        
+        match &restored.get_filters()[2].value {
+            FilterValue::Nessuno => {},
+            _ => panic!("Expected Nessuno value"),
+        }
+    }
 }
