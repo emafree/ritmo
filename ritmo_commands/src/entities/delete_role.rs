@@ -66,22 +66,19 @@ impl Command for DeleteRoleCommand {
         };
 
         // Count affected books and contents
-        let books_count = sqlx::query_scalar!(
+        let books_affected = sqlx::query_scalar!(
             "SELECT COUNT(DISTINCT book_id) FROM x_books_people_roles WHERE role_id = ?",
             input.role_id
         )
         .fetch_one(pool)
         .await?;
 
-        let contents_count = sqlx::query_scalar!(
+        let contents_affected = sqlx::query_scalar!(
             "SELECT COUNT(DISTINCT content_id) FROM x_contents_people_roles WHERE role_id = ?",
             input.role_id
         )
         .fetch_one(pool)
         .await?;
-
-        let books_affected = books_count;
-        let contents_affected = contents_count;
 
         // Delete role associations from books
         sqlx::query!(
