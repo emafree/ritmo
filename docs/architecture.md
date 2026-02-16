@@ -85,12 +85,11 @@ The project is organized as a Rust workspace with the following crates:
 - Metadata mapping utilities
 
 ### ritmo_gui
-- Graphical interface built with Slint (modern, lightweight UI framework)
+- Graphical interface built with egui (modern, immediate-mode UI framework)
 - Minimalista design with sidebar navigation (Books, Authors, Publishers, Series)
 - Features: book list view, search functionality, status messages
 - Uses async/await for database operations
 - Auto-initializes library at ~/RitmoLibrary or ./ritmo_library
-- UI defined in `ui/main_window.slint`
 - Currently displays sample data; database integration pending
 
 ### ritmo_ml
@@ -900,7 +899,7 @@ Priority: `RITMO_LANG` > `LANG` > default ("en")
 ## Rust Version
 
 Required Rust version: **stable** (currently 1.91+) (specified in `rust-toolchain.toml`)
-- Updated from 1.75 to support Slint GUI framework and modern dependencies
+- Updated from 1.75 to support modern dependencies
 - Edition 2024 features are now available
 
 ## Adding New Crates
