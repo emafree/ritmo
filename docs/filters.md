@@ -191,13 +191,13 @@ ritmo list-books                        # Uses library default if set
 ```bash
 # Create library with useful presets
 ritmo init /media/usb/SharedLibrary
-ritmo save-preset books --name "epub_only" --format epub --in-library
-ritmo set-default-filter books epub_only
+cargo run -p ritmo_cli -- save-preset books --name "epub_only" --format epub --in-library
+cargo run -p ritmo_cli -- set-default-filter books epub_only
 
 # Copy to USB and share
 # Colleague opens library
 cd /media/usb/SharedLibrary
-ritmo_cli list-books  # Automatically uses "epub_only" preset
+cargo run -p ritmo_cli -- list-books  # Automatically uses "epub_only" preset
 ```
 
 ## Implementation History
