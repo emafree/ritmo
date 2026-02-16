@@ -126,7 +126,7 @@ The project is organized as a Rust workspace with specialized crates:
 - **ritmo_config** - Configuration management
 - **ritmo_mapping** - Metadata mapping
 - **ritmo_errors** - Shared error types
-- **ritmo_commands** - Command layer for business logic
+- **ritmo_gui** - Graphical interface (egui-based)
 - **ebook_parser** - EPUB metadata extraction
 
 ## Essential Commands

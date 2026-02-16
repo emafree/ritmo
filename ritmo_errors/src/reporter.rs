@@ -43,37 +43,30 @@
 //!
 //! ```rust,ignore
 //! use ritmo_errors::reporter::RitmoReporter;
-//! use slint::ComponentHandle; // or your GUI framework
 //!
 //! pub struct GuiReporter {
-//!     window: slint::Weak<MainWindow>,
+//!     // Store reference to your GUI framework's state or message channel
+//!     // For egui: use channels or shared state
 //! }
 //!
 //! impl GuiReporter {
-//!     pub fn new(window: slint::Weak<MainWindow>) -> Self {
-//!         Self { window }
+//!     pub fn new(/* GUI-specific parameters */) -> Self {
+//!         Self { /* ... */ }
 //!     }
 //! }
 //!
 //! impl RitmoReporter for GuiReporter {
 //!     fn status(&mut self, message: &str) {
-//!         if let Some(window) = self.window.upgrade() {
-//!             window.set_status_message(message.into());
-//!         }
+//!         // Update GUI status message
+//!         // For egui: send message via channel or update shared state
 //!     }
 //!
 //!     fn progress(&mut self, message: &str) {
-//!         if let Some(window) = self.window.upgrade() {
-//!             window.set_progress_message(message.into());
-//!             // Optionally update progress bar
-//!         }
+//!         // Update GUI progress message and optionally progress bar
 //!     }
 //!
 //!     fn error(&mut self, message: &str) {
-//!         if let Some(window) = self.window.upgrade() {
-//!             window.set_error_message(message.into());
-//!             // Optionally show error dialog
-//!         }
+//!         // Display error in GUI (e.g., error dialog or status bar)
 //!     }
 //! }
 //! ```
@@ -87,7 +80,7 @@
 //!
 //! // In your GUI event handler
 //! let config = LibraryConfig::new(&library_path);
-//! let mut reporter = GuiReporter::new(window.as_weak());
+//! let mut reporter = GuiReporter::new(/* GUI-specific parameters */);
 //! let pool = config.create_pool(&mut reporter).await?;
 //! // Now status messages will appear in the GUI instead of being silent
 //! ```
