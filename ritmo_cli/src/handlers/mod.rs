@@ -18,6 +18,7 @@ pub mod contents;
 // Entity CRUD handlers
 pub mod people;
 pub mod publishers;
+pub mod roles;
 pub mod series;
 pub mod tags;
 

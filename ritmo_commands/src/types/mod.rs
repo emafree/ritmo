@@ -336,3 +336,55 @@ pub struct DeletePersonResult {
     pub contents_affected: i64,
     pub warning: Option<String>,
 }
+
+// ============================================================================
+// Role CRUD Results
+// ============================================================================
+
+/// Result of listing roles
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListRolesResult {
+    pub roles: Vec<RoleSummary>,
+    pub total_count: usize,
+}
+
+/// Summary information for a single role
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RoleSummary {
+    pub id: i64,
+    pub key: String,
+    pub display_name: String,
+    pub created_at: Option<i64>,
+}
+
+/// Result of creating a role
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateRoleResult {
+    pub role_id: i64,
+    pub key: String,
+    pub display_name: String,
+    pub created_at: String,
+    pub message: String,
+}
+
+/// Result of updating a role
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateRoleResult {
+    pub role_id: i64,
+    pub key: String,
+    pub display_name: String,
+    pub updated_at: String,
+    pub message: String,
+}
+
+/// Result of deleting a role
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeleteRoleResult {
+    pub role_id: i64,
+    pub key: String,
+    pub display_name: String,
+    pub deleted_at: String,
+    pub books_affected: i64,
+    pub contents_affected: i64,
+    pub warning: Option<String>,
+}

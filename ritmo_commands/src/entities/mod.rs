@@ -26,6 +26,12 @@ mod create_person;
 mod update_person;
 mod delete_person;
 
+// Role commands
+mod list_roles;
+mod create_role;
+mod update_role;
+mod delete_role;
+
 // Tag exports
 pub use list_tags::{ListTagsCommand, ListTagsInput};
 pub use create_tag::{CreateTagCommand, CreateTagInput};
@@ -49,3 +55,9 @@ pub use list_people::{ListPeopleCommand, ListPeopleInput};
 pub use create_person::{CreatePersonCommand, CreatePersonInput};
 pub use update_person::{UpdatePersonCommand, UpdatePersonInput};
 pub use delete_person::{DeletePersonCommand, DeletePersonInput};
+
+// Role exports
+pub use list_roles::{ListRolesCommand, ListRolesInput};
+pub use create_role::{CreateRoleCommand, CreateRoleInput};
+pub use update_role::{UpdateRoleCommand, UpdateRoleInput};
+pub use delete_role::{DeleteRoleCommand, DeleteRoleInput};
