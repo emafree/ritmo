@@ -1,6 +1,16 @@
 # Ritmo Distribution Model
 
-## Overview
+⚠️ **DEPRECATED: This distribution model is not currently implemented.**
+
+This document describes a portable distribution system that was designed but is not part of the current release strategy. Ritmo currently uses standard system installation via the CLI.
+
+**For current usage, please refer to:**
+- [Development Guide](development.md) - Building and running from source
+- [Architecture](architecture.md) - Current system architecture
+
+---
+
+## Overview (Historical Reference)
 
 Ritmo uses a **library-centric distribution model** where the primary distribution method is through pre-configured library bundles with binaries included in the `bootstrap/portable_app/` directory. This approach provides users with ready-to-use libraries that can be easily duplicated when additional libraries are needed.
 

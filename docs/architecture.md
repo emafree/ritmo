@@ -47,10 +47,9 @@ The project is organized as a Rust workspace with the following crates:
 - Commands organized by noun-verb structure (e.g., `books add`, `contents list`)
 - Global option: `--library PATH` to use specific library temporarily
 - Integrates with `ritmo_config` for global settings management
-- Auto-detects portable mode when run from bootstrap/portable_app/
 
 ### ritmo_commands
-- **Command Layer**: Separation between presentation (CLI/GUI) and business logic
+- **Command Layer**: Separation between presentation (CLI) and business logic
 - **Command Trait**: Generic trait with typed Input/Output and validation
 - **10 Commands Implemented**:
   - **Books (4)**: AddBookCommand, ListBooksCommand, UpdateBookCommand, DeleteBookCommand
@@ -59,17 +58,16 @@ The project is organized as a Rust workspace with the following crates:
 - **Validation**: Centralized input validation before service calls
 - **Error Handling**: CommandError enum with conversions from service errors
 - **Testability**: Commands testable independently from UI
-- **Reusability**: Same commands shared between CLI and GUI
+- **Reusability**: Same commands can be used by different presentation layers
 - **Architecture**: `Presentation Layer → Command Layer → Service Layer`
 - See [Command Layer Documentation](command-layer.md) for detailed guide
 
 ### ritmo_config
 - Global application configuration management
 - `AppSettings`: manages last_library_path, recent_libraries (max 10), UI preferences
-- Portable detection: auto-detects if running from bootstrap/portable_app/
 - Config location: `~/.config/ritmo/settings.toml` (Linux/Mac) or `%APPDATA%/ritmo/settings.toml` (Windows)
-- Functions: `config_dir()`, `settings_file()`, `detect_portable_library()`, `is_running_portable()`
-- Shared between GUI and CLI for consistent user experience
+- Functions: `config_dir()`, `settings_file()`
+- Shared between different interfaces for consistent user experience
 - Uses `ritmo_errors` for error handling (no custom error types)
 
 ### ritmo_errors
@@ -79,18 +77,16 @@ The project is organized as a Rust workspace with the following crates:
 - **RitmoReporter Trait** (`reporter.rs`):
   - Trait with 3 methods: `status()`, `progress()`, `error()`
   - `SilentReporter`: no-op implementation for libraries and tests
-  - Allows frontends to implement custom reporters (CLI, GUI)
+  - Allows frontends to implement custom reporters
 
 ### ritmo_mapping
 - Metadata mapping utilities
 
-### ritmo_gui
-- Graphical interface built with egui (modern, immediate-mode UI framework)
-- Minimalista design with sidebar navigation (Books, Authors, Publishers, Series)
-- Features: book list view, search functionality, status messages
-- Uses async/await for database operations
-- Auto-initializes library at ~/RitmoLibrary or ./ritmo_library
-- Currently displays sample data; database integration pending
+<!-- ### ritmo_gui (Early Development - Not Ready for Users)
+- Graphical interface built with egui framework
+- Currently in early development phase
+- Not yet integrated with current command architecture
+-->
 
 ### ritmo_ml
 - Machine learning features for entity deduplication (authors, publishers, series)
@@ -429,7 +425,6 @@ pub async fn cmd_extract_metadata(
 - **Level 2 Workflow**: Extract to JSON → review → batch import
 - **Level 1 Enhancement**: Use ebook_parser as metadata suggestion for single imports
 - **Direct Import Mode**: Extract + import in one command for trusted sources
-- **GUI Integration**: Show extracted metadata with confidence scores for user review
 
 **Error Handling**:
 - Invalid EPUB structure: skip file, log error, continue with next
@@ -472,11 +467,6 @@ library_root/
 ├── config/               # Configuration files
 │   ├── ritmo.toml        # Library config
 │   └── filters.toml      # Library-specific filter presets
-└── bootstrap/
-    └── portable_app/     # Portable application binaries (multi-platform)
-        ├── ritmo_gui     # GUI executable
-        ├── ritmo_cli     # CLI executable
-        └── README.md     # Usage instructions
 ```
 
 **Hash-Based Storage**: Book files are stored in a hierarchical structure based on their SHA256 content hash. This provides:
@@ -484,8 +474,6 @@ library_root/
 - Efficient distribution across 65,536 subdirectories (256×256)
 - Automatic duplicate detection at the filesystem level
 - Optimal performance with large collections
-
-**Portable Mode**: When running from `library_root/bootstrap/portable_app/`, ritmo automatically detects and uses the parent library without needing global configuration.
 
 ## Database Architecture
 
@@ -848,17 +836,16 @@ Modified OPF (after import with user metadata):
   - `RitmoErr::localized_message()` returns translated error messages
   - 48 error translation keys covering all 40 RitmoErr variants
   - Keeps `ritmo_errors` crate independent, adds i18n in `ritmo_db`
-- **Current Coverage**: ~54 initial keys (db.*, cli.*, error.*, gui.*, validation.*)
+- **Current Coverage**: ~54 initial keys (db.*, cli.*, error.*, validation.*)
 - **See**: [i18n Guide](i18n.md) for complete documentation
 
 ## Key Patterns
 
 ### Application Configuration Pattern
 1. Load global settings: `AppSettings::load_or_create(settings_file()?)?`
-2. Detect portable mode: `detect_portable_library()` returns Some(path) if portable
-3. Get library to use: `app_settings.get_library_to_use()` (portable > last_library > None)
-4. Update recent libraries: `app_settings.update_last_library(path)`
-5. Save settings: `app_settings.save(settings_path)?`
+2. Get library to use: `app_settings.get_library_to_use()`
+3. Update recent libraries: `app_settings.update_last_library(path)`
+4. Save settings: `app_settings.save(settings_path)?`
 
 ### LibraryConfig workflow
 1. Create config with root path: `LibraryConfig::new(path)`
@@ -899,7 +886,6 @@ Priority: `RITMO_LANG` > `LANG` > default ("en")
 ## Rust Version
 
 Required Rust version: **stable** (currently 1.91+) (specified in `rust-toolchain.toml`)
-- Updated from 1.75 to support modern dependencies
 - Edition 2024 features are now available
 
 ## Adding New Crates
