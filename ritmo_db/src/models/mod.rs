@@ -11,6 +11,7 @@ pub mod aliases;
 pub mod books;
 pub mod contents;
 pub mod formats;
+pub mod genres;
 pub mod languages;
 pub mod pending_sync;
 pub mod people;
@@ -30,6 +31,7 @@ pub use self::aliases::*;
 pub use self::books::*;
 pub use self::contents::*;
 pub use self::formats::*;
+pub use self::genres::*;
 pub use self::languages::*;
 pub use self::pending_sync::*;
 pub use self::people::*;
@@ -57,6 +59,7 @@ pub struct FullBook {
     pub contents_people_roles: ContentPersonRole,
     pub contents_tags: ContentTag,
     pub formats: Format,
+    pub genres: Genre,
     pub languages: RunningLanguages,
     pub people: Person,
     pub publishers: Publisher,

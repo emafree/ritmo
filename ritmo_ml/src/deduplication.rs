@@ -3,9 +3,9 @@
 //! This module provides high-level functions that combine ML detection
 //! with database operations to identify and optionally merge duplicates.
 
-use crate::db_loaders::{load_people_from_db, load_publishers_from_db, load_roles_from_db, load_series_from_db, load_tags_from_db};
+use crate::db_loaders::{load_genres_from_db, load_people_from_db, load_publishers_from_db, load_roles_from_db, load_series_from_db, load_tags_from_db};
 use crate::entity_learner::MLEntityLearner;
-use crate::merge::{merge_people, merge_publishers, merge_roles, merge_series, merge_tags, MergeStats};
+use crate::merge::{merge_genres, merge_people, merge_publishers, merge_roles, merge_series, merge_tags, MergeStats};
 use crate::traits::MLProcessable;
 use ritmo_errors::RitmoResult;
 use sqlx::SqlitePool;
@@ -296,6 +296,60 @@ pub async fn deduplicate_roles(
     })
 }
 
+/// Find and optionally merge duplicate genres
+///
+/// This function:
+/// 1. Loads all genres from database
+/// 2. Uses ML clustering to identify duplicates
+/// 3. Optionally merges duplicates based on config
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+/// * `config` - Deduplication configuration
+pub async fn deduplicate_genres(
+    pool: &SqlitePool,
+    config: &DeduplicationConfig,
+) -> RitmoResult<DeduplicationResult> {
+    // Step 1: Load all genres from database
+    let genres = load_genres_from_db(pool).await?;
+    let total_entities = genres.len();
+
+    if genres.is_empty() {
+        return Ok(DeduplicationResult {
+            total_entities: 0,
+            duplicate_groups: Vec::new(),
+            merged_groups: Vec::new(),
+            skipped_low_confidence: 0,
+        });
+    }
+
+    // Step 2: Extract canonical keys for ML clustering
+    let canonical_keys: Vec<String> = genres.iter().map(|g| g.canonical_key()).collect();
+
+    // Step 3: Perform ML clustering
+    let mut learner = MLEntityLearner::new();
+    learner.minimum_confidence = config.min_confidence;
+    learner.minimum_frequency = config.min_frequency;
+    learner.create_clusters(&canonical_keys);
+
+    // Step 4: Convert clusters to duplicate groups
+    let duplicate_groups = clusters_to_duplicate_groups(&learner, &genres);
+
+    // Step 5: Optionally merge duplicates
+    let (merged_groups, skipped) = if !config.dry_run && config.auto_merge {
+        merge_duplicate_genres(pool, &duplicate_groups, config).await?
+    } else {
+        (Vec::new(), 0)
+    };
+
+    Ok(DeduplicationResult {
+        total_entities,
+        duplicate_groups,
+        merged_groups,
+        skipped_low_confidence: skipped,
+    })
+}
+
 // ============================================================================
 // Helper functions
 // ============================================================================
@@ -542,6 +596,34 @@ async fn merge_duplicate_roles(
                 );
                 skipped += 1;
             }
+        }
+    }
+
+    Ok((merged, skipped))
+}
+
+async fn merge_duplicate_genres(
+    pool: &SqlitePool,
+    groups: &[DuplicateGroup],
+    config: &DeduplicationConfig,
+) -> RitmoResult<(Vec<MergeStats>, usize)> {
+    let mut merged = Vec::new();
+    let mut skipped = 0;
+
+    for group in groups {
+        if group.confidence >= config.min_confidence {
+            match merge_genres(pool, group.primary_id, &group.duplicate_ids).await {
+                Ok(stats) => merged.push(stats),
+                Err(e) => {
+                    eprintln!(
+                        "Warning: failed to merge genre group (primary: {}, duplicates: {:?}): {}",
+                        group.primary_id, group.duplicate_ids, e
+                    );
+                    skipped += 1;
+                }
+            }
+        } else {
+            skipped += 1;
         }
     }
 

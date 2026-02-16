@@ -66,6 +66,14 @@ CREATE TABLE IF NOT EXISTS "tags" (
 	"created_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
+CREATE TABLE IF NOT EXISTS "genres" (
+	"id"	INTEGER,
+	"name"	TEXT NOT NULL UNIQUE,
+	"description"	TEXT,
+	"created_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+	"updated_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
 CREATE TABLE IF NOT EXISTS "types" (
 	"id"	INTEGER,
 	"key"	TEXT NOT NULL UNIQUE,
@@ -153,13 +161,15 @@ CREATE TABLE IF NOT EXISTS "contents" (
 	"name"	TEXT NOT NULL,
 	"original_title"	TEXT,
 	"type_id"	INTEGER,
+	"genre_id"	INTEGER,
 	"publication_date"	INTEGER,
 	"pages"	INTEGER CHECK("pages" > 0),
 	"notes"	TEXT,
 	"created_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
 	"updated_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
 	PRIMARY KEY("id" AUTOINCREMENT),
-	FOREIGN KEY("type_id") REFERENCES "types"("id") ON DELETE SET NULL
+	FOREIGN KEY("type_id") REFERENCES "types"("id") ON DELETE SET NULL,
+	FOREIGN KEY("genre_id") REFERENCES "genres"("id") ON DELETE SET NULL
 );
 CREATE TABLE IF NOT EXISTS "x_books_contents" (
 	"book_id"	INTEGER NOT NULL,
@@ -233,6 +243,9 @@ CREATE INDEX IF NOT EXISTS "idx_publishers_name_search" ON "publishers" (
 CREATE INDEX IF NOT EXISTS "idx_tags_name_search" ON "tags" (
 	"name" COLLATE NOCASE
 );
+CREATE INDEX IF NOT EXISTS "idx_genres_name_search" ON "genres" (
+	"name" COLLATE NOCASE
+);
 CREATE INDEX IF NOT EXISTS "idx_people_dates" ON "people" (
 	"birth_date",
 	"death_date"
@@ -283,6 +296,9 @@ CREATE INDEX IF NOT EXISTS "idx_contents_search_optimized" ON "contents" (
 	"name",
 	"type_id",
 	"publication_date"
+);
+CREATE INDEX IF NOT EXISTS "idx_contents_genre_lookup" ON "contents" (
+	"genre_id"
 );
 CREATE INDEX IF NOT EXISTS "idx_books_series_lookup" ON "books" (
 	"series_id",
