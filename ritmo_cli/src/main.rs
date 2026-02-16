@@ -71,6 +71,10 @@ enum Commands {
     /// People management (CRUD)
     #[command(subcommand)]
     People(PeopleCommands),
+
+    /// Role management (CRUD)
+    #[command(subcommand)]
+    Roles(RolesCommands),
 }
 
 /// Libraries subcommands
@@ -517,6 +521,41 @@ enum PeopleCommands {
     /// Delete a person
     Delete {
         /// Person ID to delete
+        #[arg(long)]
+        id: i64,
+        /// Skip confirmation prompt
+        #[arg(long, short = 'y')]
+        yes: bool,
+    },
+}
+
+/// Roles subcommands
+#[derive(Subcommand)]
+enum RolesCommands {
+    /// List all roles
+    List {
+        /// Output format (table, json, simple)
+        #[arg(long, short = 'o', default_value = "table")]
+        output: String,
+    },
+    /// Create a new role
+    Create {
+        /// Role key (e.g., "role.translator")
+        #[arg(long, short = 'k')]
+        key: String,
+    },
+    /// Update an existing role
+    Update {
+        /// Role ID to update
+        #[arg(long)]
+        id: i64,
+        /// New role key
+        #[arg(long, short = 'k')]
+        key: Option<String>,
+    },
+    /// Delete a role
+    Delete {
+        /// Role ID to delete
         #[arg(long)]
         id: i64,
         /// Skip confirmation prompt
@@ -993,6 +1032,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             PeopleCommands::Delete { id, yes } => {
                 handlers::people::handle_people_delete(&cli.library, &app_settings, &id, &yes).await?;
+            }
+        },
+
+        Commands::Roles(roles_cmd) => match roles_cmd {
+            RolesCommands::List { output } => {
+                handlers::roles::handle_roles_list(&cli.library, &app_settings, &output).await?;
+            }
+            RolesCommands::Create { key } => {
+                handlers::roles::handle_roles_create(&cli.library, &app_settings, &key).await?;
+            }
+            RolesCommands::Update { id, key } => {
+                handlers::roles::handle_roles_update(&cli.library, &app_settings, &id, &key).await?;
+            }
+            RolesCommands::Delete { id, yes } => {
+                handlers::roles::handle_roles_delete(&cli.library, &app_settings, &id, &yes).await?;
             }
         },
 
