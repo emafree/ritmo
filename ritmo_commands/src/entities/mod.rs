@@ -1,6 +1,6 @@
 //! Entity management commands
 //!
-//! This module contains commands for entity operations (tags, publishers, series, people).
+//! This module contains commands for entity operations (tags, publishers, series, people, genres).
 
 // Tag commands
 mod list_tags;
@@ -32,6 +32,12 @@ mod create_role;
 mod update_role;
 mod delete_role;
 
+// Genre commands
+mod list_genres;
+mod create_genre;
+mod update_genre;
+mod delete_genre;
+
 // Tag exports
 pub use list_tags::{ListTagsCommand, ListTagsInput};
 pub use create_tag::{CreateTagCommand, CreateTagInput};
@@ -61,3 +67,9 @@ pub use list_roles::{ListRolesCommand, ListRolesInput};
 pub use create_role::{CreateRoleCommand, CreateRoleInput};
 pub use update_role::{UpdateRoleCommand, UpdateRoleInput};
 pub use delete_role::{DeleteRoleCommand, DeleteRoleInput};
+
+// Genre exports
+pub use list_genres::{ListGenresCommand, ListGenresInput};
+pub use create_genre::{CreateGenreCommand, CreateGenreInput};
+pub use update_genre::{UpdateGenreCommand, UpdateGenreInput};
+pub use delete_genre::{DeleteGenreCommand, DeleteGenreInput};
