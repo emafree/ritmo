@@ -157,7 +157,6 @@ Filters can be saved as presets for reuse.
 
 **2. Library Presets** (`library/config/filters.toml`):
 - Library-specific filter configuration
-- Portable with library (critical for portable mode!)
 - Travels with library when copied/shared
 
 ### Preset Resolution Order
@@ -196,10 +195,9 @@ ritmo save-preset books --name "epub_only" --format epub --in-library
 ritmo set-default-filter books epub_only
 
 # Copy to USB and share
-# Colleague opens portable library
-cd /media/usb/SharedLibrary/bootstrap/portable_app
-./ritmo_gui    # Opens with "epub_only" filter already active!
-./ritmo_cli list-books  # Automatically uses "epub_only" preset
+# Colleague opens library
+cd /media/usb/SharedLibrary
+ritmo_cli list-books  # Automatically uses "epub_only" preset
 ```
 
 ## Implementation History
