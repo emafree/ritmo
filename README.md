@@ -9,13 +9,12 @@ A Rust-based library management system inspired by Calibre, focused solely on ca
 ### Key Features
 
 - **Multi-library support** with global configuration
-- **Portable mode** for USB/external drive usage
 - **Complete CRUD operations** for books and metadata
 - **Advanced filter system** with OR logic and presets
 - **ML-powered deduplication** for cleaning up duplicate entities
 - **Internationalization (i18n)** - English and Italian support with easy extensibility
 - **SQLite database** - no external server required
-- **CLI and GUI interfaces** - choose your preferred workflow
+- **CLI interface** - powerful command-line tools for library management
 
 ## Quick Start
 
@@ -52,7 +51,6 @@ Comprehensive documentation is available in the `docs/` directory:
 
 ### Library Management
 - Multi-library support with global configuration (`~/.config/ritmo/settings.toml`)
-- Portable mode: auto-detect when running from `bootstrap/portable_app/`
 - Library initialization with directory structure and template database
 
 ### Book Management (CRUD Complete)
@@ -128,7 +126,7 @@ The project is organized as a Rust workspace with specialized crates:
 - **ritmo_config** - Configuration management
 - **ritmo_mapping** - Metadata mapping
 - **ritmo_errors** - Shared error types
-- **ritmo_gui** - Graphical interface (Slint-based)
+- **ritmo_commands** - Command layer for business logic
 - **ebook_parser** - EPUB metadata extraction
 
 ## Essential Commands
@@ -222,9 +220,6 @@ cargo clippy --all -- -D warnings
 
 # Run CLI
 cargo run -p ritmo_cli -- [command]
-
-# Run GUI
-cargo run -p ritmo_gui
 ```
 
 For detailed development instructions, see [Development Guide](docs/development.md).
@@ -236,17 +231,15 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 ## Roadmap
 
 ### High Priority
-1. **Portable Bootstrap**: Automatic binary copying to bootstrap/portable_app/
-2. **Book Import Level 3**: ebook_parser integration for automatic metadata extraction (95% automation goal)
+1. **Book Import Level 3**: ebook_parser integration for automatic metadata extraction (95% automation goal)
+2. **Advanced Filters**: SQL-like query DSL for complex queries
 
 ### Medium Priority
-3. **Advanced Filters**: SQL-like query DSL for complex queries
-4. **Preset System Phase 3**: Auto-save last filter, interactive editing
-5. **Documentation**: Comprehensive user documentation
+3. **Preset System Phase 3**: Auto-save last filter, interactive editing
+4. **Documentation**: Comprehensive user documentation
 
 ### Low Priority
-6. **GUI Integration**: Update `ritmo_gui` to use `ritmo_config`
-7. **Integrate ebook_parser**: Extract EPUB metadata automatically (goal: 95% automation)
+5. **Integrate ebook_parser**: Extract EPUB metadata automatically (goal: 95% automation)
 
 ## License
 
