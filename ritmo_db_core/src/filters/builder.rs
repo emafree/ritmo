@@ -214,6 +214,22 @@ pub fn build_contents_query(filters: &ContentFilters) -> (String, Vec<String>) {
         params.append(&mut clause_params);
     }
 
+    // Filtro generi (OR logic if multiple, richiede JOIN con genres)
+    if !filters.genres.is_empty() {
+        query.push_str(
+            r#"
+            LEFT JOIN genres ON contents.genre_id = genres.id
+            "#,
+        );
+
+        if let Some((clause, mut clause_params)) =
+            build_or_clause("genres.name", &filters.genres, true)
+        {
+            where_clauses.push(clause);
+            params.append(&mut clause_params);
+        }
+    }
+
     // Filtro anno
     if let Some(year) = filters.year {
         where_clauses.push(

@@ -1,7 +1,7 @@
 use crate::utils::opt_year_to_timestamp;
 use ritmo_db::{
-    crud_get, get_or_create, Book, BookContent, Content, ContentPersonRole, ContentTag, Person,
-    Role, RunningLanguages, Tag, Type,
+    crud_get, get_or_create, Book, BookContent, Content, ContentPersonRole, ContentTag, Genre,
+    Person, Role, RunningLanguages, Tag, Type,
 };
 use ritmo_errors::{RitmoErr, RitmoResult};
 
@@ -12,6 +12,7 @@ pub struct ContentCreateMetadata {
     pub original_title: Option<String>,
     pub people: Option<Vec<(String, String)>>, // (name, role)
     pub content_type: Option<String>,
+    pub genre: Option<String>,
     pub year: Option<i32>,
     pub pages: Option<i64>,
     pub notes: Option<String>,
@@ -46,6 +47,13 @@ pub async fn create_content(
         None
     };
 
+    // 2b. Ottieni/crea genere se specificato
+    let genre_id = if let Some(genre_name) = &metadata.genre {
+        Some(get_or_create::<Genre>(pool, genre_name).await?)
+    } else {
+        None
+    };
+
     // 3. Converti anno in timestamp se presente
     let publication_date = opt_year_to_timestamp(metadata.year);
 
@@ -56,7 +64,7 @@ pub async fn create_content(
         name: metadata.title.clone(),
         original_title: metadata.original_title,
         type_id,
-        genre_id: None,
+        genre_id,
         publication_date,
         pages: metadata.pages,
         notes: metadata.notes,

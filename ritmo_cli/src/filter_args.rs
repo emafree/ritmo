@@ -376,6 +376,10 @@ pub struct ContentFilterArgs {
     #[arg(long)]
     pub content_type: Option<String>,
 
+    /// Filtra per genere
+    #[arg(long)]
+    pub genre: Option<String>,
+
     /// Filtra per anno di pubblicazione
     #[arg(long)]
     pub year: Option<i32>,
@@ -409,6 +413,9 @@ impl ContentFilterArgs {
         if let Some(content_type) = &self.content_type {
             filters = filters.with_content_type(content_type.clone());
         }
+        if let Some(genre) = &self.genre {
+            filters = filters.with_genre(genre.clone());
+        }
 
         // Set other fields directly
         filters.year = self.year;
@@ -425,7 +432,7 @@ impl ContentFilterArgs {
 #[derive(Args, Clone, Debug)]
 pub struct ContentSelector {
     /// Select by content ID (for single-item operations)
-    #[arg(long, conflicts_with_all = ["author", "content_type", "year", "search"])]
+    #[arg(long, conflicts_with_all = ["author", "content_type", "genre", "year", "search"])]
     pub id: Option<i64>,
 
     /// Filter arguments (for bulk operations)
@@ -464,6 +471,10 @@ pub struct ContentUpdateArgs {
     #[arg(long)]
     pub content_type: Option<String>,
 
+    /// Nuovo genere
+    #[arg(long)]
+    pub genre: Option<String>,
+
     /// Nuovo anno di pubblicazione
     #[arg(long)]
     pub year: Option<i32>,
@@ -492,6 +503,7 @@ impl ContentUpdateArgs {
             || self.original_title.is_some()
             || !self.people.is_empty()
             || self.content_type.is_some()
+            || self.genre.is_some()
             || self.year.is_some()
             || self.notes.is_some()
             || self.pages.is_some()
@@ -505,7 +517,7 @@ impl ContentUpdateArgs {
 #[derive(Args, Clone, Debug)]
 pub struct ContentBulkUpdateSelector {
     /// Select by ID (mutually exclusive with filters)
-    #[arg(long, conflicts_with_all = ["filter_author", "filter_content_type", "filter_year", "filter_search"])]
+    #[arg(long, conflicts_with_all = ["filter_author", "filter_content_type", "filter_genre", "filter_year", "filter_search"])]
     pub id: Option<i64>,
 
     // FILTER ARGUMENTS (for selecting contents to update)
@@ -516,6 +528,10 @@ pub struct ContentBulkUpdateSelector {
     /// Filtra per tipo di contenuto
     #[arg(long = "filter-content-type")]
     pub filter_content_type: Option<String>,
+
+    /// Filtra per genere
+    #[arg(long = "filter-genre")]
+    pub filter_genre: Option<String>,
 
     /// Filtra per anno
     #[arg(long = "filter-year")]
@@ -541,6 +557,10 @@ pub struct ContentBulkUpdateSelector {
     /// Nuovo tipo di contenuto
     #[arg(long = "set-content-type")]
     pub set_content_type: Option<String>,
+
+    /// Nuovo genere
+    #[arg(long = "set-genre")]
+    pub set_genre: Option<String>,
 
     /// Nuovo anno
     #[arg(long = "set-year")]
@@ -573,6 +593,7 @@ impl ContentBulkUpdateSelector {
     pub fn has_filters(&self) -> bool {
         self.filter_author.is_some()
             || self.filter_content_type.is_some()
+            || self.filter_genre.is_some()
             || self.filter_year.is_some()
             || self.filter_search.is_some()
     }
@@ -583,6 +604,7 @@ impl ContentBulkUpdateSelector {
             || self.set_original_title.is_some()
             || !self.set_people.is_empty()
             || self.set_content_type.is_some()
+            || self.set_genre.is_some()
             || self.set_year.is_some()
             || self.set_notes.is_some()
             || self.set_pages.is_some()
@@ -599,6 +621,9 @@ impl ContentBulkUpdateSelector {
         }
         if let Some(content_type) = &self.filter_content_type {
             filters = filters.with_content_type(content_type.clone());
+        }
+        if let Some(genre) = &self.filter_genre {
+            filters = filters.with_genre(genre.clone());
         }
 
         filters.year = self.filter_year;

@@ -34,6 +34,9 @@ pub struct UpdateContentInput {
     /// New content type (optional)
     pub content_type: Option<String>,
 
+    /// New genre (optional)
+    pub genre: Option<String>,
+
     /// New publication year (optional)
     pub year: Option<i32>,
 
@@ -67,6 +70,7 @@ impl Command for UpdateContentCommand {
             original_title: input.original_title,
             people: input.people,
             content_type: input.content_type,
+            genre: input.genre,
             year: input.year,
             notes: input.notes,
             pages: input.pages,

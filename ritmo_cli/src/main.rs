@@ -782,6 +782,10 @@ enum ContentsCommands {
         #[arg(long)]
         content_type: Option<String>,
 
+        /// Genere (Science Fiction, Mystery, etc.)
+        #[arg(long)]
+        genre: Option<String>,
+
         /// Anno di pubblicazione
         #[arg(long, short = 'y')]
         year: Option<i32>,
@@ -1245,6 +1249,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 original_title,
                 people,
                 content_type,
+                genre,
                 year,
                 notes,
                 pages,
@@ -1259,6 +1264,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     original_title,
                     people,
                     content_type,
+                    genre,
                     year,
                     notes,
                     pages,

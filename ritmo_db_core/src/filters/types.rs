@@ -142,13 +142,15 @@ impl BookSortField {
 
 /// Filtri per la ricerca di contenuti
 ///
-/// Supports multiple values with OR logic for authors and content types.
+/// Supports multiple values with OR logic for authors, content types, and genres.
 #[derive(Debug, Clone, Default)]
 pub struct ContentFilters {
     /// Authors (OR logic if multiple)
     pub authors: Vec<String>,
     /// Content types (OR logic if multiple)
     pub content_types: Vec<String>,
+    /// Genres (OR logic if multiple)
+    pub genres: Vec<String>,
     /// Publication year (exact match)
     pub year: Option<i32>,
     /// Full-text search
@@ -173,6 +175,12 @@ impl ContentFilters {
         self
     }
 
+    /// Helper to add a single genre
+    pub fn with_genre(mut self, genre: impl Into<String>) -> Self {
+        self.genres.push(genre.into());
+        self
+    }
+
     /// Backward compatibility: set author from Option<String>
     pub fn set_author_opt(mut self, author: Option<String>) -> Self {
         if let Some(a) = author {
@@ -185,6 +193,14 @@ impl ContentFilters {
     pub fn set_content_type_opt(mut self, content_type: Option<String>) -> Self {
         if let Some(ct) = content_type {
             self.content_types = vec![ct];
+        }
+        self
+    }
+
+    /// Backward compatibility: set genre from Option<String>
+    pub fn set_genre_opt(mut self, genre: Option<String>) -> Self {
+        if let Some(g) = genre {
+            self.genres = vec![g];
         }
         self
     }

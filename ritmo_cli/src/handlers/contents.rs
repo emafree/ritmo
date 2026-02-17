@@ -29,6 +29,7 @@ pub async fn handle_contents_add(
     original_title: Option<String>,
     people: Vec<String>,
     content_type: Option<String>,
+    genre: Option<String>,
     year: Option<i32>,
     notes: Option<String>,
     pages: Option<i64>,
@@ -93,6 +94,7 @@ pub async fn handle_contents_add(
         original_title,
         people: parsed_people,
         content_type,
+        genre,
         year,
         notes,
         pages,
@@ -139,7 +141,7 @@ pub async fn handle_contents_list(
 
     // Execute command
     let command = ListContentsCommand;
-    let result = command.execute(&config, &pool, input).await?;
+    let _result = command.execute(&config, &pool, input).await?;
 
     // Format output (TODO: create format_content_summaries similar to books)
     // For now, we need to use execute_contents_query for formatting compatibility
@@ -276,6 +278,7 @@ pub async fn handle_contents_update(
             original_title: selector.set_original_title.clone(),
             people: parsed_people.clone(),
             content_type: selector.set_content_type.clone(),
+            genre: selector.set_genre.clone(),
             year: selector.set_year,
             notes: selector.set_notes.clone(),
             pages: selector.set_pages,
