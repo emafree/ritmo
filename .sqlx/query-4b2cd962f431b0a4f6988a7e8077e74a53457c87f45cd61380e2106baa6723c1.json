@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE formats SET key = ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "4b2cd962f431b0a4f6988a7e8077e74a53457c87f45cd61380e2106baa6723c1"
+}

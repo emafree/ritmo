@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM x_contents_tags WHERE content_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "content_id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "tag_id",
+        "ordinal": 1,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "c9518cabc2718ac915b6193c46f47e6ff6de5a9e4da2b325f69869e3ab49db23"
+}

@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM x_contents_people_roles WHERE role_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "content_id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "person_id",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "role_id",
+        "ordinal": 2,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "38198f8f52f97c297fbf8f113c1064e6041997bfee595ace8ae51b9d88fc359c"
+}

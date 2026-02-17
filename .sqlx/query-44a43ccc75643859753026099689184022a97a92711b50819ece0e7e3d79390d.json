@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO books (\n                name, original_title, publisher_id, format_id, series_id, series_index,\n                publication_date, last_modified_date, isbn, notes,\n                has_cover, has_paper, file_link, file_size, file_hash, created_at\n            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 16
+    },
+    "nullable": []
+  },
+  "hash": "44a43ccc75643859753026099689184022a97a92711b50819ece0e7e3d79390d"
+}

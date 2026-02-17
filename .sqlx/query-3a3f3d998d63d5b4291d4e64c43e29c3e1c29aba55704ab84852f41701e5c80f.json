@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO people (\n                name, display_name, given_name, surname, middle_names, title, suffix, nationality,\n                birth_date, death_date, biography, normalized_key, confidence, source, verified,\n                created_at, updated_at\n            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 17
+    },
+    "nullable": []
+  },
+  "hash": "3a3f3d998d63d5b4291d4e64c43e29c3e1c29aba55704ab84852f41701e5c80f"
+}

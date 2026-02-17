@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT 1 as test",
+  "describe": {
+    "columns": [
+      {
+        "name": "test",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "dbfb19a9bfc3a4aaa367c5e44698718392f36f4dc4ccff6f371c0a3a1674db18"
+}

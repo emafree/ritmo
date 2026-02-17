@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE genres SET name = ?, description = ?, updated_at = ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "417696f27e8c3600e9f488c6c3fa90ed35e9c0594bf84befa2f799d68ddc899e"
+}

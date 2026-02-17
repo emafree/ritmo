@@ -62,8 +62,7 @@ impl Command for DeleteGenreCommand {
             input.id
         )
         .fetch_one(pool)
-        .await?
-        .unwrap_or(0);
+        .await?;
 
         if usage_count > 0 {
             return Err(crate::CommandError::Validation(format!(

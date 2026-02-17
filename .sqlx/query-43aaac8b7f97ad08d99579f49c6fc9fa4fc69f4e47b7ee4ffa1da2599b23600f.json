@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE people SET\n                name = ?, display_name = ?, given_name = ?, surname = ?, middle_names = ?, title = ?, suffix = ?,\n                nationality = ?, birth_date = ?, death_date = ?, biography = ?, normalized_key = ?, confidence = ?,\n                source = ?, verified = ?, updated_at = ?\n            WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 17
+    },
+    "nullable": []
+  },
+  "hash": "43aaac8b7f97ad08d99579f49c6fc9fa4fc69f4e47b7ee4ffa1da2599b23600f"
+}

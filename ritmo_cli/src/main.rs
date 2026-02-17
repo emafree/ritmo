@@ -1011,7 +1011,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 dry_run,
                 interactive,
             } => {
-                cmd_deduplicate_genres(&cli.library, &app_settings, entity_name, threshold, auto_merge, dry_run, interactive).await?;
+                cmd_deduplicate_genres(&cli.library, &app_settings, &entity_name, threshold, auto_merge, dry_run, interactive).await?;
             }
             DeduplicateCommands::All {
                 threshold,
@@ -1104,10 +1104,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 handlers::genres::handle_genres_create(&cli.library, &app_settings, &name, &description).await?;
             }
             GenresCommands::Update { id, name, description } => {
-                handlers::genres::handle_genres_update(&cli.library, &app_settings, &id, &name, &description).await?;
+                handlers::genres::handle_genres_update(&cli.library, &app_settings, id, &name, &description).await?;
             }
             GenresCommands::Delete { id, yes } => {
-                handlers::genres::handle_genres_delete(&cli.library, &app_settings, &id, &yes).await?;
+                handlers::genres::handle_genres_delete(&cli.library, &app_settings, id, yes).await?;
             }
         },
 

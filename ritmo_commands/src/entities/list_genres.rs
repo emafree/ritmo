@@ -57,7 +57,7 @@ impl Command for ListGenresCommand {
         let genre_summaries: Vec<GenreSummary> = genres_list
             .into_iter()
             .map(|genre| GenreSummary {
-                id: genre.id,
+                id: genre.id.unwrap_or(0),
                 name: genre.name,
                 description: genre.description,
             })

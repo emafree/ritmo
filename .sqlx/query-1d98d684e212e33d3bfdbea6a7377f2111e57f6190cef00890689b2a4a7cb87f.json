@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO x_books_tags (book_id, tag_id) VALUES (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "1d98d684e212e33d3bfdbea6a7377f2111e57f6190cef00890689b2a4a7cb87f"
+}

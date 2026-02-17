@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "PRAGMA page_count",
+  "describe": {
+    "columns": [
+      {
+        "name": "page_count",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "e2ba7c9f86d7322e2f8cc7bbec5827d63b2f0cbfd587f7d89d488b38aaaa7397"
+}

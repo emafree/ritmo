@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE metadata SET updated_at = ?1 WHERE version = ?2 AND created_at = ?3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "fb41f05f192e9fe3cd164cab017e06e3cfb45f0902bd5de755aecdbfa64052cc"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE contents SET\n                name = ?, original_title = ?, type_id = ?, genre_id = ?, publication_date = ?, pages = ?, notes = ?, updated_at = ?\n            WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "2d1804904fb4f5a6f12dd093a0a05c6f148d1c4928a540ff0e7222fe6e25e026"
+}

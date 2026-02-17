@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE publishers SET name = ?, country = ?, website = ?, notes = ?, updated_at = ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "db8a353bb40482ba3025cc1cf31ac5234f66d3a1d6536714063e83fdac8ef3d1"
+}

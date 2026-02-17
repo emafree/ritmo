@@ -56,6 +56,7 @@ pub async fn create_content(
         name: metadata.title.clone(),
         original_title: metadata.original_title,
         type_id,
+        genre_id: None,
         publication_date,
         pages: metadata.pages,
         notes: metadata.notes,

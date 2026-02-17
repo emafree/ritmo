@@ -131,22 +131,22 @@ pub async fn handle_genres_delete(
     // Confirm deletion if not using --yes flag
     if !yes {
         let preview_items = vec![PreviewItem {
-            label: "Genre".to_string(),
-            value: format!("{} (ID: {})", genre.name, genre.id),
+            id: genre.id,
+            display_text: genre.name.clone(),
         }];
 
         let conf_config = ConfirmationConfig {
-            operation: "Delete Genre".to_string(),
-            warning: Some(format!(
-                "This will permanently delete the genre '{}'",
-                genre.name
-            )),
-            preview_items,
+            items: preview_items,
+            operation: "delete",
+            entity_type: "genre",
+            force_yes: yes,
+            dry_run: false,
+            warning: Some("This will permanently delete the genre"),
         };
 
-        match confirm_operation(&conf_config)? {
-            ConfirmationResult::Confirmed => {}
-            ConfirmationResult::Cancelled => {
+        match confirm_operation(conf_config)? {
+            ConfirmationResult::Confirmed | ConfirmationResult::Skip => {}
+            ConfirmationResult::Declined => {
                 println!("Operation cancelled");
                 return Ok(());
             }

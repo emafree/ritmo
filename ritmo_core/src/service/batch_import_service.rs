@@ -249,6 +249,7 @@ async fn create_content_from_input(
         name: content_input.title.clone(),
         original_title: content_input.original_title.clone(),
         type_id,
+        genre_id: None,
         publication_date,
         pages: None, // Contents don't have separate page counts
         notes: None, // Contents inherit notes from book
