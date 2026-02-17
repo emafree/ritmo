@@ -774,7 +774,7 @@ enum ContentsCommands {
         #[arg(long)]
         original_title: Option<String>,
 
-        /// Persone con ruoli (formato: "Nome:Ruolo")
+        /// Persone con ruoli (formato: "Nome:Ruolo"). Deve contenere almeno un autore.
         #[arg(long)]
         people: Vec<String>,
 
@@ -794,10 +794,6 @@ enum ContentsCommands {
         #[arg(long, short = 'n')]
         notes: Option<String>,
 
-        /// Numero di pagine
-        #[arg(long)]
-        pages: Option<i64>,
-
         /// Tags
         #[arg(long)]
         tags: Vec<String>,
@@ -806,9 +802,9 @@ enum ContentsCommands {
         #[arg(long)]
         languages: Vec<String>,
 
-        /// ID del libro a cui associare il contenuto (opzionale)
+        /// ID del libro a cui associare il contenuto (obbligatorio)
         #[arg(long)]
-        book_id: Option<i64>,
+        book_id: i64,
     },
 
     /// List contents with filters
@@ -853,26 +849,19 @@ enum ContentsCommands {
         dry_run: bool,
     },
 
-    /// Link content to book
-    Link {
+    /// Modify the link between content and book
+    ModifyLink {
         /// Content ID
         #[arg(long)]
         content_id: i64,
 
-        /// Book ID
+        /// New book ID to link to
         #[arg(long)]
-        book_id: i64,
-    },
+        new_book_id: i64,
 
-    /// Unlink content from book
-    Unlink {
-        /// Content ID
+        /// Old book ID to unlink from (optional)
         #[arg(long)]
-        content_id: i64,
-
-        /// Book ID
-        #[arg(long)]
-        book_id: i64,
+        old_book_id: Option<i64>,
     },
 }
 
@@ -1252,7 +1241,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 genre,
                 year,
                 notes,
-                pages,
                 tags,
                 languages,
                 book_id,
@@ -1267,7 +1255,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     genre,
                     year,
                     notes,
-                    pages,
                     tags,
                     languages,
                     book_id,
@@ -1312,28 +1299,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .await?;
             }
 
-            ContentsCommands::Link {
+            ContentsCommands::ModifyLink {
                 content_id,
-                book_id,
+                new_book_id,
+                old_book_id,
             } => {
-                handlers::contents::handle_contents_link(
+                handlers::contents::handle_contents_modify_link(
                     &cli.library,
                     &app_settings,
                     content_id,
-                    book_id,
-                )
-                .await?;
-            }
-
-            ContentsCommands::Unlink {
-                content_id,
-                book_id,
-            } => {
-                handlers::contents::handle_contents_unlink(
-                    &cli.library,
-                    &app_settings,
-                    content_id,
-                    book_id,
+                    new_book_id,
+                    old_book_id,
                 )
                 .await?;
             }

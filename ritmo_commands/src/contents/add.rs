@@ -23,6 +23,7 @@ pub struct AddContentInput {
     pub original_title: Option<String>,
 
     /// People associated with the content: Vec<(name, role)>
+    /// Must contain at least one author
     pub people: Option<Vec<(String, String)>>,
 
     /// Content type (e.g., "type.novel", "type.short_story")
@@ -37,9 +38,6 @@ pub struct AddContentInput {
     /// Additional notes
     pub notes: Option<String>,
 
-    /// Number of pages
-    pub pages: Option<i64>,
-
     /// Tags
     pub tags: Option<Vec<String>>,
 
@@ -47,8 +45,8 @@ pub struct AddContentInput {
     /// Example: vec![("Italian".to_string(), "it".to_string(), "ita".to_string(), "language_role.original".to_string())]
     pub languages: Option<Vec<(String, String, String, String)>>,
 
-    /// Optional book ID to associate with
-    pub book_id: Option<i64>,
+    /// Book ID to associate with (required)
+    pub book_id: i64,
 }
 
 #[async_trait]
@@ -61,6 +59,21 @@ impl Command for AddContentCommand {
         if input.title.trim().is_empty() {
             return Err(crate::CommandError::Validation(
                 "Title cannot be empty".to_string()
+            ));
+        }
+
+        // Validate that at least one author is present
+        // Note: We check for common author role keywords in English and Italian.
+        // This could be extended to support more languages or configured via settings.
+        let has_author = input.people.as_ref().map_or(false, |people| {
+            people.iter().any(|(_, role)| {
+                role.to_lowercase().contains("author") || role.to_lowercase().contains("autore")
+            })
+        });
+
+        if !has_author {
+            return Err(crate::CommandError::Validation(
+                "At least one author must be specified in --people".to_string()
             ));
         }
 
@@ -85,10 +98,10 @@ impl Command for AddContentCommand {
             genre: input.genre,
             year: input.year,
             notes: input.notes,
-            pages: input.pages,
+            pages: None, // Pages option removed as per requirement
             tags: input.tags,
             languages: input.languages,
-            book_id: input.book_id,
+            book_id: Some(input.book_id),
         };
 
         // Execute creation
@@ -98,7 +111,7 @@ impl Command for AddContentCommand {
         Ok(AddContentResult {
             content_id,
             title: input.title,
-            book_id: input.book_id,
+            book_id: Some(input.book_id),
         })
     }
 }
@@ -113,18 +126,59 @@ mod tests {
         let input = AddContentInput {
             title: "".to_string(),
             original_title: None,
-            people: None,
+            people: Some(vec![("John Doe".to_string(), "author".to_string())]),
             content_type: None,
+            genre: None,
             year: None,
             notes: None,
-            pages: None,
             tags: None,
             languages: None,
-            book_id: None,
+            book_id: 1,
         };
 
         let result = command.validate(&input);
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), crate::CommandError::Validation(_)));
+    }
+
+    #[test]
+    fn test_validation_missing_author() {
+        let command = AddContentCommand;
+        let input = AddContentInput {
+            title: "Test Content".to_string(),
+            original_title: None,
+            people: Some(vec![("John Doe".to_string(), "editor".to_string())]),
+            content_type: None,
+            genre: None,
+            year: None,
+            notes: None,
+            tags: None,
+            languages: None,
+            book_id: 1,
+        };
+
+        let result = command.validate(&input);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), crate::CommandError::Validation(_)));
+    }
+
+    #[test]
+    fn test_validation_with_author() {
+        let command = AddContentCommand;
+        let input = AddContentInput {
+            title: "Test Content".to_string(),
+            original_title: None,
+            people: Some(vec![("John Doe".to_string(), "author".to_string())]),
+            content_type: None,
+            genre: None,
+            year: None,
+            notes: None,
+            tags: None,
+            languages: None,
+            book_id: 1,
+        };
+
+        let result = command.validate(&input);
+        assert!(result.is_ok());
     }
 }
