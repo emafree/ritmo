@@ -6,7 +6,7 @@ use ritmo_db::mark_books_for_sync;
 use ritmo_db_core::LibraryConfig;
 use ritmo_errors::reporter::SilentReporter;
 use ritmo_ml::deduplication::{
-    deduplicate_people, deduplicate_publishers, deduplicate_roles, deduplicate_series,
+    deduplicate_genres, deduplicate_people, deduplicate_publishers, deduplicate_roles, deduplicate_series,
     deduplicate_tags, filter_duplicate_groups_by_entity, DeduplicationConfig, DeduplicationResult,
     DuplicateGroup,
 };
@@ -716,6 +716,112 @@ pub async fn cmd_deduplicate_roles(
 
                 if !all_affected_books.is_empty() {
                     mark_books_for_sync(&pool, &all_affected_books, "role_deduplicate").await?;
+                    println!("\n📝 Marked {} books for metadata sync", all_affected_books.len());
+                    println!("   Run 'ritmo sync-metadata' to update EPUB files with new metadata");
+                }
+            }
+
+            Ok(())
+        }
+        Err(e) => {
+            eprintln!("✗ Error during deduplication: {}", e);
+            Err(e.into())
+        }
+    }
+}
+
+/// Command: deduplicate-genres - Find and merge duplicate genres
+pub async fn cmd_deduplicate_genres(
+    cli_library: &Option<PathBuf>,
+    app_settings: &AppSettings,
+    entity_name: &Option<String>,
+    threshold: f64,
+    auto_merge: bool,
+    dry_run: bool,
+    interactive: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let library_path = get_library_path(cli_library, app_settings)?;
+    let config = LibraryConfig::new(&library_path);
+    if !config.exists() {
+        return Err(format!("Library does not exist: {}", library_path.display()).into());
+    }
+
+    let mut reporter = SilentReporter;
+    let pool = config.create_pool(&mut reporter).await?;
+
+    println!("🔍 Searching for duplicate genres...");
+
+    let actual_dry_run = if auto_merge && !dry_run { false } else { true };
+
+    let dedup_config = DeduplicationConfig {
+        min_confidence: threshold,
+        min_frequency: 2,
+        auto_merge,
+        dry_run: actual_dry_run,
+    };
+
+    match deduplicate_genres(&pool, &dedup_config).await {
+        Ok(mut result) => {
+            // Filter by entity name if provided
+            if let Some(ref name) = entity_name {
+                let original_count = result.duplicate_groups.len();
+                result.duplicate_groups = filter_duplicate_groups_by_entity(&result.duplicate_groups, name);
+                
+                if result.duplicate_groups.is_empty() {
+                    println!("✓ No duplicates found for entity: {}", name);
+                    return Ok(());
+                }
+                
+                println!("📋 Filtered {} -> {} groups matching '{}'", 
+                    original_count, result.duplicate_groups.len(), name);
+            }
+
+            // Interactive mode: let user choose canonical entity
+            if interactive && !result.duplicate_groups.is_empty() {
+                let processed_groups = process_groups_interactively(&result.duplicate_groups);
+                
+                if processed_groups.is_empty() {
+                    println!("\n⚠️  All merges were cancelled");
+                    return Ok(());
+                }
+                
+                // Replace duplicate_groups with processed ones
+                result.duplicate_groups = processed_groups;
+                
+                // Now perform the merge if not in dry-run
+                if !actual_dry_run {
+                    use ritmo_ml::merge::merge_genres;
+                    let mut merged_groups = Vec::new();
+                    
+                    for group in &result.duplicate_groups {
+                        match merge_genres(&pool, group.primary_id, &group.duplicate_ids).await {
+                            Ok(stats) => {
+                                merged_groups.push(stats);
+                                println!("✓ Merged group with primary ID: {}", group.primary_id);
+                            }
+                            Err(e) => {
+                                eprintln!("✗ Error merging group (primary={}): {}", group.primary_id, e);
+                            }
+                        }
+                    }
+                    
+                    result.merged_groups = merged_groups;
+                }
+            }
+
+            print_deduplication_results(&result, "Genres", dry_run);
+
+            // Mark affected books for sync if not dry-run
+            if !actual_dry_run && !result.merged_groups.is_empty() {
+                let mut all_affected_books = Vec::new();
+                for stats in &result.merged_groups {
+                    all_affected_books.extend(&stats.affected_book_ids);
+                }
+                all_affected_books.sort();
+                all_affected_books.dedup();
+
+                if !all_affected_books.is_empty() {
+                    mark_books_for_sync(&pool, &all_affected_books, "genre_deduplicate").await?;
                     println!("\n📝 Marked {} books for metadata sync", all_affected_books.len());
                     println!("   Run 'ritmo sync-metadata' to update EPUB files with new metadata");
                 }

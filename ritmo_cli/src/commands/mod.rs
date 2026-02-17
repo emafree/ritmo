@@ -14,7 +14,7 @@ pub mod sync;
 
 // Re-export command functions for convenience
 pub use deduplication::{
-    cmd_deduplicate_all, cmd_deduplicate_people, cmd_deduplicate_publishers,
+    cmd_deduplicate_all, cmd_deduplicate_genres, cmd_deduplicate_people, cmd_deduplicate_publishers,
     cmd_deduplicate_roles, cmd_deduplicate_series, cmd_deduplicate_tags,
 };
 pub use duplicate::cmd_duplicate;
