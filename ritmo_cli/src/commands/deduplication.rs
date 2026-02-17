@@ -734,7 +734,7 @@ pub async fn cmd_deduplicate_roles(
 pub async fn cmd_deduplicate_genres(
     cli_library: &Option<PathBuf>,
     app_settings: &AppSettings,
-    entity_name: &Option<String>,
+    entity_name: Option<String>,
     threshold: f64,
     auto_merge: bool,
     dry_run: bool,

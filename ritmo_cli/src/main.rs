@@ -1011,7 +1011,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 dry_run,
                 interactive,
             } => {
-                cmd_deduplicate_genres(&cli.library, &app_settings, &entity_name, threshold, auto_merge, dry_run, interactive).await?;
+                cmd_deduplicate_genres(&cli.library, &app_settings, entity_name, threshold, auto_merge, dry_run, interactive).await?;
             }
             DeduplicateCommands::All {
                 threshold,
