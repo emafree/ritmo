@@ -12,8 +12,7 @@ use ritmo_commands::{
         ListContentsCommand, ListContentsInput,
         UpdateContentCommand, UpdateContentInput,
         DeleteContentCommand, DeleteContentInput,
-        LinkContentCommand, LinkContentInput,
-        UnlinkContentCommand, UnlinkContentInput,
+        ModifyLinkContentCommand, ModifyLinkContentInput,
     }
 };
 use ritmo_config::AppSettings;
@@ -32,10 +31,9 @@ pub async fn handle_contents_add(
     genre: Option<String>,
     year: Option<i32>,
     notes: Option<String>,
-    pages: Option<i64>,
     tags: Vec<String>,
     languages: Vec<String>,
-    book_id: Option<i64>,
+    book_id: i64,
 ) -> Result<(), Box<dyn std::error::Error>> {
     use super::common::{get_library_and_pool, parse_people};
 
@@ -97,7 +95,6 @@ pub async fn handle_contents_add(
         genre,
         year,
         notes,
-        pages,
         tags: if tags.is_empty() { None } else { Some(tags) },
         languages: parsed_languages,
         book_id,
@@ -108,9 +105,7 @@ pub async fn handle_contents_add(
     match command.execute(&_config, &pool, input).await {
         Ok(result) => {
             println!("✓ Contenuto creato con successo! ID: {}", result.content_id);
-            if let Some(book_id) = result.book_id {
-                println!("  Associato al libro ID: {}", book_id);
-            }
+            println!("  Associato al libro ID: {}", result.book_id.unwrap());
         }
         Err(e) => {
             println!("✗ Errore durante la creazione: {}", e);
@@ -397,75 +392,55 @@ pub async fn handle_contents_delete(
     Ok(())
 }
 
-/// Handle: contents link
-/// Link content to book
-pub async fn handle_contents_link(
+/// Handle: contents modify-link
+/// Modify the link between content and book
+pub async fn handle_contents_modify_link(
     cli_library: &Option<PathBuf>,
     app_settings: &AppSettings,
     content_id: i64,
-    book_id: i64,
+    new_book_id: i64,
+    old_book_id: Option<i64>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     use super::common::get_library_and_pool;
 
     let (config, pool) = get_library_and_pool(cli_library, app_settings).await?;
 
-    println!(
-        "Associazione contenuto {} al libro {}...",
-        content_id, book_id
-    );
-
-    // Prepare command input
-    let input = LinkContentInput {
-        content_id,
-        book_id,
-    };
-
-    // Execute command
-    let command = LinkContentCommand;
-    match command.execute(&config, &pool, input).await {
-        Ok(_) => {
-            println!("✓ Contenuto associato con successo!");
-        }
-        Err(e) => {
-            println!("✗ Errore durante l'associazione: {}", e);
-            return Err(e.into());
-        }
+    if let Some(old_id) = old_book_id {
+        println!(
+            "Modifica associazione contenuto {} dal libro {} al libro {}...",
+            content_id, old_id, new_book_id
+        );
+    } else {
+        println!(
+            "Associazione contenuto {} al libro {}...",
+            content_id, new_book_id
+        );
     }
 
-    Ok(())
-}
-
-/// Handle: contents unlink
-/// Unlink content from book
-pub async fn handle_contents_unlink(
-    cli_library: &Option<PathBuf>,
-    app_settings: &AppSettings,
-    content_id: i64,
-    book_id: i64,
-) -> Result<(), Box<dyn std::error::Error>> {
-    use super::common::get_library_and_pool;
-
-    let (config, pool) = get_library_and_pool(cli_library, app_settings).await?;
-
-    println!(
-        "Rimozione associazione contenuto {} dal libro {}...",
-        content_id, book_id
-    );
-
     // Prepare command input
-    let input = UnlinkContentInput {
+    let input = ModifyLinkContentInput {
         content_id,
-        book_id,
+        new_book_id,
+        old_book_id,
     };
 
     // Execute command
-    let command = UnlinkContentCommand;
+    let command = ModifyLinkContentCommand;
     match command.execute(&config, &pool, input).await {
-        Ok(_) => {
-            println!("✓ Associazione rimossa con successo!");
+        Ok(result) => {
+            if let Some(old_id) = result.old_book_id {
+                if old_id != result.new_book_id {
+                    println!("✓ Link modificato con successo!");
+                    println!("  Contenuto {} ora associato al libro {}", result.content_id, result.new_book_id);
+                } else {
+                    println!("✓ Contenuto già associato a questo libro");
+                }
+            } else {
+                println!("✓ Contenuto associato con successo al libro {}", result.new_book_id);
+            }
         }
         Err(e) => {
-            println!("✗ Errore durante la rimozione: {}", e);
+            println!("✗ Errore durante la modifica: {}", e);
             return Err(e.into());
         }
     }

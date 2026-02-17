@@ -84,6 +84,14 @@ pub struct UnlinkContentResult {
     pub book_id: i64,
 }
 
+/// Result of modifying content-book link
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModifyLinkContentResult {
+    pub content_id: i64,
+    pub new_book_id: i64,
+    pub old_book_id: Option<i64>,
+}
+
 /// Result of listing books
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListBooksResult {
