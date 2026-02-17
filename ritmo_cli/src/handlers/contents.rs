@@ -105,7 +105,10 @@ pub async fn handle_contents_add(
     match command.execute(&_config, &pool, input).await {
         Ok(result) => {
             println!("✓ Contenuto creato con successo! ID: {}", result.content_id);
-            println!("  Associato al libro ID: {}", result.book_id.unwrap());
+            // book_id is guaranteed to be Some since it's required in the input
+            if let Some(bid) = result.book_id {
+                println!("  Associato al libro ID: {}", bid);
+            }
         }
         Err(e) => {
             println!("✗ Errore durante la creazione: {}", e);

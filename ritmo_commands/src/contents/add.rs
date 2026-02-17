@@ -63,6 +63,8 @@ impl Command for AddContentCommand {
         }
 
         // Validate that at least one author is present
+        // Note: We check for common author role keywords in English and Italian.
+        // This could be extended to support more languages or configured via settings.
         let has_author = input.people.as_ref().map_or(false, |people| {
             people.iter().any(|(_, role)| {
                 role.to_lowercase().contains("author") || role.to_lowercase().contains("autore")
