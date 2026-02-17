@@ -8,6 +8,7 @@ pub struct Content {
     pub name: String,
     pub original_title: Option<String>,
     pub type_id: Option<i64>,
+    pub genre_id: Option<i64>,
     pub publication_date: Option<i64>,
     pub pages: Option<i64>,
     pub notes: Option<String>,
@@ -35,11 +36,12 @@ impl Content {
         let now = chrono::Utc::now().timestamp();
         let result = sqlx::query!(
             "INSERT INTO contents (
-                name, original_title, type_id, publication_date, notes, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                name, original_title, type_id, genre_id, publication_date, notes, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             self.name,
             self.original_title,
             self.type_id,
+            self.genre_id,
             self.publication_date,
             self.notes,
             now,
@@ -74,11 +76,12 @@ impl Content {
         let now = chrono::Utc::now().timestamp();
         let result = sqlx::query!(
             "UPDATE contents SET
-                name = ?, original_title = ?, type_id = ?, publication_date = ?, pages = ?, notes = ?, updated_at = ?
+                name = ?, original_title = ?, type_id = ?, genre_id = ?, publication_date = ?, pages = ?, notes = ?, updated_at = ?
             WHERE id = ?",
             self.name,
             self.original_title,
             self.type_id,
+            self.genre_id,
             self.publication_date,
             self.pages,
             self.notes,

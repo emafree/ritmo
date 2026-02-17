@@ -8,6 +8,7 @@ use crate::publishers::record::PublisherRecord;
 use crate::roles::record::RoleRecord;
 use crate::series::record::SeriesRecord;
 use crate::tags::record::TagRecord;
+use crate::genres::record::GenreRecord;
 use crate::utils::MLStringUtils;
 use ritmo_errors::RitmoResult;
 use sqlx::SqlitePool;
@@ -149,6 +150,40 @@ pub async fn load_tags_from_db(pool: &SqlitePool) -> RitmoResult<Vec<TagRecord>>
             let normalized_label = normalizer.normalize_string(&label);
 
             TagRecord {
+                id,
+                label,
+                normalized_label,
+            }
+        })
+        .collect();
+
+    Ok(records)
+}
+
+/// Load all genres from the database
+///
+/// Returns a vector of GenreRecord with normalized names ready for ML processing.
+pub async fn load_genres_from_db(pool: &SqlitePool) -> RitmoResult<Vec<GenreRecord>> {
+    let normalizer = MLStringUtils::default();
+
+    let rows = sqlx::query!(
+        r#"
+        SELECT id, name
+        FROM genres
+        ORDER BY id
+        "#
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let records = rows
+        .into_iter()
+        .map(|row| {
+            let id = row.id;
+            let label = row.name;
+            let normalized_label = normalizer.normalize_string(&label);
+
+            GenreRecord {
                 id,
                 label,
                 normalized_label,

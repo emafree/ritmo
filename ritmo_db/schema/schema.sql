@@ -66,6 +66,14 @@ CREATE TABLE IF NOT EXISTS "tags" (
 	"created_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
+CREATE TABLE IF NOT EXISTS "genres" (
+	"id"	INTEGER,
+	"name"	TEXT NOT NULL UNIQUE,
+	"description"	TEXT,
+	"created_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+	"updated_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
 CREATE TABLE IF NOT EXISTS "types" (
 	"id"	INTEGER,
 	"key"	TEXT NOT NULL UNIQUE,
@@ -153,13 +161,15 @@ CREATE TABLE IF NOT EXISTS "contents" (
 	"name"	TEXT NOT NULL,
 	"original_title"	TEXT,
 	"type_id"	INTEGER,
+	"genre_id"	INTEGER,
 	"publication_date"	INTEGER,
 	"pages"	INTEGER CHECK("pages" > 0),
 	"notes"	TEXT,
 	"created_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
 	"updated_at"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
 	PRIMARY KEY("id" AUTOINCREMENT),
-	FOREIGN KEY("type_id") REFERENCES "types"("id") ON DELETE SET NULL
+	FOREIGN KEY("type_id") REFERENCES "types"("id") ON DELETE SET NULL,
+	FOREIGN KEY("genre_id") REFERENCES "genres"("id") ON DELETE SET NULL
 );
 CREATE TABLE IF NOT EXISTS "x_books_contents" (
 	"book_id"	INTEGER NOT NULL,
@@ -233,6 +243,9 @@ CREATE INDEX IF NOT EXISTS "idx_publishers_name_search" ON "publishers" (
 CREATE INDEX IF NOT EXISTS "idx_tags_name_search" ON "tags" (
 	"name" COLLATE NOCASE
 );
+CREATE INDEX IF NOT EXISTS "idx_genres_name_search" ON "genres" (
+	"name" COLLATE NOCASE
+);
 CREATE INDEX IF NOT EXISTS "idx_people_dates" ON "people" (
 	"birth_date",
 	"death_date"
@@ -282,6 +295,7 @@ CREATE INDEX IF NOT EXISTS "idx_books_search_optimized" ON "books" (
 CREATE INDEX IF NOT EXISTS "idx_contents_search_optimized" ON "contents" (
 	"name",
 	"type_id",
+	"genre_id",
 	"publication_date"
 );
 CREATE INDEX IF NOT EXISTS "idx_books_series_lookup" ON "books" (
@@ -361,6 +375,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS "idx_series_name_unique" ON "series" (
 CREATE UNIQUE INDEX IF NOT EXISTS "idx_tags_name_unique" ON "tags" (
 	LOWER(TRIM("name"))
 );
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_genres_name_unique" ON "genres" (
+	LOWER(TRIM("name"))
+);
 CREATE INDEX IF NOT EXISTS "idx_books_bulk_filters_covering" ON "books" (
 	"publisher_id",
 	"format_id",
@@ -377,6 +394,7 @@ CREATE INDEX IF NOT EXISTS "idx_books_people_composite" ON "x_books_people_roles
 );
 CREATE INDEX IF NOT EXISTS "idx_contents_type_lookup" ON "contents" (
 	"type_id",
+	"genre_id",
 	"publication_date",
 	"id"
 );
@@ -403,6 +421,12 @@ CREATE TRIGGER update_series_timestamp
     FOR EACH ROW
 BEGIN
     UPDATE series SET updated_at = strftime('%s', 'now') WHERE id = NEW.id;
+END;
+CREATE TRIGGER update_genres_timestamp
+    AFTER UPDATE ON genres
+    FOR EACH ROW
+BEGIN
+    UPDATE genres SET updated_at = strftime('%s', 'now') WHERE id = NEW.id;
 END;
 CREATE TRIGGER update_publishers_timestamp
     AFTER UPDATE ON publishers
