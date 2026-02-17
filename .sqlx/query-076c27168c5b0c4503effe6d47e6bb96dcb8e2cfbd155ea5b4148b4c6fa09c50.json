@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO metadata (version, created_at, updated_at) VALUES (?1, ?2, ?3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "076c27168c5b0c4503effe6d47e6bb96dcb8e2cfbd155ea5b4148b4c6fa09c50"
+}

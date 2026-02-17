@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT DISTINCT book_id FROM pending_metadata_sync",
+  "describe": {
+    "columns": [
+      {
+        "name": "book_id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "0bfaedc6c1c834b88f7b7cf36cfc5f184a2bd5a96eac276f9d5347fe75c8894a"
+}

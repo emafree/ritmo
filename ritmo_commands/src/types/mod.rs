@@ -189,6 +189,21 @@ pub struct SeriesSummary {
     pub completed: bool,
 }
 
+/// Result of listing genres
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListGenresResult {
+    pub genres: Vec<GenreSummary>,
+    pub total_count: usize,
+}
+
+/// Summary information for a single genre
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GenreSummary {
+    pub id: i64,
+    pub name: String,
+    pub description: Option<String>,
+}
+
 /// Result of listing people
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListPeopleResult {
@@ -300,6 +315,35 @@ pub struct DeleteSeriesResult {
     pub deleted_at: String,
     pub books_affected: i64,
     pub warning: Option<String>,
+}
+
+// ============================================================================
+// Genre CRUD Results
+// ============================================================================
+
+/// Result of creating a genre
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateGenreResult {
+    pub genre_id: i64,
+    pub name: String,
+    pub created_at: String,
+    pub message: String,
+}
+
+/// Result of updating a genre
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateGenreResult {
+    pub genre_id: i64,
+    pub name: String,
+    pub message: String,
+}
+
+/// Result of deleting a genre
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeleteGenreResult {
+    pub genre_id: i64,
+    pub name: String,
+    pub message: String,
 }
 
 // ============================================================================

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE aliases SET name = ?, person_id = ?, alias_normalized = ?, confidence = ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "a4c1be5395be1bf26c1047f64cb3e098b7d36fe1de1e5434c34197bbf11c3015"
+}

@@ -3,6 +3,7 @@
 //! This module provides functions to load entity records from the ritmo database
 //! and convert them into ML-ready structures for deduplication.
 
+use crate::genres::record::GenreRecord;
 use crate::people::record::PersonRecord;
 use crate::publishers::record::PublisherRecord;
 use crate::roles::record::RoleRecord;
@@ -186,6 +187,40 @@ pub async fn load_roles_from_db(pool: &SqlitePool) -> RitmoResult<Vec<RoleRecord
                 id,
                 name,
                 normalized_name,
+            }
+        })
+        .collect();
+
+    Ok(records)
+}
+
+/// Load all genres from the database
+///
+/// Returns a vector of GenreRecord with normalized labels ready for ML processing.
+pub async fn load_genres_from_db(pool: &SqlitePool) -> RitmoResult<Vec<GenreRecord>> {
+    let normalizer = MLStringUtils::default();
+
+    let rows = sqlx::query!(
+        r#"
+        SELECT id, name
+        FROM genres
+        ORDER BY id
+        "#
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let records = rows
+        .into_iter()
+        .map(|row| {
+            let id = row.id;
+            let label = row.name;
+            let normalized_label = normalizer.normalize_string(&label);
+
+            GenreRecord {
+                id,
+                label,
+                normalized_label,
             }
         })
         .collect();

@@ -1,0 +1,122 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM people WHERE name = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "display_name",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "given_name",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "surname",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "middle_names",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "suffix",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "nationality",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "birth_date",
+        "ordinal": 9,
+        "type_info": "Integer"
+      },
+      {
+        "name": "death_date",
+        "ordinal": 10,
+        "type_info": "Integer"
+      },
+      {
+        "name": "biography",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "normalized_key",
+        "ordinal": 12,
+        "type_info": "Text"
+      },
+      {
+        "name": "confidence",
+        "ordinal": 13,
+        "type_info": "Float"
+      },
+      {
+        "name": "source",
+        "ordinal": 14,
+        "type_info": "Text"
+      },
+      {
+        "name": "verified",
+        "ordinal": 15,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 16,
+        "type_info": "Integer"
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 17,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "1665deeea4c20dc38ebb2fba34f4c30db159092551038eb68cc713c3b103be58"
+}

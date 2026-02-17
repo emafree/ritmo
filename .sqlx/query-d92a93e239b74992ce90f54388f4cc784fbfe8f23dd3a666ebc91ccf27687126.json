@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO aliases (name, person_id, alias_normalized, created_at) VALUES (?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "d92a93e239b74992ce90f54388f4cc784fbfe8f23dd3a666ebc91ccf27687126"
+}

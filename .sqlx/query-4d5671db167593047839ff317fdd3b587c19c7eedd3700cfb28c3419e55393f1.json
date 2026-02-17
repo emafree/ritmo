@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT version, updated_at, created_at FROM metadata ORDER BY created_at DESC LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "name": "version",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 2,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "4d5671db167593047839ff317fdd3b587c19c7eedd3700cfb28c3419e55393f1"
+}

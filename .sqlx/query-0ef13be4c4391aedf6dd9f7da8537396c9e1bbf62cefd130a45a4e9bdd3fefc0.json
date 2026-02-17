@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT name FROM sqlite_master WHERE type = ?1 AND name = ?2",
+  "describe": {
+    "columns": [
+      {
+        "name": "name",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "0ef13be4c4391aedf6dd9f7da8537396c9e1bbf62cefd130a45a4e9bdd3fefc0"
+}

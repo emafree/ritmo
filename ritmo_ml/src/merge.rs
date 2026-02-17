@@ -823,6 +823,152 @@ async fn delete_roles(tx: &mut Transaction<'_, Sqlite>, ids: &[i64]) -> RitmoRes
     Ok(())
 }
 
+// ============================================================================
+// Merge genres
+// ============================================================================
+
+/// Merge duplicate genres into a single primary record
+///
+/// This function:
+/// 1. Validates that all IDs exist
+/// 2. Updates all references in contents table to point to primary_id
+/// 3. Deletes duplicate genre records
+/// 4. Returns statistics about the merge
+///
+/// # Safety
+/// This operation is executed within a transaction. If any step fails,
+/// all changes are rolled back.
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+/// * `primary_id` - ID of the genre to keep (primary record)
+/// * `duplicate_ids` - IDs of genres to merge into primary (will be deleted)
+pub async fn merge_genres(
+    pool: &SqlitePool,
+    primary_id: i64,
+    duplicate_ids: &[i64],
+) -> RitmoResult<MergeStats> {
+    if duplicate_ids.is_empty() {
+        return Err(RitmoErr::Generic("No duplicate IDs provided".to_string()));
+    }
+
+    if duplicate_ids.contains(&primary_id) {
+        return Err(RitmoErr::Generic(
+            "Primary ID cannot be in duplicate IDs list".to_string(),
+        ));
+    }
+
+    let mut tx = pool.begin().await?;
+
+    // Step 1: Validate that all genre IDs exist
+    validate_genres_exist(&mut tx, primary_id, duplicate_ids).await?;
+
+    // Step 2: Update contents.genre_id to point to primary_id
+    let (contents_updated, affected_book_ids) = update_contents_genre(&mut tx, primary_id, duplicate_ids).await?;
+
+    // Step 3: Delete duplicate genre records
+    delete_genres(&mut tx, duplicate_ids).await?;
+
+    // Commit transaction
+    tx.commit().await?;
+
+    Ok(MergeStats {
+        primary_id,
+        merged_ids: duplicate_ids.to_vec(),
+        books_updated: 0, // Genres not directly linked to books
+        contents_updated,
+        affected_book_ids,
+    })
+}
+
+// ============================================================================
+// Helper functions for genre merging
+// ============================================================================
+
+async fn validate_genres_exist(
+    tx: &mut Transaction<'_, Sqlite>,
+    primary_id: i64,
+    duplicate_ids: &[i64],
+) -> RitmoResult<()> {
+    // Check primary exists
+    let primary_exists = sqlx::query!("SELECT id FROM genres WHERE id = ?", primary_id)
+        .fetch_optional(&mut **tx)
+        .await?;
+
+    if primary_exists.is_none() {
+        return Err(RitmoErr::Generic(format!(
+            "Primary genre ID {} not found",
+            primary_id
+        )));
+    }
+
+    for &dup_id in duplicate_ids {
+        let exists = sqlx::query!("SELECT id FROM genres WHERE id = ?", dup_id)
+            .fetch_optional(&mut **tx)
+            .await?;
+
+        if exists.is_none() {
+            return Err(RitmoErr::Generic(format!(
+                "Duplicate genre ID {} not found",
+                dup_id
+            )));
+        }
+    }
+
+    Ok(())
+}
+
+async fn update_contents_genre(
+    tx: &mut Transaction<'_, Sqlite>,
+    primary_id: i64,
+    duplicate_ids: &[i64],
+) -> RitmoResult<(usize, Vec<i64>)> {
+    let mut total_updated = 0;
+    let mut affected_book_ids = Vec::new();
+
+    for &dup_id in duplicate_ids {
+        // First, get affected content IDs
+        let contents = sqlx::query!("SELECT DISTINCT id FROM contents WHERE genre_id = ?", dup_id)
+            .fetch_all(&mut **tx)
+            .await?;
+
+        // Then get books associated with those contents
+        for content_record in contents {
+            let books = sqlx::query!("SELECT DISTINCT book_id FROM x_books_contents WHERE content_id = ?", content_record.id)
+                .fetch_all(&mut **tx)
+                .await?;
+
+            affected_book_ids.extend(books.iter().map(|r| r.book_id));
+        }
+
+        // Then update
+        let result = sqlx::query!(
+            "UPDATE contents SET genre_id = ? WHERE genre_id = ?",
+            primary_id,
+            dup_id
+        )
+        .execute(&mut **tx)
+        .await?;
+
+        total_updated += result.rows_affected() as usize;
+    }
+
+    affected_book_ids.sort();
+    affected_book_ids.dedup();
+
+    Ok((total_updated, affected_book_ids))
+}
+
+async fn delete_genres(tx: &mut Transaction<'_, Sqlite>, ids: &[i64]) -> RitmoResult<()> {
+    for &id in ids {
+        sqlx::query!("DELETE FROM genres WHERE id = ?", id)
+            .execute(&mut **tx)
+            .await?;
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

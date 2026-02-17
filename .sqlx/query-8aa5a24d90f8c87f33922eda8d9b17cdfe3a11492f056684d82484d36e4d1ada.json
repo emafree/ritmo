@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT name FROM sqlite_master WHERE type='table' AND name = 'metadata'",
+  "describe": {
+    "columns": [
+      {
+        "name": "name",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "8aa5a24d90f8c87f33922eda8d9b17cdfe3a11492f056684d82484d36e4d1ada"
+}

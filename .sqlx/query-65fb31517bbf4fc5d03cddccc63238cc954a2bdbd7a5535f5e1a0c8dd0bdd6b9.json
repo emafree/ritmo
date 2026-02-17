@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO pending_metadata_sync (book_id, reason) VALUES (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "65fb31517bbf4fc5d03cddccc63238cc954a2bdbd7a5535f5e1a0c8dd0bdd6b9"
+}

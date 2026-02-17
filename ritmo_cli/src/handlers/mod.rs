@@ -16,6 +16,7 @@ pub mod books;
 pub mod contents;
 
 // Entity CRUD handlers
+pub mod genres;
 pub mod people;
 pub mod publishers;
 pub mod roles;

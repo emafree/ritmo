@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO running_languages (official_name, language_role, iso_code_2char, iso_code_3char, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "648286d6e86414c76b4af20426f6c21ce98ff2482932e4a0d640c2eee39363c8"
+}

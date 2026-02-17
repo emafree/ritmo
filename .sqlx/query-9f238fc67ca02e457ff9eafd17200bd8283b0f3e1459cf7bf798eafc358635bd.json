@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO series (name, description, total_books, completed, created_at, updated_at)\n             VALUES (?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "9f238fc67ca02e457ff9eafd17200bd8283b0f3e1459cf7bf798eafc358635bd"
+}

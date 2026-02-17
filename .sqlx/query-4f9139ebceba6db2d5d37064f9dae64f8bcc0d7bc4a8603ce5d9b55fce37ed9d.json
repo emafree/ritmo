@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE series SET name = ?, description = ?, total_books = ?, completed = ?, updated_at = ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "4f9139ebceba6db2d5d37064f9dae64f8bcc0d7bc4a8603ce5d9b55fce37ed9d"
+}

@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM x_books_people_roles WHERE book_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "book_id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "person_id",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "role_id",
+        "ordinal": 2,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "314f776a76b87fbe3d168e87764d241cc75e2a3b887f454ad48165fd0b1e294c"
+}

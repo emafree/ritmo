@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM aliases WHERE person_id = ? ORDER BY name",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "person_id",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "alias_normalized",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "confidence",
+        "ordinal": 4,
+        "type_info": "Float"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 5,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "74bca4aecdce4f4a01c24fbee825efbbf45a2c589f2f08351d008cf4c32af181"
+}

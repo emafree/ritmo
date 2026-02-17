@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM formats WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "9925460326363bf2509d5cb4f0ac49b0e3d749c6dd41fff466d4ad5d3f7dc1d5"
+}

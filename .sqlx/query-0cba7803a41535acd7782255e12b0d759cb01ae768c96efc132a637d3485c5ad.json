@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM x_books_people_roles WHERE book_id = ? AND person_id = ? AND role_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "0cba7803a41535acd7782255e12b0d759cb01ae768c96efc132a637d3485c5ad"
+}

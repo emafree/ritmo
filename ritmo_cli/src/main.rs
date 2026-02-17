@@ -68,6 +68,10 @@ enum Commands {
     #[command(subcommand)]
     Series(SeriesCommands),
 
+    /// Genre management (CRUD)
+    #[command(subcommand)]
+    Genres(GenresCommands),
+
     /// People management (CRUD)
     #[command(subcommand)]
     People(PeopleCommands),
@@ -286,6 +290,28 @@ enum DeduplicateCommands {
         interactive: bool,
     },
 
+    /// Find and merge duplicate genres
+    Genres {
+        /// Entity name to filter duplicates (optional)
+        entity_name: Option<String>,
+
+        /// Similarity threshold (0.0-1.0)
+        #[arg(long, default_value = "0.85")]
+        threshold: f64,
+
+        /// Automatically merge duplicates without confirmation
+        #[arg(long)]
+        auto_merge: bool,
+
+        /// Preview duplicates without merging
+        #[arg(long)]
+        dry_run: bool,
+
+        /// Enable interactive mode to choose canonical entity
+        #[arg(short = 'i', long)]
+        interactive: bool,
+    },
+
     /// Find and merge all duplicate entities
     All {
         /// Similarity threshold (0.0-1.0)
@@ -456,6 +482,47 @@ enum SeriesCommands {
     /// Delete a series
     Delete {
         /// Series ID to delete
+        #[arg(long)]
+        id: i64,
+        /// Skip confirmation prompt
+        #[arg(long, short = 'y')]
+        yes: bool,
+    },
+}
+
+/// Genre subcommands
+#[derive(Subcommand)]
+enum GenresCommands {
+    /// List all genres
+    List {
+        /// Output format (table, json, simple)
+        #[arg(long, short = 'o', default_value = "table")]
+        output: String,
+    },
+    /// Create a new genre
+    Create {
+        /// Genre name (required)
+        #[arg(long, short = 'n')]
+        name: String,
+        /// Description (optional)
+        #[arg(long, short = 'd')]
+        description: Option<String>,
+    },
+    /// Update an existing genre
+    Update {
+        /// Genre ID to update
+        #[arg(long)]
+        id: i64,
+        /// New genre name (optional)
+        #[arg(long, short = 'n')]
+        name: Option<String>,
+        /// New description (optional)
+        #[arg(long, short = 'd')]
+        description: Option<String>,
+    },
+    /// Delete a genre
+    Delete {
+        /// Genre ID to delete
         #[arg(long)]
         id: i64,
         /// Skip confirmation prompt
@@ -937,6 +1004,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             } => {
                 cmd_deduplicate_roles(&cli.library, &app_settings, entity_name, threshold, auto_merge, dry_run, interactive).await?;
             }
+            DeduplicateCommands::Genres {
+                entity_name,
+                threshold,
+                auto_merge,
+                dry_run,
+                interactive,
+            } => {
+                cmd_deduplicate_genres(&cli.library, &app_settings, entity_name, threshold, auto_merge, dry_run, interactive).await?;
+            }
             DeduplicateCommands::All {
                 threshold,
                 auto_merge,
@@ -1017,6 +1093,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             SeriesCommands::Delete { id, yes } => {
                 handlers::series::handle_series_delete(&cli.library, &app_settings, &id, &yes).await?;
+            }
+        },
+
+        Commands::Genres(genres_cmd) => match genres_cmd {
+            GenresCommands::List { output } => {
+                handlers::genres::handle_genres_list(&cli.library, &app_settings, &output).await?;
+            }
+            GenresCommands::Create { name, description } => {
+                handlers::genres::handle_genres_create(&cli.library, &app_settings, &name, &description).await?;
+            }
+            GenresCommands::Update { id, name, description } => {
+                handlers::genres::handle_genres_update(&cli.library, &app_settings, id, &name, &description).await?;
+            }
+            GenresCommands::Delete { id, yes } => {
+                handlers::genres::handle_genres_delete(&cli.library, &app_settings, id, yes).await?;
             }
         },
 

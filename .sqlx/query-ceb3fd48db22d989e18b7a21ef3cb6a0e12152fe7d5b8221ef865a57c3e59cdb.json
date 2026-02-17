@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO publishers (name, country, website, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "ceb3fd48db22d989e18b7a21ef3cb6a0e12152fe7d5b8221ef865a57c3e59cdb"
+}
