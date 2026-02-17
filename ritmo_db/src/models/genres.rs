@@ -11,13 +11,13 @@ pub struct Genre {
     pub updated_at: i64,
 }
 
-// ✅ Implementa CrudModel trait - elimina necessità di get/list_all/delete custom
+// Implement CrudModel trait for standard CRUD operations
 impl CrudModel for Genre {
     const TABLE_NAME: &'static str = "genres";
     const ORDER_BY: &'static str = "name";
 }
 
-// ✅ Implement GetOrCreateModel trait
+// Implement GetOrCreateModel trait for get-or-create pattern
 impl GetOrCreateModel for Genre {
     type LookupKey = str;
 

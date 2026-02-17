@@ -34,7 +34,7 @@ impl GenreRecord {
     }
 }
 
-// Implementazione del trait MLProcessable per GenreRecord
+// Implementation of the MLProcessable trait for GenreRecord
 impl MLProcessable for GenreRecord {
     fn id(&self) -> i64 {
         self.id
@@ -49,8 +49,8 @@ impl MLProcessable for GenreRecord {
     }
 
     fn set_variants(&mut self, _variants: Vec<String>) {
-        // Variants are set but GenreRecord doesn't store them separately
-        // This is a no-op implementation for genres
+        // Intentionally a no-op: GenreRecord doesn't need separate variant storage.
+        // Variants are handled by the ML clustering process.
     }
 }
 
