@@ -141,7 +141,7 @@ pub async fn handle_contents_list(
 
     // Execute command
     let command = ListContentsCommand;
-    let result = command.execute(&config, &pool, input).await?;
+    let _result = command.execute(&config, &pool, input).await?;
 
     // Format output (TODO: create format_content_summaries similar to books)
     // For now, we need to use execute_contents_query for formatting compatibility
