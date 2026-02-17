@@ -1,6 +1,6 @@
 use crate::utils::opt_year_to_timestamp;
 use ritmo_db::{
-    crud_get, get_or_create, Content, ContentPersonRole, ContentTag, Person, Role,
+    crud_get, get_or_create, Content, ContentPersonRole, ContentTag, Genre, Person, Role,
     RunningLanguages, Tag, Type,
 };
 use ritmo_errors::{RitmoErr, RitmoResult};
@@ -13,6 +13,7 @@ pub struct ContentUpdateMetadata {
     pub original_title: Option<String>,
     pub people: Option<Vec<(String, String)>>, // (name, role)
     pub content_type: Option<String>,
+    pub genre: Option<String>,
     pub year: Option<i32>,
     pub notes: Option<String>,
     pub pages: Option<i64>,
@@ -61,6 +62,11 @@ pub async fn update_content(
     // 3. Aggiorna tipo contenuto
     if let Some(type_name) = metadata.content_type {
         content.type_id = Some(get_or_create::<Type>(pool, &type_name).await?);
+    }
+
+    // 3b. Aggiorna genere
+    if let Some(genre_name) = metadata.genre {
+        content.genre_id = Some(get_or_create::<Genre>(pool, &genre_name).await?);
     }
 
     // 4. Salva modifiche nel database

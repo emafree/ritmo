@@ -28,6 +28,9 @@ pub struct AddContentInput {
     /// Content type (e.g., "type.novel", "type.short_story")
     pub content_type: Option<String>,
 
+    /// Genre (e.g., "Science Fiction", "Mystery")
+    pub genre: Option<String>,
+
     /// Publication year
     pub year: Option<i32>,
 
@@ -79,6 +82,7 @@ impl Command for AddContentCommand {
             original_title: input.original_title,
             people: input.people,
             content_type: input.content_type,
+            genre: input.genre,
             year: input.year,
             notes: input.notes,
             pages: input.pages,

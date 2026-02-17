@@ -34,6 +34,7 @@ filters/
 ### ContentFilters
 - `authors: Vec<String>` - Multiple authors (OR logic)
 - `content_types: Vec<String>` - Multiple content types (OR logic)
+- `genres: Vec<String>` - Multiple genres (OR logic)
 - `year: Option<i32>` - Single year (exact match)
 - `search: Option<String>` - Full-text search
 - `sort: ContentSortField` - Sort field
@@ -88,6 +89,7 @@ let filters = BookFilters::default()
 #### ContentFilters
 - `with_author(author: &str)` - Add author filter
 - `with_content_type(content_type: &str)` - Add content type filter
+- `with_genre(genre: &str)` - Add genre filter
 - `with_year(year: i32)` - Set year filter
 - `with_search(query: &str)` - Set search query
 - `with_limit(limit: i64)` - Set result limit
