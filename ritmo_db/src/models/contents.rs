@@ -160,6 +160,7 @@ impl Content {
             name: name.to_string(),
             original_title: None,
             type_id: None,
+            genre_id: None,
             publication_date: None,
             pages: None,
             notes: None,
