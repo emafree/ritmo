@@ -1,7 +1,7 @@
 use crate::app::App;
 use crate::config::{CustomTheme, ThemePreset};
 use crate::events::Message;
-use egui::{Color32, Window};
+use egui::Window;
 
 /// Render the theme editor dialog
 pub fn render(app: &mut App, ctx: &egui::Context) {
