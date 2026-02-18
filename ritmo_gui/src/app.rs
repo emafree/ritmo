@@ -1,4 +1,4 @@
-use crate::config::{GuiSettings, ThemeConfig};
+use crate::config::{GuiSettings, ThemeConfig, ThemeMode, ThemePreset, CustomTheme};
 use crate::events::{Message, TabState};
 use crate::state::{LibraryState, BooksFilterState, ContentsFilterState};
 use std::path::PathBuf;
@@ -31,6 +31,13 @@ pub struct App {
     
     /// Error flag for status message
     pub status_is_error: bool,
+    
+    /// Theme editor dialog state
+    pub theme_editor_open: bool,
+    pub theme_editor_theme: Option<CustomTheme>,
+    
+    /// Theme manager dialog state
+    pub theme_manager_open: bool,
 }
 
 impl App {
@@ -80,6 +87,9 @@ impl App {
             selected_content_id: None,
             status_message: Some(format!("Library loaded: {}", library_path.display())),
             status_is_error: false,
+            theme_editor_open: false,
+            theme_editor_theme: None,
+            theme_manager_open: false,
         }
     }
     
@@ -155,9 +165,73 @@ impl App {
                 std::process::exit(0);
             }
             
-            Message::ThemeChanged(theme) => {
-                self.settings.theme = theme;
+            Message::ThemePresetSelected(preset) => {
+                self.settings.theme_mode = ThemeMode::Preset(preset);
                 let _ = self.settings.save();
+                self.status_message = Some(format!("Theme changed to: {}", preset.name()));
+                self.status_is_error = false;
+            }
+            
+            Message::CustomThemeSelected(name) => {
+                self.settings.theme_mode = ThemeMode::Custom(name.clone());
+                let _ = self.settings.save();
+                self.status_message = Some(format!("Theme changed to: {}", name));
+                self.status_is_error = false;
+            }
+            
+            Message::ThemeEditorOpened => {
+                self.theme_editor_open = true;
+            }
+            
+            Message::ThemeEditorClosed => {
+                self.theme_editor_open = false;
+                self.theme_editor_theme = None;
+            }
+            
+            Message::ThemeManagerOpened => {
+                self.theme_manager_open = true;
+            }
+            
+            Message::ThemeManagerClosed => {
+                self.theme_manager_open = false;
+            }
+            
+            Message::CreateCustomTheme => {
+                // Create a new theme from current preset
+                let base_preset = match &self.settings.theme_mode {
+                    ThemeMode::Preset(p) => *p,
+                    ThemeMode::Custom(_) => ThemePreset::Dark,
+                };
+                let theme = CustomTheme::from_preset(base_preset, "New Theme".to_string());
+                self.theme_editor_theme = Some(theme);
+                self.theme_editor_open = true;
+            }
+            
+            Message::SaveCustomTheme(theme) => {
+                self.settings.save_custom_theme(theme.clone());
+                let _ = self.settings.save();
+                self.settings.theme_mode = ThemeMode::Custom(theme.name.clone());
+                self.theme_editor_open = false;
+                self.theme_editor_theme = None;
+                self.status_message = Some(format!("Theme '{}' saved", theme.name));
+                self.status_is_error = false;
+            }
+            
+            Message::DeleteCustomTheme(name) => {
+                if self.settings.delete_custom_theme(&name) {
+                    // If we're currently using this theme, switch to Dark
+                    if let ThemeMode::Custom(current_name) = &self.settings.theme_mode {
+                        if current_name == &name {
+                            self.settings.theme_mode = ThemeMode::Preset(ThemePreset::Dark);
+                        }
+                    }
+                    let _ = self.settings.save();
+                    self.status_message = Some(format!("Theme '{}' deleted", name));
+                    self.status_is_error = false;
+                } else {
+                    self.status_message = Some(format!("Theme '{}' not found", name));
+                    self.status_is_error = true;
+                }
             }
             
             _ => {}
@@ -200,7 +274,7 @@ impl App {
     
     /// Get current theme visuals
     pub fn get_visuals(&self) -> egui::Visuals {
-        ThemeConfig::get_visuals(self.settings.theme)
+        ThemeConfig::get_visuals(&self.settings.theme_mode, &self.settings.custom_themes)
     }
 }
 
