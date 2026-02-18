@@ -1,6 +1,6 @@
 use crate::app::App;
 use crate::events::TabState;
-use crate::ui::{menu, filters_panel, tabs};
+use crate::ui::{menu, tabs};
 
 /// Render the main window
 pub fn render(app: &mut App, ctx: &egui::Context) {
@@ -8,18 +8,9 @@ pub fn render(app: &mut App, ctx: &egui::Context) {
     egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
         ui.horizontal(|ui| {
             // Menu button
-            if ui.button("☰").clicked() {
-                ui.menu_button("Menu", |ui| {
-                    menu::render_menu_contents(app, ui);
-                });
-            }
-            
-            ui.separator();
-            
-            // Filters button
-            if ui.button("⚙ Filters").clicked() {
-                // Toggle will be handled by panel state
-            }
+            ui.menu_button("☰ Menu", |ui| {
+                menu::render_menu_contents(app, ui);
+            });
             
             ui.separator();
             
@@ -49,14 +40,7 @@ pub fn render(app: &mut App, ctx: &egui::Context) {
         });
     });
     
-    // Filters side panel
-    egui::SidePanel::left("filters_panel")
-        .default_width(250.0)
-        .show(ctx, |ui| {
-            filters_panel::render(app, ui);
-        });
-    
-    // Main content area
+    // Main content area (expanded to full width)
     egui::CentralPanel::default().show(ctx, |ui| {
         match app.active_tab {
             TabState::Books => tabs::render_books_tab(app, ui),

@@ -1,4 +1,5 @@
-use crate::events::{TabState, Theme};
+use crate::events::TabState;
+use crate::config::theme::{ThemeMode, CustomTheme};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -9,9 +10,13 @@ pub struct GuiSettings {
     #[serde(default = "default_tab")]
     pub last_tab: TabState,
     
-    /// Theme preference
-    #[serde(default = "default_theme")]
-    pub theme: Theme,
+    /// Theme mode (preset or custom)
+    #[serde(default = "default_theme_mode")]
+    pub theme_mode: ThemeMode,
+    
+    /// Custom themes
+    #[serde(default)]
+    pub custom_themes: Vec<CustomTheme>,
     
     /// Window size
     #[serde(default = "default_window_size")]
@@ -32,8 +37,8 @@ fn default_tab() -> TabState {
     TabState::Books
 }
 
-fn default_theme() -> Theme {
-    Theme::Dark
+fn default_theme_mode() -> ThemeMode {
+    ThemeMode::default()
 }
 
 fn default_window_size() -> f32 {
@@ -44,7 +49,8 @@ impl Default for GuiSettings {
     fn default() -> Self {
         Self {
             last_tab: default_tab(),
-            theme: default_theme(),
+            theme_mode: default_theme_mode(),
+            custom_themes: Vec::new(),
             window_width: 1200.0,
             window_height: 800.0,
             last_books_filter: None,
@@ -86,6 +92,28 @@ impl GuiSettings {
             .unwrap_or_else(|| PathBuf::from("."))
             .join(".ritmo")
             .join("gui_config.toml")
+    }
+    
+    /// Add or update a custom theme
+    pub fn save_custom_theme(&mut self, theme: CustomTheme) {
+        // Check if theme with this name already exists
+        if let Some(existing) = self.custom_themes.iter_mut().find(|t| t.name == theme.name) {
+            *existing = theme;
+        } else {
+            self.custom_themes.push(theme);
+        }
+    }
+    
+    /// Delete a custom theme by name
+    pub fn delete_custom_theme(&mut self, name: &str) -> bool {
+        let initial_len = self.custom_themes.len();
+        self.custom_themes.retain(|t| t.name != name);
+        self.custom_themes.len() != initial_len
+    }
+    
+    /// Get a custom theme by name
+    pub fn get_custom_theme(&self, name: &str) -> Option<&CustomTheme> {
+        self.custom_themes.iter().find(|t| t.name == name)
     }
 }
 

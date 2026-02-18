@@ -1,15 +1,16 @@
 #[cfg(test)]
 mod tests {
-    use crate::config::GuiSettings;
-    use crate::events::{TabState, Theme};
+    use crate::config::{GuiSettings, ThemeMode, ThemePreset};
+    use crate::events::TabState;
 
     #[test]
     fn test_gui_settings_default() {
         let settings = GuiSettings::default();
         assert_eq!(settings.last_tab, TabState::Books);
-        assert_eq!(settings.theme, Theme::Dark);
+        assert!(matches!(settings.theme_mode, ThemeMode::Preset(ThemePreset::Dark)));
         assert_eq!(settings.window_width, 1200.0);
         assert_eq!(settings.window_height, 800.0);
+        assert_eq!(settings.custom_themes.len(), 0);
     }
 
     #[test]
@@ -28,13 +29,37 @@ mod tests {
     }
 
     #[test]
-    fn test_theme_serialization() {
-        // Theme is serialized as part of GuiSettings, not standalone
+    fn test_theme_mode_serialization() {
         let mut settings = GuiSettings::default();
-        settings.theme = Theme::Light;
+        settings.theme_mode = ThemeMode::Preset(ThemePreset::Light);
         
         let toml_str = toml::to_string(&settings).unwrap();
         let deserialized: GuiSettings = toml::from_str(&toml_str).unwrap();
-        assert_eq!(deserialized.theme, Theme::Light);
+        assert!(matches!(deserialized.theme_mode, ThemeMode::Preset(ThemePreset::Light)));
+    }
+    
+    #[test]
+    fn test_custom_theme_management() {
+        use crate::config::CustomTheme;
+        
+        let mut settings = GuiSettings::default();
+        
+        // Create a custom theme
+        let theme = CustomTheme::from_preset(ThemePreset::Dark, "My Dark Theme".to_string());
+        
+        // Save it
+        settings.save_custom_theme(theme.clone());
+        assert_eq!(settings.custom_themes.len(), 1);
+        assert_eq!(settings.custom_themes[0].name, "My Dark Theme");
+        
+        // Get it
+        let retrieved = settings.get_custom_theme("My Dark Theme");
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.unwrap().name, "My Dark Theme");
+        
+        // Delete it
+        let deleted = settings.delete_custom_theme("My Dark Theme");
+        assert!(deleted);
+        assert_eq!(settings.custom_themes.len(), 0);
     }
 }

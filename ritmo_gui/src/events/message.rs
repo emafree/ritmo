@@ -1,3 +1,5 @@
+use crate::config::theme::{ThemePreset, CustomTheme};
+
 /// Messages for UI events and state changes
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -26,8 +28,16 @@ pub enum Message {
     MenuOpenSettings,
     MenuExit,
     
-    // UI events
-    ThemeChanged(Theme),
+    // Theme operations
+    ThemePresetSelected(ThemePreset),
+    CustomThemeSelected(String),
+    ThemeEditorOpened,
+    ThemeEditorClosed,
+    ThemeManagerOpened,
+    ThemeManagerClosed,
+    CreateCustomTheme,
+    SaveCustomTheme(CustomTheme),
+    DeleteCustomTheme(String),
 }
 
 /// Represents which tab is active
