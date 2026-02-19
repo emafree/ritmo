@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ritmo — Wireframe v2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #171717;
+    --surface2: #1f1f1f;
+    --surface3: #282828;
+    --border: #2e2e2e;
+    --border2: #3a3a3a;
+    --text: #e8e8e8;
+    --text2: #999;
+    --text3: #555;
+    --accent: #c8a96e;
+    --accent2: #a07040;
+    --active: #2a2218;
+    --tag: #1e2a1e;
+    --tag-text: #7ab87a;
+    --red: #c0392b;
+  }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-size: 13px;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    height: 44px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .app-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-right: 8px;
+  }
+
+  .view-toggle {
+    display: flex;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .view-toggle button {
+    padding: 5px 14px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+
+  .view-toggle button.active {
+    background: var(--accent);
+    color: #0f0f0f;
+  }
+
+  .search-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0 10px;
+    gap: 8px;
+    max-width: 480px;
+  }
+
+  .search-box input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    width: 100%;
+  }
+
+  .search-box input::placeholder { color: var(--text3); }
+  .search-icon { color: var(--text3); font-size: 14px; }
+  .spacer { flex: 1; }
+
+  .topbar-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text2);
+    cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+  }
+
+  .topbar-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .topbar-btn.primary {
+    background: var(--accent);
+    color: #0f0f0f;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .topbar-btn.primary:hover { background: var(--accent2); }
+
+  /* MAIN LAYOUT */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .sidebar-section {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-section-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 0 14px 8px;
+  }
+
+  .filter-item {
+    margin: 2px 8px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .filter-header {
+    display: flex;
+    align-items: center;
+    padding: 7px 10px;
+    cursor: pointer;
+    background: var(--surface2);
+    gap: 8px;
+    transition: background 0.1s;
+  }
+
+  .filter-header:hover { background: var(--surface3); }
+
+  .filter-header.active-filter {
+    background: var(--active);
+    border-color: var(--accent2);
+  }
+
+  .filter-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .filter-name {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .filter-toggle {
+    font-size: 10px;
+    color: var(--text3);
+    transition: transform 0.2s;
+  }
+
+  .filter-toggle.open { transform: rotate(90deg); }
+
+  .filter-body {
+    background: var(--surface);
+    padding: 8px 10px;
+    border-top: 1px solid var(--border);
+    display: none;
+  }
+
+  .filter-body.open { display: block; }
+
+  .filter-subsection { margin-bottom: 8px; }
+
+  .filter-sublabel {
+    font-size: 10px;
+    color: var(--text3);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  .filter-rows { display: flex; flex-direction: column; gap: 4px; }
+
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    background: var(--surface2);
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .filter-row-label {
+    font-size: 11px;
+    color: var(--text3);
+    min-width: 48px;
+  }
+
+  .filter-row-values {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    flex: 1;
+  }
+
+  .filter-chip {
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    border: 1px solid var(--accent2);
+    background: var(--active);
+    color: var(--accent);
+  }
+
+  .filter-row-add {
+    font-size: 14px;
+    color: var(--text3);
+    cursor: pointer;
+    padding: 0 2px;
+    transition: color 0.1s;
+    background: none;
+    border: none;
+    font-family: monospace;
+  }
+
+  .filter-row-add:hover { color: var(--accent); }
+
+  .filter-actions {
+    display: flex;
+    gap: 6px;
+    padding: 6px 8px;
+    border-top: 1px solid var(--border);
+    background: var(--surface2);
+    margin: 8px -10px -8px;
+  }
+
+  .filter-action-btn {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+    transition: all 0.1s;
+  }
+
+  .filter-action-btn:hover { color: var(--text2); border-color: var(--border2); }
+  .filter-action-btn.danger:hover { color: var(--red); border-color: var(--red); }
+
+  .add-filter-btn {
+    margin: 8px;
+    padding: 7px;
+    border-radius: 6px;
+    border: 1px dashed var(--border2);
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    width: calc(100% - 16px);
+    text-align: center;
+    transition: all 0.15s;
+  }
+
+  .add-filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .saved-filter-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 14px;
+    gap: 8px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .saved-filter-item:hover { background: var(--surface2); }
+  .saved-filter-icon { color: var(--accent); font-size: 11px; }
+  .saved-filter-name { font-size: 12px; color: var(--text2); flex: 1; }
+
+  /* CONTENT AREA */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+  }
+
+  .content::-webkit-scrollbar { width: 4px; }
+  .content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .results-count {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .list-display-toggle { display: flex; gap: 4px; margin-left: auto; }
+
+  .list-display-btn {
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.1s;
+  }
+
+  .list-display-btn.active { border-color: var(--accent); color: var(--accent); }
+
+  .book-item {
+    margin-bottom: 6px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--surface);
+    transition: border-color 0.15s;
+  }
+
+  .book-item:hover { border-color: var(--border2); }
+  .book-item.selected { border-color: var(--accent2); }
+
+  .book-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    gap: 12px;
+    cursor: pointer;
+  }
+
+  .book-cover {
+    width: 36px; height: 50px;
+    background: var(--surface3);
+    border-radius: 3px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text3);
+    font-size: 18px;
+    border: 1px solid var(--border2);
+  }
+
+  .book-meta { flex: 1; min-width: 0; }
+
+  .book-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+  }
+
+  .book-info { font-size: 11px; color: var(--text2); display: flex; gap: 10px; }
+  .book-info span { display: flex; align-items: center; gap: 3px; }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 6px;
+    background: var(--tag);
+    color: var(--tag-text);
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .book-expand-btn {
+    color: var(--text3);
+    font-size: 11px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.1s;
+    background: none;
+    border: none;
+  }
+
+  .book-expand-btn:hover { color: var(--text); background: var(--surface2); }
+
+  .book-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+  .book-item:hover .book-actions { opacity: 1; }
+
+  .book-action {
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 11px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    transition: all 0.1s;
+  }
+
+  .book-action:hover { color: var(--text); border-color: var(--border2); }
+  .book-action.export:hover { color: var(--accent); border-color: var(--accent2); }
+  .book-action.delete:hover { color: var(--red); border-color: var(--red); }
+
+  .contents-list {
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    display: none;
+  }
+
+  .contents-list.open { display: block; }
+
+  .content-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 14px 8px 62px;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .content-row:last-child { border-bottom: none; }
+  .content-row:hover { background: var(--surface); }
+
+  .content-title { flex: 1; font-size: 12px; color: var(--text); }
+
+  .content-meta { display: flex; gap: 10px; font-size: 11px; color: var(--text2); }
+
+  /* STATUSBAR */
+  .statusbar {
+    height: 26px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .statusbar-item {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'IBM Plex Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .statusbar-item .val { color: var(--text2); }
+
+  .kobo-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .kobo-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); }
+  .kobo-dot.connected { background: var(--tag-text); }
+
+  /* ── POPUP OVERLAY ── */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .popup {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    width: 380px;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    transform: translateY(8px);
+    transition: transform 0.2s;
+  }
+
+  .overlay.visible .popup { transform: translateY(0); }
+
+  .popup-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .popup-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    letter-spacing: 0.05em;
+    flex: 1;
+  }
+
+  .popup-breadcrumb {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .popup-close {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 2px;
+    transition: color 0.1s;
+  }
+
+  .popup-close:hover { color: var(--text); }
+
+  /* STEP 1 — scelta item */
+  .popup-step { display: none; }
+  .popup-step.active { display: block; }
+
+  .popup-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 10px 16px 6px;
+  }
+
+  .popup-item-list { padding: 0 8px 8px; }
+
+  .popup-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    gap: 10px;
+    transition: background 0.1s;
+  }
+
+  .popup-item:hover { background: var(--surface2); }
+
+  .popup-item-icon { font-size: 13px; color: var(--text3); width: 16px; text-align: center; }
+
+  .popup-item-name { font-size: 13px; color: var(--text); }
+
+  .popup-item-arrow { margin-left: auto; font-size: 10px; color: var(--text3); }
+
+  /* STEP 2 — input + autocomplete */
+  .popup-input-area { padding: 12px 16px 8px; }
+
+  .popup-input-label {
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 6px;
+  }
+
+  .popup-input-label strong { color: var(--accent); }
+
+  .popup-input-wrap {
+    display: flex;
+    align-items: center;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .popup-input-wrap:focus-within { border-color: var(--accent); }
+
+  .popup-input-wrap input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    padding: 9px 0;
+    width: 100%;
+  }
+
+  .popup-input-wrap input::placeholder { color: var(--text3); }
+
+  .autocomplete-list { margin-top: 4px; }
+
+  .autocomplete-item {
+    display: flex;
+    align-items: center;
+    padding: 7px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    gap: 10px;
+    transition: background 0.1s;
+  }
+
+  .autocomplete-item:hover, .autocomplete-item.focused { background: var(--surface2); }
+
+  .autocomplete-match { font-size: 13px; color: var(--text); }
+  .autocomplete-match em { color: var(--accent); font-style: normal; font-weight: 600; }
+
+  .autocomplete-sub { font-size: 11px; color: var(--text3); margin-left: auto; }
+
+  .autocomplete-new {
+    display: flex;
+    align-items: center;
+    padding: 7px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    gap: 8px;
+    transition: background 0.1s;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+  }
+
+  .autocomplete-new:hover { background: var(--surface2); }
+  .autocomplete-new-label { font-size: 12px; color: var(--text3); }
+  .autocomplete-new-value { font-size: 12px; color: var(--accent); font-weight: 500; }
+
+  /* valori già aggiunti */
+  .popup-added {
+    padding: 6px 16px 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-height: 0;
+  }
+
+  .popup-added-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    background: var(--active);
+    border: 1px solid var(--accent2);
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--accent);
+  }
+
+  .popup-added-chip button {
+    background: none;
+    border: none;
+    color: var(--accent2);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .popup-added-chip button:hover { color: var(--red); }
+
+  .popup-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface2);
+  }
+
+  .popup-footer-hint { font-size: 11px; color: var(--text3); }
+
+  .popup-footer-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    transition: all 0.15s;
+  }
+
+  .popup-footer-btn.primary {
+    background: var(--accent);
+    color: #0f0f0f;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .popup-footer-btn.primary:hover { background: var(--accent2); }
+
+  .back-btn {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    padding: 0;
+    transition: color 0.1s;
+  }
+
+  .back-btn:hover { color: var(--text2); }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <span class="app-name">RITMO</span>
+  <div class="view-toggle">
+    <button class="active" onclick="switchView(this)">Books</button>
+    <button onclick="switchView(this)">Contents</button>
+  </div>
+  <div class="search-box">
+    <span class="search-icon">⌕</span>
+    <input type="text" placeholder="Cerca titolo, autore, tag...">
+  </div>
+  <div class="spacer"></div>
+  <button class="topbar-btn primary">+ Aggiungi</button>
+  <button class="topbar-btn">⚙ Impostazioni</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Filtri attivi</div>
+
+      <!-- Filtro 1 collassato -->
+      <div class="filter-item">
+        <div class="filter-header active-filter" onclick="toggleFilter('f1')">
+          <div class="filter-dot"></div>
+          <span class="filter-name">Fantascienza ITA</span>
+          <span class="filter-toggle" id="toggle-f1">▶</span>
+        </div>
+        <div class="filter-body" id="body-f1">
+          <div class="filter-subsection">
+            <div class="filter-sublabel">Book</div>
+            <div class="filter-rows">
+              <div class="filter-row">
+                <span class="filter-row-label">Editore</span>
+                <div class="filter-row-values">
+                  <span class="filter-chip">Einaudi</span>
+                  <span class="filter-chip">Urania</span>
+                </div>
+                <button class="filter-row-add" onclick="openPopup('Editore', 'Book')">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="filter-subsection">
+            <div class="filter-sublabel">Content</div>
+            <div class="filter-rows">
+              <div class="filter-row">
+                <span class="filter-row-label">Tag</span>
+                <div class="filter-row-values">
+                  <span class="filter-chip">Fantascienza</span>
+                </div>
+                <button class="filter-row-add" onclick="openPopup('Tag', 'Content')">+</button>
+              </div>
+              <div class="filter-row">
+                <span class="filter-row-label">Lingua</span>
+                <div class="filter-row-values">
+                  <span class="filter-chip">italiano</span>
+                </div>
+                <button class="filter-row-add" onclick="openPopup('Lingua', 'Content')">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="filter-actions">
+            <button class="filter-action-btn">Salva</button>
+            <button class="filter-action-btn">Disattiva</button>
+            <button class="filter-action-btn danger">Elimina</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtro 2 espanso -->
+      <div class="filter-item">
+        <div class="filter-header active-filter" onclick="toggleFilter('f2')">
+          <div class="filter-dot"></div>
+          <span class="filter-name">Filtro 2</span>
+          <span class="filter-toggle open" id="toggle-f2">▶</span>
+        </div>
+        <div class="filter-body open" id="body-f2">
+          <div class="filter-subsection">
+            <div class="filter-sublabel">Content</div>
+            <div class="filter-rows">
+              <div class="filter-row">
+                <span class="filter-row-label">Autore</span>
+                <div class="filter-row-values">
+                  <span class="filter-chip">Le Guin</span>
+                </div>
+                <button class="filter-row-add" onclick="openPopup('Autore', 'Content')">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="filter-actions">
+            <button class="filter-action-btn">Salva</button>
+            <button class="filter-action-btn">Disattiva</button>
+            <button class="filter-action-btn danger">Elimina</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="add-filter-btn" onclick="openPopupStep1()">+ Nuovo filtro</button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Filtri salvati</div>
+      <div class="saved-filter-item"><span class="saved-filter-icon">◈</span><span class="saved-filter-name">Fantascienza ITA</span></div>
+      <div class="saved-filter-item"><span class="saved-filter-icon">◈</span><span class="saved-filter-name">Da esportare</span></div>
+      <div class="saved-filter-item"><span class="saved-filter-icon">◈</span><span class="saved-filter-name">Le Guin completo</span></div>
+      <div class="saved-filter-item"><span class="saved-filter-icon">◈</span><span class="saved-filter-name">Non letti 2024</span></div>
+    </div>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div class="content">
+    <div class="results-header">
+      <div class="results-count">247 risultati</div>
+      <div class="list-display-toggle">
+        <button class="list-display-btn active">≡</button>
+        <button class="list-display-btn">⊞</button>
+      </div>
+    </div>
+
+    <div class="book-item selected">
+      <div class="book-row">
+        <div class="book-cover">📖</div>
+        <div class="book-meta">
+          <div class="book-title">I laici di un dio ignorante</div>
+          <div class="book-info">
+            <span>Adelphi · 1987</span>
+            <span><span class="tag">Fantascienza</span></span>
+            <span>3 contenuti</span>
+          </div>
+        </div>
+        <div class="book-actions">
+          <button class="book-action export">⇒ Kobo</button>
+          <button class="book-action">✎ Modifica</button>
+          <button class="book-action delete">✕</button>
+        </div>
+        <button class="book-expand-btn" onclick="toggleContents('c1', this)">▼</button>
+      </div>
+      <div class="contents-list open" id="c1">
+        <div class="content-row">
+          <span class="content-title">La mano sinistra delle tenebre</span>
+          <div class="content-meta"><span>Ursula K. Le Guin</span><span>italiano</span><span class="tag">romanzo</span></div>
+        </div>
+        <div class="content-row">
+          <span class="content-title">La parola per mondo è foresta</span>
+          <div class="content-meta"><span>Ursula K. Le Guin</span><span>italiano</span><span class="tag">racconto</span></div>
+        </div>
+        <div class="content-row">
+          <span class="content-title">Nota del traduttore</span>
+          <div class="content-meta"><span>—</span><span>italiano</span><span class="tag">note</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="book-item">
+      <div class="book-row">
+        <div class="book-cover">📖</div>
+        <div class="book-meta">
+          <div class="book-title">I dispossedati</div>
+          <div class="book-info"><span>Feltrinelli · 1975</span><span><span class="tag">Fantascienza</span></span><span>1 contenuto</span></div>
+        </div>
+        <div class="book-actions">
+          <button class="book-action export">⇒ Kobo</button>
+          <button class="book-action">✎ Modifica</button>
+          <button class="book-action delete">✕</button>
+        </div>
+        <button class="book-expand-btn" onclick="toggleContents('c2', this)">▶</button>
+      </div>
+      <div class="contents-list" id="c2">
+        <div class="content-row">
+          <span class="content-title">I dispossedati</span>
+          <div class="content-meta"><span>Ursula K. Le Guin</span><span>italiano</span><span class="tag">romanzo</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="book-item">
+      <div class="book-row">
+        <div class="book-cover">📖</div>
+        <div class="book-meta">
+          <div class="book-title">L'occhio dell'airone</div>
+          <div class="book-info"><span>Mondadori · 2002</span><span><span class="tag">Fantascienza</span></span><span>1 contenuto</span></div>
+        </div>
+        <div class="book-actions">
+          <button class="book-action export">⇒ Kobo</button>
+          <button class="book-action">✎ Modifica</button>
+          <button class="book-action delete">✕</button>
+        </div>
+        <button class="book-expand-btn" onclick="toggleContents('c3', this)">▶</button>
+      </div>
+      <div class="contents-list" id="c3">
+        <div class="content-row">
+          <span class="content-title">L'occhio dell'airone</span>
+          <div class="content-meta"><span>Ursula K. Le Guin</span><span>italiano</span><span class="tag">romanzo</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUSBAR -->
+<div class="statusbar">
+  <div class="statusbar-item">Books: <span class="val">247</span></div>
+  <div class="statusbar-item">Contents: <span class="val">412</span></div>
+  <div class="statusbar-item">Filtri attivi: <span class="val">2</span></div>
+  <div class="kobo-status">
+    <div class="kobo-dot connected"></div>
+    Kobo connesso
+  </div>
+</div>
+
+<!-- ── POPUP ── -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="popup" onclick="event.stopPropagation()">
+
+    <!-- STEP 1: scelta item filtrabile -->
+    <div class="popup-step active" id="step1">
+      <div class="popup-header">
+        <span class="popup-title">Aggiungi criterio di filtro</span>
+        <button class="popup-close" onclick="closePopup()">✕</button>
+      </div>
+
+      <div class="popup-section-label">Book</div>
+      <div class="popup-item-list">
+        <div class="popup-item" onclick="goToStep2('Editore', 'Book')">
+          <span class="popup-item-icon">🏢</span>
+          <span class="popup-item-name">Editore</span>
+          <span class="popup-item-arrow">▶</span>
+        </div>
+        <div class="popup-item" onclick="goToStep2('Tag', 'Book')">
+          <span class="popup-item-icon">🏷</span>
+          <span class="popup-item-name">Tag</span>
+          <span class="popup-item-arrow">▶</span>
+        </div>
+      </div>
+
+      <div class="popup-section-label">Content</div>
+      <div class="popup-item-list">
+        <div class="popup-item" onclick="goToStep2('Autore', 'Content')">
+          <span class="popup-item-icon">✍</span>
+          <span class="popup-item-name">Autore</span>
+          <span class="popup-item-arrow">▶</span>
+        </div>
+        <div class="popup-item" onclick="goToStep2('Traduttore', 'Content')">
+          <span class="popup-item-icon">🌐</span>
+          <span class="popup-item-name">Traduttore</span>
+          <span class="popup-item-arrow">▶</span>
+        </div>
+        <div class="popup-item" onclick="goToStep2('Lingua', 'Content')">
+          <span class="popup-item-icon">💬</span>
+          <span class="popup-item-name">Lingua</span>
+          <span class="popup-item-arrow">▶</span>
+        </div>
+        <div class="popup-item" onclick="goToStep2('Lingua originale', 'Content')">
+          <span class="popup-item-icon">📜</span>
+          <span class="popup-item-name">Lingua originale</span>
+          <span class="popup-item-arrow">▶</span>
+        </div>
+        <div class="popup-item" onclick="goToStep2('Serie', 'Content')">
+          <span class="popup-item-icon">📚</span>
+          <span class="popup-item-name">Serie</span>
+          <span class="popup-item-arrow">▶</span>
+        </div>
+        <div class="popup-item" onclick="goToStep2('Tag', 'Content')">
+          <span class="popup-item-icon">🏷</span>
+          <span class="popup-item-name">Tag</span>
+          <span class="popup-item-arrow">▶</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: input con autocomplete -->
+    <div class="popup-step" id="step2">
+      <div class="popup-header">
+        <button class="back-btn" onclick="goBackToStep1()">← indietro</button>
+        <span class="popup-title" id="step2-title">Autore</span>
+        <span class="popup-breadcrumb" id="step2-scope">Content</span>
+        <button class="popup-close" onclick="closePopup()">✕</button>
+      </div>
+
+      <div class="popup-added" id="added-chips"></div>
+
+      <div class="popup-input-area">
+        <div class="popup-input-label">Digita per cercare o aggiungere un valore <strong id="step2-field"></strong></div>
+        <div class="popup-input-wrap">
+          <span style="color:var(--text3);font-size:13px">⌕</span>
+          <input type="text" id="autocomplete-input" placeholder="es. Asimov, Le Guin..." oninput="handleInput(this.value)">
+        </div>
+        <div class="autocomplete-list" id="autocomplete-list"></div>
+      </div>
+
+      <div class="popup-footer">
+        <span class="popup-footer-hint" id="footer-hint">Più valori = OR tra loro</span>
+        <button class="popup-footer-btn primary" onclick="confirmFilter()">Aggiungi al filtro</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── dati finti per autocomplete ──
+  const fakeDb = {
+    'Autore':    ['Asimov, Isaac', 'Le Guin, Ursula K.', 'Dick, Philip K.', 'Clarke, Arthur C.', 'Lem, Stanisław', 'Ballard, J.G.'],
+    'Editore':   ['Adelphi', 'Einaudi', 'Feltrinelli', 'Mondadori', 'Nord', 'Urania', 'Sellerio'],
+    'Lingua':    ['italiano', 'inglese', 'francese', 'tedesco', 'spagnolo', 'polacco'],
+    'Lingua originale': ['inglese', 'russo', 'polacco', 'francese', 'tedesco'],
+    'Tag':       ['Fantascienza', 'Fantasy', 'Distopia', 'Hard SF', 'Cyberpunk', 'Ucronia', 'Horror'],
+    'Serie':     ['Ciclo della Fondazione', 'Terramare', 'Discworld', 'Hyperion'],
+    'Traduttore':['Rossi, Marco', 'Verdi, Anna', 'Bianchi, Luca'],
+  };
+
+  let currentField = '';
+  let currentScope = '';
+  let addedValues = [];
+
+  function openPopupStep1() {
+    addedValues = [];
+    document.getElementById('step1').classList.add('active');
+    document.getElementById('step2').classList.remove('active');
+    document.getElementById('overlay').classList.add('visible');
+  }
+
+  function openPopup(field, scope) {
+    addedValues = [];
+    goToStep2(field, scope);
+    document.getElementById('overlay').classList.add('visible');
+  }
+
+  function closePopup() {
+    document.getElementById('overlay').classList.remove('visible');
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('overlay')) closePopup();
+  }
+
+  function goToStep2(field, scope) {
+    currentField = field;
+    currentScope = scope;
+    addedValues = [];
+    document.getElementById('step2-title').textContent = field;
+    document.getElementById('step2-scope').textContent = scope;
+    document.getElementById('step2-field').textContent = field;
+    document.getElementById('autocomplete-input').value = '';
+    document.getElementById('autocomplete-list').innerHTML = '';
+    document.getElementById('added-chips').innerHTML = '';
+    document.getElementById('step1').classList.remove('active');
+    document.getElementById('step2').classList.add('active');
+    setTimeout(() => document.getElementById('autocomplete-input').focus(), 50);
+  }
+
+  function goBackToStep1() {
+    document.getElementById('step2').classList.remove('active');
+    document.getElementById('step1').classList.add('active');
+  }
+
+  function handleInput(val) {
+    const list = document.getElementById('autocomplete-list');
+    list.innerHTML = '';
+    if (!val.trim()) return;
+
+    const suggestions = (fakeDb[currentField] || [])
+      .filter(s => s.toLowerCase().includes(val.toLowerCase()));
+
+    suggestions.slice(0, 5).forEach((s, i) => {
+      const div = document.createElement('div');
+      div.className = 'autocomplete-item' + (i === 0 ? ' focused' : '');
+      const highlighted = s.replace(new RegExp(`(${val})`, 'gi'), '<em>$1</em>');
+      div.innerHTML = `<span class="autocomplete-match">${highlighted}</span>`;
+      div.onclick = () => selectValue(s);
+      list.appendChild(div);
+    });
+
+    // voce "nuovo valore"
+    const exact = (fakeDb[currentField] || []).some(s => s.toLowerCase() === val.toLowerCase());
+    if (!exact) {
+      const div = document.createElement('div');
+      div.className = 'autocomplete-new';
+      div.innerHTML = `<span class="autocomplete-new-label">Aggiungi nuovo:</span> <span class="autocomplete-new-value">"${val}"</span>`;
+      div.onclick = () => selectValue(val);
+      list.appendChild(div);
+    }
+  }
+
+  function selectValue(val) {
+    if (!addedValues.includes(val)) {
+      addedValues.push(val);
+      renderChips();
+    }
+    document.getElementById('autocomplete-input').value = '';
+    document.getElementById('autocomplete-list').innerHTML = '';
+    document.getElementById('autocomplete-input').focus();
+  }
+
+  function renderChips() {
+    const container = document.getElementById('added-chips');
+    container.innerHTML = '';
+    addedValues.forEach((v, i) => {
+      const chip = document.createElement('div');
+      chip.className = 'popup-added-chip';
+      chip.innerHTML = `${v} <button onclick="removeValue(${i})">✕</button>`;
+      container.appendChild(chip);
+    });
+  }
+
+  function removeValue(i) {
+    addedValues.splice(i, 1);
+    renderChips();
+  }
+
+  function confirmFilter() {
+    if (addedValues.length === 0) {
+      const v = document.getElementById('autocomplete-input').value.trim();
+      if (v) selectValue(v);
+      else return;
+    }
+    closePopup();
+    // In una vera implementazione qui aggiorneresti lo stato del filtro
+  }
+
+  function toggleFilter(id) {
+    const body = document.getElementById('body-' + id);
+    const toggle = document.getElementById('toggle-' + id);
+    body.classList.toggle('open');
+    toggle.classList.toggle('open');
+  }
+
+  function toggleContents(id, btn) {
+    const list = document.getElementById(id);
+    list.classList.toggle('open');
+    btn.textContent = list.classList.contains('open') ? '▼' : '▶';
+  }
+
+  function switchView(btn) {
+    document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+</script>
+</body>
+</html>
