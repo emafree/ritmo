@@ -4,6 +4,76 @@ use crate::state::{LibraryState, BooksFilterState, ContentsFilterState};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+// ---------------------------------------------------------------------------
+// Demo filter UI state (no real filter logic – interactive skeleton only)
+// ---------------------------------------------------------------------------
+
+/// A single collapsible filter card shown in the sidebar.
+#[derive(Debug, Clone)]
+pub struct DemoFilterCard {
+    /// Human-readable field name (e.g. "Author")
+    pub field: String,
+    /// Scope label ("Book" / "Content")
+    pub scope: String,
+    /// Currently selected chip values
+    pub values: Vec<String>,
+    /// Whether the card is collapsed
+    pub collapsed: bool,
+}
+
+/// Which step of the filter popup is active.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FilterPopupStep {
+    Step1ChooseField,
+    Step2AddValues,
+}
+
+/// All demo UI state for the left-sidebar filter UX.
+#[derive(Debug, Clone)]
+pub struct FilterUiState {
+    /// Active filter cards shown in the sidebar
+    pub active_filters: Vec<DemoFilterCard>,
+    /// Saved filter names (demo list)
+    pub saved_filters: Vec<String>,
+    /// Search query for the topbar search box
+    pub search_query: String,
+    // ---- popup ----
+    /// Whether the filter popup is open
+    pub popup_open: bool,
+    pub popup_step: FilterPopupStep,
+    /// Index into active_filters if adding a value to an existing card; None = new card
+    pub popup_target_idx: Option<usize>,
+    /// Selected field (step 1 → step 2 carry-over)
+    pub popup_field: Option<String>,
+    /// Selected scope for chosen field
+    pub popup_scope: Option<String>,
+    /// Autocomplete search text in step 2
+    pub popup_search: String,
+    /// Values staged in the popup before confirm
+    pub popup_staged: Vec<String>,
+}
+
+impl Default for FilterUiState {
+    fn default() -> Self {
+        Self {
+            active_filters: Vec::new(),
+            saved_filters: vec![
+                "Fantasy 2020+".to_string(),
+                "Author: Tolkien".to_string(),
+                "Short stories".to_string(),
+            ],
+            search_query: String::new(),
+            popup_open: false,
+            popup_step: FilterPopupStep::Step1ChooseField,
+            popup_target_idx: None,
+            popup_field: None,
+            popup_scope: None,
+            popup_search: String::new(),
+            popup_staged: Vec::new(),
+        }
+    }
+}
+
 /// Main application state
 pub struct App {
     /// Library data management
@@ -44,6 +114,9 @@ pub struct App {
     /// The thumbnail path is resolved as `library_root/covers/thumbnails/{id}.jpg`.
     /// (SHA-256 is not exposed in BookSummary; the book id is used as a surrogate key.)
     pub thumbnail_cache: HashMap<i64, egui::TextureHandle>,
+
+    /// Demo filter UI state (sidebar + popup interaction skeleton)
+    pub filter_ui: FilterUiState,
 }
 
 impl App {
@@ -97,6 +170,7 @@ impl App {
             theme_editor_theme: None,
             theme_manager_open: false,
             thumbnail_cache: HashMap::new(),
+            filter_ui: FilterUiState::default(),
         }
     }
     
