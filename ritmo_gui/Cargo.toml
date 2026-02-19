@@ -24,3 +24,4 @@ ritmo_errors = { path = "../ritmo_errors" }
 ritmo_commands = { path = "../ritmo_commands" }
 anyhow = "1.0"
 chrono = { workspace = true }
+image = { version = "0.24", default-features = false, features = ["jpeg"] }

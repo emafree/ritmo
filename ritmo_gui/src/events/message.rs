@@ -1,10 +1,14 @@
 use crate::config::theme::{ThemePreset, CustomTheme};
+use crate::config::ViewMode;
 
 /// Messages for UI events and state changes
 #[derive(Debug, Clone)]
 pub enum Message {
     // Tab navigation
     TabSelected(TabState),
+    
+    // View mode
+    ViewModeChanged(ViewMode),
     
     // Books operations
     BookSelected(i64),
