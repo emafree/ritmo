@@ -168,23 +168,73 @@ fn render_book_card(app: &mut App, ui: &mut egui::Ui, book: &ritmo_commands::Boo
             }
         }
 
-        // Caption: title (and author if available)
+        // Caption: title only – single row with ellipsis if the text is wider than the card.
         ui.separator();
-        ui.add(
-            egui::Label::new(
-                egui::RichText::new(&book.title).small().strong(),
-            )
-            .wrap(true),
+        let font_id = egui::TextStyle::Small.resolve(ui.style());
+        let max_width = ui.available_width();
+        let (display_title, was_truncated) =
+            truncate_to_width(ui, &book.title, font_id, max_width);
+        let response = ui.add(
+            egui::Label::new(egui::RichText::new(&display_title).small().strong())
+                .wrap(false),
         );
-        if !book.authors.is_empty() {
-            ui.add(
-                egui::Label::new(
-                    egui::RichText::new(book.authors.join(", ")).small(),
-                )
-                .wrap(true),
-            );
+        if was_truncated {
+            response.on_hover_text(&book.title);
         }
     });
+}
+
+/// Truncate `text` so that it fits within `max_width` logical pixels when rendered with
+/// `font_id`.  Returns the (possibly truncated) string and whether truncation occurred.
+/// If truncated, an `…` suffix is appended.
+fn truncate_to_width(
+    ui: &egui::Ui,
+    text: &str,
+    font_id: egui::FontId,
+    max_width: f32,
+) -> (String, bool) {
+    const ELLIPSIS: &str = "…";
+
+    // Measure the full-width text first.
+    let full_width = ui.fonts(|f| {
+        f.layout_no_wrap(text.to_owned(), font_id.clone(), egui::Color32::WHITE)
+            .size()
+            .x
+    });
+    if full_width <= max_width {
+        return (text.to_owned(), false);
+    }
+
+    let ellipsis_width = ui.fonts(|f| {
+        f.layout_no_wrap(ELLIPSIS.to_owned(), font_id.clone(), egui::Color32::WHITE)
+            .size()
+            .x
+    });
+    let budget = (max_width - ellipsis_width).max(0.0);
+
+    // Collect byte offsets at each character boundary for O(1) slicing during binary search.
+    let offsets: Vec<usize> = text.char_indices().map(|(i, _)| i).collect();
+    let char_count = offsets.len();
+
+    let mut lo = 0usize;
+    let mut hi = char_count;
+    while lo < hi {
+        let mid = (lo + hi + 1) / 2;
+        let end = if mid < char_count { offsets[mid] } else { text.len() };
+        let w = ui.fonts(|f| {
+            f.layout_no_wrap(text[..end].to_owned(), font_id.clone(), egui::Color32::WHITE)
+                .size()
+                .x
+        });
+        if w <= budget {
+            lo = mid;
+        } else {
+            hi = mid - 1;
+        }
+    }
+
+    let end = if lo < char_count { offsets[lo] } else { text.len() };
+    (format!("{}{}", &text[..end], ELLIPSIS), true)
 }
 
 /// Scale (w, h) to fit inside max_w × max_h while preserving aspect ratio.
