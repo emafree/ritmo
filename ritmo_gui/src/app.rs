@@ -1,6 +1,7 @@
 use crate::config::{GuiSettings, ThemeConfig, ThemeMode, ThemePreset, CustomTheme};
 use crate::events::{Message, TabState};
 use crate::state::{LibraryState, BooksFilterState, ContentsFilterState};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 /// Main application state
@@ -38,6 +39,11 @@ pub struct App {
     
     /// Theme manager dialog state
     pub theme_manager_open: bool,
+    
+    /// Thumbnail texture cache: keyed by book id.
+    /// The thumbnail path is resolved as `library_root/covers/thumbnails/{id}.jpg`.
+    /// (SHA-256 is not exposed in BookSummary; the book id is used as a surrogate key.)
+    pub thumbnail_cache: HashMap<i64, egui::TextureHandle>,
 }
 
 impl App {
@@ -90,6 +96,7 @@ impl App {
             theme_editor_open: false,
             theme_editor_theme: None,
             theme_manager_open: false,
+            thumbnail_cache: HashMap::new(),
         }
     }
     
@@ -100,6 +107,13 @@ impl App {
                 self.active_tab = tab;
                 self.settings.last_tab = tab;
                 let _ = self.settings.save();
+            }
+            
+            Message::ViewModeChanged(mode) => {
+                if self.settings.view_mode != mode {
+                    self.settings.view_mode = mode;
+                    let _ = self.settings.save();
+                }
             }
             
             Message::BookSelected(id) => {
@@ -272,6 +286,55 @@ impl App {
         }
     }
     
+    /// Get or load a thumbnail texture for a book.
+    ///
+    /// Thumbnail path: `library_root/covers/thumbnails/{book_id}.jpg`
+    /// (SHA-256 is not present in BookSummary; the book id is used as a surrogate
+    /// identifier for deterministic thumbnail lookup.)
+    ///
+    /// Returns `None` if the file does not exist or cannot be decoded; callers
+    /// should show a placeholder in that case.
+    pub fn get_thumbnail(
+        &mut self,
+        ctx: &egui::Context,
+        book_id: i64,
+    ) -> Option<&egui::TextureHandle> {
+        // Return cached texture if already loaded
+        if self.thumbnail_cache.contains_key(&book_id) {
+            return self.thumbnail_cache.get(&book_id);
+        }
+
+        // Resolve path: library_root/covers/thumbnails/{book_id}.jpg
+        let path = self.library_state.library_root()
+            .join("covers")
+            .join("thumbnails")
+            .join(format!("{}.jpg", book_id));
+
+        // Load and decode the JPEG; fail silently → placeholder
+        let texture = (|| -> Option<egui::TextureHandle> {
+            let data = std::fs::read(&path).ok()?;
+            let img = image::load_from_memory_with_format(&data, image::ImageFormat::Jpeg).ok()?;
+            let rgba = img.to_rgba8();
+            let (w, h) = rgba.dimensions();
+            let color_image = egui::ColorImage::from_rgba_unmultiplied(
+                [w as usize, h as usize],
+                &rgba,
+            );
+            Some(ctx.load_texture(
+                format!("thumb_{}", book_id),
+                color_image,
+                egui::TextureOptions::LINEAR,
+            ))
+        })();
+
+        if let Some(tex) = texture {
+            self.thumbnail_cache.insert(book_id, tex);
+            self.thumbnail_cache.get(&book_id)
+        } else {
+            None
+        }
+    }
+
     /// Get current theme visuals
     pub fn get_visuals(&self) -> egui::Visuals {
         ThemeConfig::get_visuals(&self.settings.theme_mode, &self.settings.custom_themes)

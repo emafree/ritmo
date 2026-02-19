@@ -50,6 +50,11 @@ impl LibraryState {
         Ok(())
     }
     
+    /// Get the library root directory path
+    pub fn library_root(&self) -> &std::path::Path {
+        &self.config.root_path
+    }
+    
     /// Get books with current filters
     pub fn get_books(&self) -> &[BookSummary] {
         &self.books

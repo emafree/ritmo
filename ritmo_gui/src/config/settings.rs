@@ -3,6 +3,26 @@ use crate::config::theme::{ThemeMode, CustomTheme};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+/// Book list display mode
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ViewMode {
+    /// Scrollable list (default)
+    List,
+    /// Scrollable grid with thumbnail cards
+    Grid,
+}
+
+impl Default for ViewMode {
+    fn default() -> Self {
+        ViewMode::List
+    }
+}
+
+fn default_view_mode() -> ViewMode {
+    ViewMode::default()
+}
+
 /// Persistent GUI settings
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GuiSettings {
@@ -31,6 +51,10 @@ pub struct GuiSettings {
     
     #[serde(default)]
     pub last_contents_filter: Option<String>,
+    
+    /// View mode for the books tab (list or grid)
+    #[serde(default = "default_view_mode")]
+    pub view_mode: ViewMode,
 }
 
 fn default_tab() -> TabState {
@@ -55,6 +79,7 @@ impl Default for GuiSettings {
             window_height: 800.0,
             last_books_filter: None,
             last_contents_filter: None,
+            view_mode: default_view_mode(),
         }
     }
 }

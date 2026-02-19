@@ -2409,6 +2409,7 @@ dependencies = [
  "bytemuck",
  "byteorder",
  "color_quant",
+ "jpeg-decoder",
  "num-traits",
  "png",
 ]
@@ -2510,6 +2511,12 @@ dependencies = [
  "getrandom 0.3.4",
  "libc",
 ]
+
+[[package]]
+name = "jpeg-decoder"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "00810f1d8b74be64b13dbf3db89ac67740615d6c891f0e7b6179326533011a07"
 
 [[package]]
 name = "js-sys"
@@ -3773,6 +3780,7 @@ dependencies = [
  "dirs 6.0.0",
  "eframe",
  "egui",
+ "image",
  "ritmo_commands",
  "ritmo_config",
  "ritmo_core",

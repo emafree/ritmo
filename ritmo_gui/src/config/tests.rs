@@ -11,6 +11,7 @@ mod tests {
         assert_eq!(settings.window_width, 1200.0);
         assert_eq!(settings.window_height, 800.0);
         assert_eq!(settings.custom_themes.len(), 0);
+        assert_eq!(settings.view_mode, crate::config::ViewMode::List);
     }
 
     #[test]
@@ -61,5 +62,26 @@ mod tests {
         let deleted = settings.delete_custom_theme("My Dark Theme");
         assert!(deleted);
         assert_eq!(settings.custom_themes.len(), 0);
+    }
+
+    #[test]
+    fn test_view_mode_serialization() {
+        use crate::config::ViewMode;
+
+        // Default is List
+        let mut settings = GuiSettings::default();
+        assert_eq!(settings.view_mode, ViewMode::List);
+
+        // Round-trip through TOML
+        settings.view_mode = ViewMode::Grid;
+        let toml_str = toml::to_string(&settings).unwrap();
+        assert!(toml_str.contains("view_mode = \"grid\""));
+        let deserialized: GuiSettings = toml::from_str(&toml_str).unwrap();
+        assert_eq!(deserialized.view_mode, ViewMode::Grid);
+
+        // Old configs without view_mode field default to List
+        let old_toml = r#"last_tab = "Books""#;
+        let from_old: GuiSettings = toml::from_str(old_toml).unwrap();
+        assert_eq!(from_old.view_mode, ViewMode::List);
     }
 }
