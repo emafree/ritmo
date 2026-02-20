@@ -109,6 +109,7 @@ pub struct BookBasicInfo {
     pub book_publisher: Option<String>,
     pub book_format_key: Option<String>,
     pub book_publication_date: Option<i64>,
+    pub authors: Vec<String>,
 }
 
 /// Get books with their contents and all associated people
@@ -462,6 +463,7 @@ pub async fn get_contents_with_nested_data(
                 book_publisher: row.book_publisher,
                 book_format_key: row.book_format_key,
                 book_publication_date: row.book_publication_date,
+                authors: Vec::new(),
             });
     }
 
@@ -485,4 +487,185 @@ pub async fn get_contents_with_nested_data(
         .collect();
 
     Ok(result)
+}
+
+/// Get the contents of a specific book (by book_id), with associated people.
+pub async fn get_book_contents_by_id(
+    pool: &SqlitePool,
+    book_id: i64,
+) -> Result<Vec<ContentWithPeople>, sqlx::Error> {
+    #[derive(sqlx::FromRow)]
+    struct ContentBookRow2 {
+        content_id: i64,
+        content_name: String,
+        content_original_title: Option<String>,
+        content_type_key: Option<String>,
+        content_publication_date: Option<i64>,
+    }
+
+    let contents = sqlx::query_as::<_, ContentBookRow2>(
+        r#"
+        SELECT
+            c.id as content_id,
+            c.name as content_name,
+            c.original_title as content_original_title,
+            t.key as content_type_key,
+            c.publication_date as content_publication_date
+        FROM x_books_contents bc
+        JOIN contents c ON bc.content_id = c.id
+        LEFT JOIN types t ON c.type_id = t.id
+        WHERE bc.book_id = ?
+        "#,
+    )
+    .bind(book_id)
+    .fetch_all(pool)
+    .await?;
+
+    if contents.is_empty() {
+        return Ok(vec![]);
+    }
+
+    let content_ids: Vec<i64> = contents.iter().map(|c| c.content_id).collect();
+    let placeholders = content_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+
+    #[derive(sqlx::FromRow)]
+    struct PersonContentRow3 {
+        content_id: i64,
+        person_id: i64,
+        person_name: String,
+        role_key: String,
+    }
+
+    let people_query = format!(
+        r#"
+        SELECT
+            cpr.content_id,
+            p.id as person_id,
+            p.name as person_name,
+            r.key as role_key
+        FROM x_contents_people_roles cpr
+        JOIN people p ON cpr.person_id = p.id
+        JOIN roles r ON cpr.role_id = r.id
+        WHERE cpr.content_id IN ({})
+          AND r.key = 'role.author'
+        "#,
+        placeholders
+    );
+
+    let mut query = sqlx::query_as::<_, PersonContentRow3>(&people_query);
+    for content_id in &content_ids {
+        query = query.bind(content_id);
+    }
+    let person_rows = query.fetch_all(pool).await?;
+
+    let mut people_map: HashMap<i64, Vec<PersonWithRole>> = HashMap::new();
+    for row in person_rows {
+        people_map.entry(row.content_id).or_insert_with(Vec::new).push(PersonWithRole {
+            person_id: row.person_id,
+            person_name: row.person_name,
+            role_key: row.role_key,
+        });
+    }
+
+    Ok(contents
+        .into_iter()
+        .map(|c| {
+            let people = people_map.get(&c.content_id).cloned().unwrap_or_default();
+            ContentWithPeople {
+                content_id: c.content_id,
+                content_name: c.content_name,
+                content_original_title: c.content_original_title,
+                content_type_key: c.content_type_key,
+                content_publication_date: c.content_publication_date,
+                people,
+            }
+        })
+        .collect())
+}
+
+/// Get the books that contain a specific content (by content_id), with associated authors.
+pub async fn get_content_books_by_id(
+    pool: &SqlitePool,
+    content_id: i64,
+) -> Result<Vec<BookBasicInfo>, sqlx::Error> {
+    #[derive(sqlx::FromRow)]
+    struct BookContentRow2 {
+        book_id: i64,
+        book_name: String,
+        book_publisher: Option<String>,
+        book_format_key: Option<String>,
+        book_publication_date: Option<i64>,
+    }
+
+    let books = sqlx::query_as::<_, BookContentRow2>(
+        r#"
+        SELECT
+            b.id as book_id,
+            b.name as book_name,
+            pub.name as book_publisher,
+            f.key as book_format_key,
+            b.publication_date as book_publication_date
+        FROM x_books_contents bc
+        JOIN books b ON bc.book_id = b.id
+        LEFT JOIN publishers pub ON b.publisher_id = pub.id
+        LEFT JOIN formats f ON b.format_id = f.id
+        WHERE bc.content_id = ?
+        "#,
+    )
+    .bind(content_id)
+    .fetch_all(pool)
+    .await?;
+
+    if books.is_empty() {
+        return Ok(vec![]);
+    }
+
+    let book_ids: Vec<i64> = books.iter().map(|b| b.book_id).collect();
+    let placeholders = book_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+
+    #[derive(sqlx::FromRow)]
+    struct BookPersonRow {
+        book_id: i64,
+        person_name: String,
+    }
+
+    let authors_query = format!(
+        r#"
+        SELECT
+            bpr.book_id,
+            p.name as person_name
+        FROM x_books_people_roles bpr
+        JOIN people p ON bpr.person_id = p.id
+        JOIN roles r ON bpr.role_id = r.id
+        WHERE bpr.book_id IN ({})
+          AND r.key = 'role.author'
+        "#,
+        placeholders
+    );
+
+    let mut query = sqlx::query_as::<_, BookPersonRow>(&authors_query);
+    for book_id in &book_ids {
+        query = query.bind(book_id);
+    }
+    let author_rows = query.fetch_all(pool).await?;
+
+    let mut authors_map: HashMap<i64, Vec<String>> = HashMap::new();
+    for row in author_rows {
+        authors_map.entry(row.book_id).or_insert_with(Vec::new).push(row.person_name);
+    }
+
+    Ok(books
+        .into_iter()
+        .map(|b| {
+            let authors = authors_map.get(&b.book_id).cloned().unwrap_or_default();
+            BookBasicInfo {
+                book_id: b.book_id,
+                book_name: b.book_name,
+                book_publisher: b.book_publisher,
+                book_format_key: b.book_format_key,
+                book_publication_date: b.book_publication_date,
+                authors,
+            }
+        })
+        .collect())
 }

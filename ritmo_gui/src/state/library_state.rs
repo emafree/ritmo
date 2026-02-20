@@ -152,4 +152,26 @@ impl LibraryState {
         authors.dedup();
         authors
     }
+
+    /// Fetch the contents of a specific book with associated people.
+    /// Intended to be called only when selection changes (not every frame).
+    pub fn get_book_contents(&self, book_id: i64) -> anyhow::Result<Vec<ritmo_db::gui_queries::ContentWithPeople>> {
+        let pool = self.pool.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Database not initialized"))?;
+        let result = self.runtime.block_on(async {
+            ritmo_db::gui_queries::get_book_contents_by_id(pool, book_id).await
+        })?;
+        Ok(result)
+    }
+
+    /// Fetch the books that contain a specific content with associated authors.
+    /// Intended to be called only when selection changes (not every frame).
+    pub fn get_content_books(&self, content_id: i64) -> anyhow::Result<Vec<ritmo_db::gui_queries::BookBasicInfo>> {
+        let pool = self.pool.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Database not initialized"))?;
+        let result = self.runtime.block_on(async {
+            ritmo_db::gui_queries::get_content_books_by_id(pool, content_id).await
+        })?;
+        Ok(result)
+    }
 }

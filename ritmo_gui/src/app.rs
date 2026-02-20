@@ -117,6 +117,12 @@ pub struct App {
 
     /// Demo filter UI state (sidebar + popup interaction skeleton)
     pub filter_ui: FilterUiState,
+
+    /// Cached contents for the currently selected book (loaded on BookSelected)
+    pub selected_book_contents: Vec<ritmo_db::gui_queries::ContentWithPeople>,
+
+    /// Cached books for the currently selected content (loaded on ContentSelected)
+    pub selected_content_books: Vec<ritmo_db::gui_queries::BookBasicInfo>,
 }
 
 impl App {
@@ -171,6 +177,8 @@ impl App {
             theme_manager_open: false,
             thumbnail_cache: HashMap::new(),
             filter_ui: FilterUiState::default(),
+            selected_book_contents: Vec::new(),
+            selected_content_books: Vec::new(),
         }
     }
     
@@ -192,6 +200,14 @@ impl App {
             
             Message::BookSelected(id) => {
                 self.selected_book_id = Some(id);
+                // Load and cache related contents (only on selection change)
+                match self.library_state.get_book_contents(id) {
+                    Ok(contents) => self.selected_book_contents = contents,
+                    Err(e) => {
+                        self.selected_book_contents = Vec::new();
+                        eprintln!("Warning: failed to load book contents: {}", e);
+                    }
+                }
             }
             
             Message::BookDoubleClicked(id) => {
@@ -201,6 +217,14 @@ impl App {
             
             Message::ContentSelected(id) => {
                 self.selected_content_id = Some(id);
+                // Load and cache related books (only on selection change)
+                match self.library_state.get_content_books(id) {
+                    Ok(books) => self.selected_content_books = books,
+                    Err(e) => {
+                        self.selected_content_books = Vec::new();
+                        eprintln!("Warning: failed to load content books: {}", e);
+                    }
+                }
             }
             
             Message::ContentDoubleClicked(id) => {
