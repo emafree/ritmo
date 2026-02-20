@@ -44,6 +44,22 @@ pub fn render_contents_tab(app: &mut App, ui: &mut egui::Ui) {
                     if let Some(pages) = content.pages {
                         ui.label(format!("Pages: {}", pages));
                     }
+
+                    // Related books
+                    ui.add_space(4.0);
+                    ui.label(egui::RichText::new("Books:").strong());
+                    if app.selected_content_books.is_empty() {
+                        ui.label("No books found.");
+                    } else {
+                        for book in &app.selected_content_books {
+                            let authors_str = if book.authors.is_empty() {
+                                "—".to_string()
+                            } else {
+                                book.authors.join(", ")
+                            };
+                            ui.label(format!("• {} — {}", book.book_name, authors_str));
+                        }
+                    }
                 });
             }
             

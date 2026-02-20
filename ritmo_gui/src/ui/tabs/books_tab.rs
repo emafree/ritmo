@@ -66,6 +66,22 @@ fn render_list_view(
                     if let Some(size) = book.file_size {
                         ui.label(format!("Size: {} bytes", size));
                     }
+
+                    // Related contents
+                    ui.add_space(4.0);
+                    ui.label(egui::RichText::new("Contents:").strong());
+                    if app.selected_book_contents.is_empty() {
+                        ui.label("No contents found.");
+                    } else {
+                        for content in &app.selected_book_contents {
+                            let authors_str = if content.people.is_empty() {
+                                "—".to_string()
+                            } else {
+                                content.people.iter().map(|p| p.person_name.as_str()).collect::<Vec<_>>().join(", ")
+                            };
+                            ui.label(format!("• {} — {}", content.content_name, authors_str));
+                        }
+                    }
                 });
             }
 
