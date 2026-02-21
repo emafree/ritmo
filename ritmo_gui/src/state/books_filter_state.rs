@@ -56,29 +56,40 @@ impl BooksFilterState {
         for filter in &self.filters {
             match &filter.field {
                 FilterField::BookAuthor => {
-                    if let FilterValue::Specific(author) = &filter.value {
-                        book_filters = book_filters.with_author(author);
+                    if let FilterValue::Specific(authors) = &filter.value {
+                        for author in authors {
+                            book_filters = book_filters.with_author(author);
+                        }
                     }
                 }
                 FilterField::BookPublisher => {
-                    if let FilterValue::Specific(pub_name) = &filter.value {
-                        book_filters = book_filters.with_publisher(pub_name);
+                    if let FilterValue::Specific(publishers) = &filter.value {
+                        for pub_name in publishers {
+                            book_filters = book_filters.with_publisher(pub_name);
+                        }
                     }
                 }
                 FilterField::BookSeries => {
-                    if let FilterValue::Specific(series) = &filter.value {
-                        book_filters = book_filters.with_series(series);
+                    if let FilterValue::Specific(series_vals) = &filter.value {
+                        for series in series_vals {
+                            book_filters = book_filters.with_series(series);
+                        }
                     }
                 }
                 FilterField::BookFormat => {
-                    if let FilterValue::Specific(format) = &filter.value {
-                        book_filters = book_filters.with_format(format);
+                    if let FilterValue::Specific(formats) = &filter.value {
+                        for format in formats {
+                            book_filters = book_filters.with_format(format);
+                        }
                     }
                 }
                 FilterField::BookYear => {
-                    if let FilterValue::Specific(year_str) = &filter.value {
-                        if let Ok(year) = year_str.parse::<i32>() {
-                            book_filters.year = Some(year);
+                    if let FilterValue::Specific(years) = &filter.value {
+                        // BookFilters.year is a single exact-match value; use the first entry only.
+                        if let Some(year_str) = years.first() {
+                            if let Ok(year) = year_str.parse::<i32>() {
+                                book_filters.year = Some(year);
+                            }
                         }
                     }
                 }
@@ -97,7 +108,7 @@ impl BooksFilterState {
             value: match &f.value {
                 FilterValue::Nessuno => "NESSUNO".to_string(),
                 FilterValue::AlmenoUno => "ALMENO_UNO".to_string(),
-                FilterValue::Specific(s) => format!("SPECIFIC:{}", s),
+                FilterValue::Specific(vals) => format!("SPECIFIC:{}", vals.join("|")),
             },
         }).collect();
         
@@ -122,8 +133,10 @@ impl BooksFilterState {
                 "NESSUNO" => FilterValue::Nessuno,
                 "ALMENO_UNO" => FilterValue::AlmenoUno,
                 s if s.starts_with("SPECIFIC:") => {
-                    FilterValue::Specific(s.strip_prefix("SPECIFIC:").unwrap().to_string())
-                }
+                        let raw = s.strip_prefix("SPECIFIC:").unwrap();
+                        let values: Vec<String> = raw.split('|').map(|v| v.to_string()).collect();
+                        FilterValue::Specific(values)
+                    }
                 _ => return None,
             };
             

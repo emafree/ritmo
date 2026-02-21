@@ -89,8 +89,8 @@ pub enum FilterValue {
     Nessuno,
     /// Include items that have this field
     AlmenoUno,
-    /// Specific value
-    Specific(String),
+    /// One or more specific values combined with OR logic
+    Specific(Vec<String>),
 }
 
 impl FilterValue {
@@ -98,7 +98,7 @@ impl FilterValue {
         match self {
             FilterValue::Nessuno => "NESSUNO".to_string(),
             FilterValue::AlmenoUno => "ALMENO UNO".to_string(),
-            FilterValue::Specific(s) => s.clone(),
+            FilterValue::Specific(values) => values.join(" | "),
         }
     }
 }

@@ -400,12 +400,12 @@ fn accept_filter(app: &mut App) {
     // as set by confirm_filter via `values: vec![value]`)
     let cards: Vec<DemoFilterCard> = app.filter_ui.active_filters.drain(..).collect();
     for card in cards {
-        let value = match card.values.into_iter().next() {
-            Some(v) if !v.is_empty() => v,
-            _ => continue,
-        };
+        let values: Vec<String> = card.values.into_iter().filter(|v| !v.is_empty()).collect();
+        if values.is_empty() {
+            continue;
+        }
         if let Some(field) = demo_card_to_filter_field(&card.scope, &card.field) {
-            let filter_value = FilterValue::Specific(value);
+            let filter_value = FilterValue::Specific(values);
             match app.active_tab {
                 TabState::Books => app.books_filter_state.add_filter(field, filter_value),
                 TabState::Contents => app.contents_filter_state.add_filter(field, filter_value),
