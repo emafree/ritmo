@@ -1,6 +1,6 @@
 use egui::{Align2, Color32, Frame, Key, Margin, Vec2};
 use crate::app::{App, DemoFilterCard};
-use crate::events::FilterMode;
+use crate::events::{FilterField, FilterMode, FilterValue, Message, TabState};
 use crate::ui::palette::UiPalette;
 
 // ---------------------------------------------------------------------------
@@ -305,11 +305,12 @@ fn render_filter_row(app: &mut App, ui: &mut egui::Ui, palette: &UiPalette) {
     ui.separator();
     ui.add_space(8.0);
 
-    let can_confirm = app.filter_ui.popup_field.is_some()
+    let row_valid = app.filter_ui.popup_field.is_some()
         && !app.filter_ui.popup_search.is_empty();
+    let can_accept = row_valid || !app.filter_ui.active_filters.is_empty();
 
     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-        ui.add_enabled_ui(can_confirm, |ui| {
+        ui.add_enabled_ui(can_accept, |ui| {
             let cta = egui::Button::new(
                 egui::RichText::new("Accetta").size(12.0),
             )
@@ -317,6 +318,12 @@ fn render_filter_row(app: &mut App, ui: &mut egui::Ui, palette: &UiPalette) {
             .stroke(egui::Stroke::NONE)
             .rounding(egui::Rounding::same(5.0));
             if ui.add(cta).clicked() {
+                accept_filter(app);
+            }
+        });
+        ui.add_space(8.0);
+        ui.add_enabled_ui(row_valid, |ui| {
+            if ui.button("Continua").clicked() {
                 confirm_filter(app);
             }
         });
@@ -365,4 +372,75 @@ fn close_popup(app: &mut App) {
     app.filter_ui.popup_scope = None;
     app.filter_ui.popup_mode = FilterMode::default();
     app.filter_ui.popup_search.clear();
+    app.filter_ui.active_filters.clear();
+}
+
+/// Map a DemoFilterCard scope/field pair to a FilterField enum value.
+fn demo_card_to_filter_field(scope: &str, field: &str) -> Option<FilterField> {
+    match (scope, field) {
+        ("Book", "Author")    => Some(FilterField::BookAuthor),
+        ("Book", "Publisher") => Some(FilterField::BookPublisher),
+        ("Book", "Series")    => Some(FilterField::BookSeries),
+        ("Book", "Format")    => Some(FilterField::BookFormat),
+        ("Book", "Year")      => Some(FilterField::BookYear),
+        ("Content", "Author") => Some(FilterField::ContentAuthor),
+        ("Content", "Type")   => Some(FilterField::ContentType),
+        ("Content", "Year")   => Some(FilterField::ContentYear),
+        _ => None,
+    }
+}
+
+/// Accept all accumulated rows: optionally save current row, apply rows to the
+/// effective filter state for the active tab, then close the popup.
+fn accept_filter(app: &mut App) {
+    // confirm_filter internally checks validity and is a no-op if the row is empty
+    confirm_filter(app);
+
+    // Drain and apply all accumulated rows (each card holds exactly one value,
+    // as set by confirm_filter via `values: vec![value]`)
+    let cards: Vec<DemoFilterCard> = app.filter_ui.active_filters.drain(..).collect();
+    for card in cards {
+        let value = match card.values.into_iter().next() {
+            Some(v) if !v.is_empty() => v,
+            _ => continue,
+        };
+        if let Some(field) = demo_card_to_filter_field(&card.scope, &card.field) {
+            let filter_value = FilterValue::Specific(value);
+            match app.active_tab {
+                TabState::Books => app.books_filter_state.add_filter(field, filter_value),
+                TabState::Contents => app.contents_filter_state.add_filter(field, filter_value),
+            }
+        }
+    }
+    app.handle_message(Message::FilterAdded);
+    close_popup(app);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_book_field_mapping() {
+        assert_eq!(demo_card_to_filter_field("Book", "Author"),    Some(FilterField::BookAuthor));
+        assert_eq!(demo_card_to_filter_field("Book", "Publisher"), Some(FilterField::BookPublisher));
+        assert_eq!(demo_card_to_filter_field("Book", "Series"),    Some(FilterField::BookSeries));
+        assert_eq!(demo_card_to_filter_field("Book", "Format"),    Some(FilterField::BookFormat));
+        assert_eq!(demo_card_to_filter_field("Book", "Year"),      Some(FilterField::BookYear));
+    }
+
+    #[test]
+    fn test_content_field_mapping() {
+        assert_eq!(demo_card_to_filter_field("Content", "Author"), Some(FilterField::ContentAuthor));
+        assert_eq!(demo_card_to_filter_field("Content", "Type"),   Some(FilterField::ContentType));
+        assert_eq!(demo_card_to_filter_field("Content", "Year"),   Some(FilterField::ContentYear));
+    }
+
+    #[test]
+    fn test_unknown_field_mapping() {
+        assert_eq!(demo_card_to_filter_field("Book", "Title"),       None);
+        assert_eq!(demo_card_to_filter_field("Book", "Tag"),         None);
+        assert_eq!(demo_card_to_filter_field("Content", "Translator"), None);
+        assert_eq!(demo_card_to_filter_field("Unknown", "Author"),   None);
+    }
 }
