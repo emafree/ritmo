@@ -109,3 +109,70 @@ pub enum Theme {
     Dark,
     Light,
 }
+
+/// Filter matching mode used in the filter popup row
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FilterMode {
+    /// Exact match
+    Uguale,
+    /// Non-matching
+    Diverso,
+    /// Fuzzy / similar
+    Simile,
+    /// Contains substring
+    Contiene,
+}
+
+impl Default for FilterMode {
+    fn default() -> Self {
+        FilterMode::Contiene
+    }
+}
+
+impl FilterMode {
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            FilterMode::Uguale => "uguale",
+            FilterMode::Diverso => "diverso",
+            FilterMode::Simile => "simile",
+            FilterMode::Contiene => "contiene",
+        }
+    }
+
+    pub fn all() -> &'static [FilterMode] {
+        &[
+            FilterMode::Uguale,
+            FilterMode::Diverso,
+            FilterMode::Simile,
+            FilterMode::Contiene,
+        ]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_filter_mode_display_names() {
+        assert_eq!(FilterMode::Uguale.display_name(), "uguale");
+        assert_eq!(FilterMode::Diverso.display_name(), "diverso");
+        assert_eq!(FilterMode::Simile.display_name(), "simile");
+        assert_eq!(FilterMode::Contiene.display_name(), "contiene");
+    }
+
+    #[test]
+    fn test_filter_mode_default() {
+        assert_eq!(FilterMode::default(), FilterMode::Contiene);
+    }
+
+    #[test]
+    fn test_filter_mode_all() {
+        let modes = FilterMode::all();
+        assert_eq!(modes.len(), 4);
+        assert!(modes.contains(&FilterMode::Uguale));
+        assert!(modes.contains(&FilterMode::Diverso));
+        assert!(modes.contains(&FilterMode::Simile));
+        assert!(modes.contains(&FilterMode::Contiene));
+    }
+}
