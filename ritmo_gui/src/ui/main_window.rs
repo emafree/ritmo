@@ -1,4 +1,4 @@
-use crate::app::{App, FilterPopupStep};
+use crate::app::App;
 use crate::config::ViewMode;
 use crate::events::{Message, TabState};
 use crate::ui::{menu, palette::UiPalette, tabs};
@@ -161,6 +161,7 @@ fn render_sidebar(app: &mut App, ui: &mut egui::Ui, p: &UiPalette) {
                 let card = &app.filter_ui.active_filters[idx];
                 let field   = card.field.clone();
                 let scope   = card.scope.clone();
+                let mode    = card.mode;
                 let values  = card.values.clone();
                 let collapsed = card.collapsed;
 
@@ -181,7 +182,7 @@ fn render_sidebar(app: &mut App, ui: &mut egui::Ui, p: &UiPalette) {
 
                             ui.colored_label(
                                 p.text,
-                                egui::RichText::new(format!("{} › {}", scope, field)).size(12.0).strong(),
+                                egui::RichText::new(format!("{} › {} [{}]", scope, field, mode.display_name())).size(12.0).strong(),
                             );
 
                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -238,10 +239,8 @@ fn render_sidebar(app: &mut App, ui: &mut egui::Ui, p: &UiPalette) {
                 app.filter_ui.popup_target_idx = Some(idx);
                 app.filter_ui.popup_field = Some(card.field.clone());
                 app.filter_ui.popup_scope = Some(card.scope.clone());
-                app.filter_ui.popup_step = FilterPopupStep::Step2AddValues;
                 app.filter_ui.popup_open = true;
                 app.filter_ui.popup_search.clear();
-                app.filter_ui.popup_staged.clear();
             }
 
             ui.add_space(8.0);
@@ -255,7 +254,6 @@ fn render_sidebar(app: &mut App, ui: &mut egui::Ui, p: &UiPalette) {
                     .rounding(egui::Rounding::same(5.0));
                 if ui.add(btn).clicked() {
                     app.filter_ui.popup_target_idx = None;
-                    app.filter_ui.popup_step = FilterPopupStep::Step1ChooseField;
                     app.filter_ui.popup_open = true;
                 }
             });

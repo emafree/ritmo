@@ -1,5 +1,5 @@
 use crate::config::{GuiSettings, ThemeConfig, ThemeMode, ThemePreset, CustomTheme};
-use crate::events::{Message, TabState};
+use crate::events::{FilterMode, Message, TabState};
 use crate::state::{LibraryState, BooksFilterState, ContentsFilterState};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -15,17 +15,12 @@ pub struct DemoFilterCard {
     pub field: String,
     /// Scope label ("Book" / "Content")
     pub scope: String,
+    /// Matching mode selected for this filter
+    pub mode: FilterMode,
     /// Currently selected chip values
     pub values: Vec<String>,
     /// Whether the card is collapsed
     pub collapsed: bool,
-}
-
-/// Which step of the filter popup is active.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FilterPopupStep {
-    Step1ChooseField,
-    Step2AddValues,
 }
 
 /// All demo UI state for the left-sidebar filter UX.
@@ -40,17 +35,16 @@ pub struct FilterUiState {
     // ---- popup ----
     /// Whether the filter popup is open
     pub popup_open: bool,
-    pub popup_step: FilterPopupStep,
     /// Index into active_filters if adding a value to an existing card; None = new card
     pub popup_target_idx: Option<usize>,
-    /// Selected field (step 1 → step 2 carry-over)
+    /// Selected field (criterion)
     pub popup_field: Option<String>,
     /// Selected scope for chosen field
     pub popup_scope: Option<String>,
-    /// Autocomplete search text in step 2
+    /// Selected matching mode for the current row
+    pub popup_mode: FilterMode,
+    /// Target value text in the current row
     pub popup_search: String,
-    /// Values staged in the popup before confirm
-    pub popup_staged: Vec<String>,
 }
 
 impl Default for FilterUiState {
@@ -64,12 +58,11 @@ impl Default for FilterUiState {
             ],
             search_query: String::new(),
             popup_open: false,
-            popup_step: FilterPopupStep::Step1ChooseField,
             popup_target_idx: None,
             popup_field: None,
             popup_scope: None,
+            popup_mode: FilterMode::default(),
             popup_search: String::new(),
-            popup_staged: Vec::new(),
         }
     }
 }
