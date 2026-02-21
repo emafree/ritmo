@@ -93,7 +93,7 @@ fn show_value_selector(app: &mut App, ui: &mut egui::Ui, field: FilterField) {
         // Specific values
         for value in values {
             if ui.button(&value).clicked() {
-                add_filter(app, field, FilterValue::Specific(value));
+                add_filter(app, field, FilterValue::Specific(vec![value]));
                 ui.close_menu();
             }
         }

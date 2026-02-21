@@ -51,19 +51,26 @@ impl ContentsFilterState {
         for filter in &self.filters {
             match &filter.field {
                 FilterField::ContentAuthor => {
-                    if let FilterValue::Specific(author) = &filter.value {
-                        content_filters = content_filters.with_author(author);
+                    if let FilterValue::Specific(authors) = &filter.value {
+                        for author in authors {
+                            content_filters = content_filters.with_author(author);
+                        }
                     }
                 }
                 FilterField::ContentType => {
-                    if let FilterValue::Specific(ctype) = &filter.value {
-                        content_filters = content_filters.with_content_type(ctype);
+                    if let FilterValue::Specific(ctypes) = &filter.value {
+                        for ctype in ctypes {
+                            content_filters = content_filters.with_content_type(ctype);
+                        }
                     }
                 }
                 FilterField::ContentYear => {
-                    if let FilterValue::Specific(year_str) = &filter.value {
-                        if let Ok(year) = year_str.parse::<i32>() {
-                            content_filters.year = Some(year);
+                    if let FilterValue::Specific(years) = &filter.value {
+                        // ContentFilters.year is a single exact-match value; use the first entry only.
+                        if let Some(year_str) = years.first() {
+                            if let Ok(year) = year_str.parse::<i32>() {
+                                content_filters.year = Some(year);
+                            }
                         }
                     }
                 }
@@ -82,7 +89,7 @@ impl ContentsFilterState {
             value: match &f.value {
                 FilterValue::Nessuno => "NESSUNO".to_string(),
                 FilterValue::AlmenoUno => "ALMENO_UNO".to_string(),
-                FilterValue::Specific(s) => format!("SPECIFIC:{}", s),
+                FilterValue::Specific(vals) => format!("SPECIFIC:{}", vals.join("|")),
             },
         }).collect();
         
@@ -105,8 +112,10 @@ impl ContentsFilterState {
                 "NESSUNO" => FilterValue::Nessuno,
                 "ALMENO_UNO" => FilterValue::AlmenoUno,
                 s if s.starts_with("SPECIFIC:") => {
-                    FilterValue::Specific(s.strip_prefix("SPECIFIC:").unwrap().to_string())
-                }
+                        let raw = s.strip_prefix("SPECIFIC:").unwrap();
+                        let values: Vec<String> = raw.split('|').map(|v| v.to_string()).collect();
+                        FilterValue::Specific(values)
+                    }
                 _ => return None,
             };
             
