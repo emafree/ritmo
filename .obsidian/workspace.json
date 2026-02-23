@@ -11,14 +11,12 @@
             "id": "6c37c8528be1f98a",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "image",
               "state": {
-                "file": "docs/book_metadata_format.md",
-                "mode": "source",
-                "source": false
+                "file": "ritmo_db/ritmo.png"
               },
-              "icon": "lucide-file",
-              "title": "book_metadata_format"
+              "icon": "lucide-image",
+              "title": "ritmo"
             }
           }
         ]
@@ -44,7 +42,7 @@
                 "autoReveal": false
               },
               "icon": "lucide-folder-closed",
-              "title": "Files"
+              "title": "Esplora risorse"
             }
           },
           {
@@ -174,28 +172,29 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "switcher:Open quick switcher": false,
-      "graph:Open graph view": false,
-      "canvas:Create new canvas": false,
-      "daily-notes:Open today's daily note": false,
-      "templates:Insert template": false,
-      "command-palette:Open command palette": false,
-      "bases:Create new base": false
+      "switcher:Apri selezione rapida": false,
+      "graph:Apri vista grafo": false,
+      "canvas:Crea nuova lavagna": false,
+      "daily-notes:Apri nota del giorno": false,
+      "templates:Inserisci modello": false,
+      "command-palette:Apri riquadro comandi": false,
+      "bases:Crea nuova Base": false
     }
   },
   "active": "6c37c8528be1f98a",
   "lastOpenFiles": [
-    "docs/sessions/2026-01-sessions.md.tmp.63679.1769553233973",
-    "CLAUDE.md.tmp.63679.1769553192853",
-    "docs/architecture.md.tmp.63679.1769553181041",
-    "docs/architecture.md.tmp.63679.1769553155527",
-    "docs/architecture.md.tmp.63679.1769553140395",
-    "ritmo_db/src/models/books.rs.tmp.63679.1769553012057",
-    "ritmo_db/src/models/books.rs.tmp.63679.1769553003101",
-    "ritmo_core/src/service/mod.rs.tmp.63679.1769552978418",
-    "ritmo_core/src/service/book_import_service.rs.tmp.63679.1769552952860",
-    "CLAUDE.md.tmp.63679.1769551731104",
-    "docs/sessions/2026-01-sessions.md.tmp.63679.1769551720172",
+    "checklist.md",
+    "mavaffanculo/config/ritmo.toml",
+    "mavaffanculo/config/filters.toml",
+    "mavaffanculo/storage/temp",
+    "mavaffanculo/storage/covers",
+    "mavaffanculo/storage/books",
+    "mavaffanculo/database/ritmo.db",
+    "mavaffanculo/bootstrap/portable_app",
+    "mavaffanculo/storage",
+    "mavaffanculo/config",
+    "mavaffanculo/database",
+    "docs/book_metadata_format.md",
     "docs/ml-system.md",
     "docs/architecture decisions.md",
     "docs/architecture.md",

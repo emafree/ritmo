@@ -30,3 +30,5 @@ Thumbs.db
 # Node / frontend artifacts (if GUI uses web frontend)
 node_modules/
 dist/
+.aider*
+.env
