@@ -1,0 +1,52 @@
+import { Theme } from "theme.slint";
+import { Button } from "std-widgets.slint";
+import { FilterRow } from "filter_row.slint";
+
+export component FilterDialog inherits Window {
+    title: "Filtra libri";
+    min-width: 420px;
+    min-height: 220px;
+
+    callback accepted();
+    callback cancelled();
+
+    VerticalLayout {
+        padding: Theme.padding;
+        spacing: Theme.spacing;
+
+        FilterRow {
+            selected-field: "Titolo";
+            selected-mode: "contiene";
+            value: "Python";
+        }
+
+        FilterRow {
+            selected-field: "Autore";
+            selected-mode: "=";
+            value: "Grassi";
+        }
+
+        FilterRow {
+            selected-field: "Categoria";
+            selected-mode: "=";
+            value: "Manuale";
+        }
+
+        // Spazio flessibile — bottoni sempre in fondo
+        Rectangle { vertical-stretch: 1; }
+
+        HorizontalLayout {
+            spacing: Theme.spacing;
+            alignment: end;
+
+            Button {
+                text: "Annulla";
+                clicked => { root.cancelled(); }
+            }
+            Button {
+                text: "Salva";
+                clicked => { root.accepted(); }
+            }
+        }
+    }
+}

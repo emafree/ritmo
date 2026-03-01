@@ -16,6 +16,13 @@ export global Theme {
     out property <length> font-size-label: 13px;
     out property <length> font-size-section: 11px;
 
+    // Filtri
+    out property <length> filter-row-height: 32px;
+    out property <length> filter-icon-size: 28px;
+    out property <length> filter-combobox-width: 240px;
+    out property <length> filter-combobox-mode-width: 120px;
+    out property <length> filter-edit-width: 280px;
+
     // Colori
     out property <color> sidebar-bg: Palette.background.darker(0.06);
 }
@@ -39,7 +46,10 @@ export component SegmentedButton inherits Rectangle {
         height: parent.height - 4px;
         border-radius: 5px;
         background: Palette.background;
-        animate x { duration: 150ms; easing: ease-in-out; }
+        animate x {
+            duration: 150ms;
+            easing: ease-in-out;
+        }
     }
 
     // Label sinistra
@@ -52,9 +62,7 @@ export component SegmentedButton inherits Rectangle {
         font-size: Theme.font-size-section;
         horizontal-alignment: center;
         vertical-alignment: center;
-        color: root.left-selected
-            ? Palette.foreground
-            : Palette.foreground.transparentize(0.4);
+        color: root.left-selected ? Palette.foreground : Palette.foreground.transparentize(0.4);
     }
 
     // Label destra
@@ -67,9 +75,7 @@ export component SegmentedButton inherits Rectangle {
         font-size: Theme.font-size-section;
         horizontal-alignment: center;
         vertical-alignment: center;
-        color: !root.left-selected
-            ? Palette.foreground
-            : Palette.foreground.transparentize(0.4);
+        color: !root.left-selected ? Palette.foreground : Palette.foreground.transparentize(0.4);
     }
 
     // Touch area sinistra
