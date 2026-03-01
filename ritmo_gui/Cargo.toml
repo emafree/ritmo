@@ -8,8 +8,6 @@ name = "ritmo_gui"
 path = "src/main.rs"
 
 [dependencies]
-egui = "0.27"
-eframe = "0.27"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 toml = { workspace = true }
@@ -25,3 +23,7 @@ ritmo_commands = { path = "../ritmo_commands" }
 anyhow = "1.0"
 chrono = { workspace = true }
 image = { version = "0.24", default-features = false, features = ["jpeg"] }
+slint = "1.15.1"
+
+[build-dependencies]
+slint-build = "1.15.1"

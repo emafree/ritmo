@@ -1,0 +1,156 @@
+import { Palette } from "std-widgets.slint";
+import { Theme, SegmentedButton } from "theme.slint";
+import { Tr } from "tr.slint";
+
+export component MainWindow inherits Window {
+    title: "App";
+    min-width: 800px;
+    min-height: 600px;
+
+    in-out property <bool> sidebar-open: true;
+    in property <string> library-name: "La mia libreria";
+    in-out property <bool> show-books: true;
+    in-out property <bool> show-grid: true;
+
+    HorizontalLayout {
+        spacing: 0px;
+
+        // ── Colonna sinistra: Sidebar ─────────────────────────────
+        if root.sidebar-open: Rectangle {
+            width: Theme.sidebar-width;
+            background: Theme.sidebar-bg;
+
+            VerticalLayout {
+                spacing: 0px;
+
+                // Header sidebar
+                Rectangle {
+                    height: Theme.header-height;
+                    background: transparent;
+
+                    Text {
+                        text: Tr.app-name;
+                        color: Palette.foreground;
+                        font-size: Theme.font-size-app-title;
+                        font-weight: 600;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                        width: parent.width;
+                        height: parent.height;
+                    }
+
+                    Rectangle {
+                        x: parent.width - self.width - 8px;
+                        y: (parent.height - self.height) / 2;
+                        width: 32px;
+                        height: 32px;
+                        background: transparent;
+
+                        Text {
+                            text: "☰";
+                            font-size: 18px;
+                            color: Palette.foreground;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                            width: parent.width;
+                            height: parent.height;
+                        }
+
+                        TouchArea {
+                            width: 100%;
+                            height: 100%;
+                            clicked => {
+                                root.sidebar-open = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Pill in posizione assoluta, fondo a destra
+            SegmentedButton {
+                x: parent.width - self.width - Theme.padding;
+                y: parent.height - self.height - Theme.padding;
+                label-left: Tr.books;
+                label-right: Tr.contents;
+                left-selected: root.show-books;
+                changed(v) => {
+                    root.show-books = v;
+                }
+            }
+        }
+
+        // ── Colonna destra: Main window ───────────────────────────
+        VerticalLayout {
+            spacing: 0px;
+
+            // Header main
+            Rectangle {
+                height: Theme.header-height;
+                background: Palette.background;
+
+                if !root.sidebar-open: Rectangle {
+                    x: 8px;
+                    y: (parent.height - self.height) / 2;
+                    width: 32px;
+                    height: 32px;
+                    background: transparent;
+
+                    Text {
+                        text: "☰";
+                        font-size: 18px;
+                        color: Palette.foreground;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                        width: parent.width;
+                        height: parent.height;
+                    }
+
+                    TouchArea {
+                        width: 100%;
+                        height: 100%;
+                        clicked => {
+                            root.sidebar-open = true;
+                        }
+                    }
+                }
+
+                Text {
+                    text: root.library-name;
+                    color: Palette.foreground.transparentize(0.2);
+                    font-size: Theme.font-size-label;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    width: parent.width;
+                    height: parent.height;
+                }
+
+                SegmentedButton {
+                    x: root.sidebar-open ? Theme.padding : 48px;
+                    y: (parent.height - self.height) / 2;
+                    label-left: Tr.grid;
+                    label-right: Tr.list;
+                    left-selected: root.show-grid;
+                    changed(v) => {
+                        root.show-grid = v;
+                    }
+                }
+            }
+
+            // Contenuto main
+            Rectangle {
+                background: Palette.background;
+
+                VerticalLayout {
+                    alignment: center;
+                    Text {
+                        text: root.show-books ? Tr.books : Tr.contents;
+                        color: Palette.foreground.transparentize(0.5);
+                        horizontal-alignment: center;
+                        font-size: Theme.font-size-label;
+                    }
+                }
+            }
+        }
+    }
+}
