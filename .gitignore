@@ -32,3 +32,4 @@ node_modules/
 dist/
 .aider*
 .env
+ritmo_gui/ver.txt
