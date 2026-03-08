@@ -1,0 +1,78 @@
+// content_dialog.slint
+import { Palette } from "std-widgets.slint";
+import { Button, ComboBox } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { FieldDefinition, FieldEntry } from "types.slint";
+import { FieldRow } from "field_row.slint";
+import { Tr } from "tr.slint";
+
+export component ContentDialog inherits Window {
+    title: "Nuovo Content";
+    min-width: 440px;
+    min-height: 200px;
+
+    in property <[string]> languages;
+    in property <[string]> available-field-names;
+    in property <[FieldDefinition]> available-fields;
+
+    // Il Rust gestisce l'intera sequenza di righe:
+    // - obbligatorie: field-name valorizzato, is-required = true
+    // - ghost row obbligatoria: field-name valorizzato, is-placeholder = true
+    // - opzionali: field-name sceglibile, is-required = false
+    // - ghost row opzionale: field-name vuoto, is-placeholder = true
+    in property <[FieldEntry]> entries;
+
+    callback accepted();
+    callback cancelled();
+    callback value-changed(int, FieldEntry);
+    callback field-selected(int, string);
+    callback delete-requested(int);
+
+    VerticalLayout {
+        spacing: 0px;
+
+        Rectangle {
+            background: Palette.background;
+            vertical-stretch: 1;
+
+            VerticalLayout {
+                padding: Theme.padding;
+                spacing: Theme.spacing;
+
+                for entry[i] in root.entries: FieldRow {
+                    available-field-names: root.available-field-names;
+                    available-fields: root.available-fields;
+                    entry: entry;
+                    is-placeholder: entry.value == "" && i == root.entries.length - 1;
+                    is-required: entry.field-name != "" && i < 3;
+                    value-changed(e) => { root.value-changed(i, e); }
+                    field-selected(name) => { root.field-selected(i, name); }
+                    delete-requested => { root.delete-requested(i); }
+                }
+
+                Rectangle { vertical-stretch: 1; }
+            }
+        }
+
+        // ── Bottoni ───────────────────────────────────────────────
+        Rectangle {
+            background: Theme.sidebar-bg;
+            height: 52px;
+
+            HorizontalLayout {
+                alignment: end;
+                padding: Theme.padding;
+                spacing: Theme.spacing;
+
+                Button {
+                    text: Tr.cancel;
+                    clicked => { root.cancelled(); }
+                }
+                Button {
+                    text: Tr.accept;
+                    clicked => { root.accepted(); }
+                }
+            }
+        }
+    }
+}

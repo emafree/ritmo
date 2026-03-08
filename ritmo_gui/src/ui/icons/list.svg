@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <!-- Riga 1: quadratino + linea -->
+  <rect x="1" y="2" width="3" height="3" rx="0.5" fill="currentColor"/>
+  <rect x="6" y="3" width="9" height="1.5" rx="0.5" fill="currentColor"/>
+
+  <!-- Riga 2: quadratino + linea -->
+  <rect x="1" y="7" width="3" height="3" rx="0.5" fill="currentColor"/>
+  <rect x="6" y="8" width="9" height="1.5" rx="0.5" fill="currentColor"/>
+
+  <!-- Riga 3: quadratino + linea -->
+  <rect x="1" y="12" width="3" height="3" rx="0.5" fill="currentColor"/>
+  <rect x="6" y="13" width="9" height="1.5" rx="0.5" fill="currentColor"/>
+</svg>

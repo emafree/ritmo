@@ -1,6 +1,48 @@
 import { Theme } from "theme.slint";
 import { Button } from "std-widgets.slint";
-import { FilterRow } from "filter_row.slint";
+import { ComboBox, LineEdit, Button } from "std-widgets.slint";
+import { Tr } from "tr.slint";
+
+export component FilterRow inherits Rectangle {
+    in property <[string]> fields: ["Titolo", "Autore", "Categoria"];
+    in property <[string]> modes: ["=", "!=", "<", ">", "contiene"];
+    in-out property <string> selected-field: "";
+    in-out property <string> selected-mode: "";
+    in-out property <string> value: "";
+    callback delete-requested();
+
+    height: Theme.filter-row-height;
+
+    HorizontalLayout {
+        spacing: Theme.spacing;
+
+        ComboBox {
+            model: root.fields;
+            current-value <=> root.selected-field;
+            width: Theme.filter-combobox-width;
+        }
+
+        ComboBox {
+            model: root.modes;
+            current-value <=> root.selected-mode;
+            width: Theme.filter-combobox-mode-width;
+        }
+
+        LineEdit {
+            text <=> root.value;
+            width: Theme.filter-edit-width;
+        }
+
+        Button {
+            text: "✕";
+            width: Theme.filter-icon-size;
+            height: Theme.filter-icon-size;
+            clicked => {
+                root.delete-requested();
+            }
+        }
+    }
+}
 
 export component FilterDialog inherits Window {
     title: "Filtra libri";
@@ -14,38 +56,36 @@ export component FilterDialog inherits Window {
         padding: Theme.padding;
         spacing: Theme.spacing;
 
-        FilterRow {
-            selected-field: "Titolo";
-            selected-mode: "contiene";
-            value: "Python";
-        }
-
-        FilterRow {
-            selected-field: "Autore";
-            selected-mode: "=";
-            value: "Grassi";
-        }
-
-        FilterRow {
-            selected-field: "Categoria";
-            selected-mode: "=";
-            value: "Manuale";
-        }
+        FilterRow { }
 
         // Spazio flessibile — bottoni sempre in fondo
-        Rectangle { vertical-stretch: 1; }
+        Rectangle {
+            vertical-stretch: 1;
+        }
 
         HorizontalLayout {
             spacing: Theme.spacing;
             alignment: end;
 
             Button {
-                text: "Annulla";
-                clicked => { root.cancelled(); }
+                text: Tr.cancel;
+                clicked => {
+                    root.cancelled();
+                }
             }
+
             Button {
-                text: "Salva";
-                clicked => { root.accepted(); }
+                text: Tr.save;
+                clicked => {
+                    root.accepted();
+                }
+            }
+
+            Button {
+                text: Tr.accept;
+                clicked => {
+                    root.accepted();
+                }
             }
         }
     }

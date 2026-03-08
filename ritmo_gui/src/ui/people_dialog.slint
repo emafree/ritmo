@@ -1,0 +1,140 @@
+// people_dialog.slint
+import { Palette } from "std-widgets.slint";
+import { Button } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { Tr } from "tr.slint";
+import { FieldDefinition, FieldEntry } from "types.slint";
+import { FieldRow } from "field_row.slint";
+import { Suggestion } from "types.slint";
+import { AutocompleteField } from "autocomplete_field.slint";
+
+export component PeopleDialog inherits Window {
+    title: Tr.new-person;
+    min-width: 440px;
+    min-height: 200px;
+
+    // Autocomplete name
+    in property <[Suggestion]> name-suggestions;
+    in-out property <string> name-text: "";
+
+    // Autocomplete role
+    in property <[Suggestion]> role-suggestions;
+    in-out property <string> role-text: "";
+
+    // Campi opzionali — stesso pattern ghost row
+    in property <[string]> available-field-names;
+    in property <[FieldDefinition]> available-fields;
+    in property <[FieldEntry]> optional-entries;
+
+    callback accepted();
+    callback cancelled();
+
+    // Name autocomplete
+    callback name-text-changed(string);
+    callback name-selected(int);
+    callback name-create-requested(string);
+
+    // Role autocomplete
+    callback role-text-changed(string);
+    callback role-selected(int);
+    callback role-create-requested(string);
+
+    // Campi opzionali
+    callback optional-value-changed(int, FieldEntry);
+    callback optional-field-selected(int, string);
+    callback optional-delete-requested(int);
+
+    VerticalLayout {
+        spacing: 0px;
+
+        Rectangle {
+            background: Palette.background;
+            vertical-stretch: 1;
+
+            VerticalLayout {
+                padding: Theme.padding;
+                spacing: Theme.spacing;
+
+                // Nome — obbligatorio, autocomplete
+                AutocompleteField {
+                    placeholder-text: Tr.field-name;
+                    text <=> root.name-text;
+                    suggestions: root.name-suggestions;
+                    text-changed(t) => {
+                        root.name-text-changed(t);
+                    }
+                    selected(id) => {
+                        root.name-selected(id);
+                    }
+                    create-requested(t) => {
+                        root.name-create-requested(t);
+                    }
+                }
+
+                // Ruolo — obbligatorio, autocomplete
+                AutocompleteField {
+                    placeholder-text: Tr.field-role;
+                    text <=> root.role-text;
+                    suggestions: root.role-suggestions;
+                    text-changed(t) => {
+                        root.role-text-changed(t);
+                    }
+                    selected(id) => {
+                        root.role-selected(id);
+                    }
+                    create-requested(t) => {
+                        root.role-create-requested(t);
+                    }
+                }
+
+                // Campi opzionali — ghost row gestita dal Rust
+                for entry[i] in root.optional-entries: FieldRow {
+                    available-field-names: root.available-field-names;
+                    available-fields: root.available-fields;
+                    entry: entry;
+                    is-placeholder: entry.value == "" && i == root.optional-entries.length - 1;
+                    is-required: false;
+                    value-changed(e) => {
+                        root.optional-value-changed(i, e);
+                    }
+                    field-selected(name) => {
+                        root.optional-field-selected(i, name);
+                    }
+                    delete-requested => {
+                        root.optional-delete-requested(i);
+                    }
+                }
+
+                Rectangle {
+                    vertical-stretch: 1;
+                }
+            }
+        }
+
+        // ── Bottoni ───────────────────────────────────────────────
+        Rectangle {
+            background: Theme.sidebar-bg;
+            height: 52px;
+
+            HorizontalLayout {
+                alignment: end;
+                padding: Theme.padding;
+                spacing: Theme.spacing;
+
+                Button {
+                    text: Tr.cancel;
+                    clicked => {
+                        root.cancelled();
+                    }
+                }
+
+                Button {
+                    text: Tr.save;
+                    clicked => {
+                        root.accepted();
+                    }
+                }
+            }
+        }
+    }
+}

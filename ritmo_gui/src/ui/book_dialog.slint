@@ -1,0 +1,194 @@
+// book_dialog.slint
+import { Palette } from "std-widgets.slint";
+import { Button } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { Tr } from "tr.slint";
+import { FieldDefinition, FieldEntry } from "types.slint";
+import { FieldRow } from "field_row.slint";
+
+// Riga singola nella lista contents
+component ContentRow inherits Rectangle {
+    in property <string> title;
+    in property <string> author;
+    callback edit-requested();
+    callback delete-requested();
+
+    height: Theme.filter-row-height;
+    background: transparent;
+
+    HorizontalLayout {
+        spacing: Theme.spacing;
+
+        // Titolo + autore
+        Text {
+            text: root.title + " — " + root.author;
+            color: Palette.foreground;
+            font-size: Theme.font-size-label;
+            vertical-alignment: center;
+            horizontal-stretch: 1;
+            overflow: elide;
+        }
+
+        // Edit
+        Rectangle {
+            width: 28px;
+            height: 28px;
+            background: transparent;
+            Text {
+                text: "✎";
+                font-size: 14px;
+                color: Palette.foreground.transparentize(0.3);
+                horizontal-alignment: center;
+                vertical-alignment: center;
+                width: parent.width;
+                height: parent.height;
+            }
+            TouchArea {
+                width: 100%; height: 100%;
+                clicked => { root.edit-requested(); }
+            }
+        }
+
+        // Delete
+        Rectangle {
+            width: 28px;
+            height: 28px;
+            background: transparent;
+            Text {
+                text: "✕";
+                font-size: 14px;
+                color: Palette.foreground.transparentize(0.3);
+                horizontal-alignment: center;
+                vertical-alignment: center;
+                width: parent.width;
+                height: parent.height;
+            }
+            TouchArea {
+                width: 100%; height: 100%;
+                clicked => { root.delete-requested(); }
+            }
+        }
+    }
+}
+
+// Struct per un content nella lista
+export struct ContentSummary {
+    title: string,
+    author: string,
+}
+
+export component BookDialog inherits Window {
+    title: Tr.new-book;
+    min-width: 440px;
+    min-height: 300px;
+
+    in property <[string]> available-field-names;
+    in property <[FieldDefinition]> available-fields;
+
+    // Righe book (obbligatorie + opzionali) — stesso pattern di ContentDialog
+    in property <[FieldEntry]> entries;
+
+    // Lista contents già aggiunti
+    in property <[ContentSummary]> added-contents;
+
+    callback accepted();
+    callback cancelled();
+    callback value-changed(int, FieldEntry);
+    callback field-selected(int, string);
+    callback delete-requested(int);
+    callback add-content-requested();
+    callback edit-content-requested(int);
+    callback delete-content-requested(int);
+
+    VerticalLayout {
+        spacing: 0px;
+
+        // ── Sezione dati book ─────────────────────────────────────
+        Rectangle {
+            background: Palette.background;
+
+            VerticalLayout {
+                padding: Theme.padding;
+                spacing: Theme.spacing;
+
+                for entry[i] in root.entries: FieldRow {
+                    available-field-names: root.available-field-names;
+                    available-fields: root.available-fields;
+                    entry: entry;
+                    is-placeholder: entry.value == "" && i == root.entries.length - 1;
+                    is-required: entry.field-name != "" && i == 0;
+                    value-changed(e) => { root.value-changed(i, e); }
+                    field-selected(name) => { root.field-selected(i, name); }
+                    delete-requested => { root.delete-requested(i); }
+                }
+            }
+        }
+
+        // ── Sezione lista contents ────────────────────────────────
+        Rectangle {
+            background: Theme.sidebar-bg;
+            vertical-stretch: 1;
+
+            VerticalLayout {
+                padding: Theme.padding;
+                spacing: Theme.spacing;
+
+                Text {
+                    text: "Contents";
+                    color: Palette.foreground.transparentize(0.4);
+                    font-size: Theme.font-size-section;
+                }
+
+                // Contents aggiunti
+                for content[i] in root.added-contents: ContentRow {
+                    title: content.title;
+                    author: content.author;
+                    edit-requested => { root.edit-content-requested(i); }
+                    delete-requested => { root.delete-content-requested(i); }
+                }
+
+                // Ghost row — apre ContentDialog
+                Rectangle {
+                    height: Theme.filter-row-height;
+                    background: transparent;
+
+                    Text {
+                        text: "+ " + Tr.new-content;
+                        color: Palette.foreground.transparentize(0.5);
+                        font-size: Theme.font-size-label;
+                        vertical-alignment: center;
+                        height: parent.height;
+                    }
+
+                    TouchArea {
+                        width: 100%; height: 100%;
+                        clicked => { root.add-content-requested(); }
+                    }
+                }
+
+                Rectangle { vertical-stretch: 1; }
+            }
+        }
+
+        // ── Bottoni ───────────────────────────────────────────────
+        Rectangle {
+            background: Palette.background;
+            height: 52px;
+
+            HorizontalLayout {
+                alignment: end;
+                padding: Theme.padding;
+                spacing: Theme.spacing;
+
+                Button {
+                    text: Tr.cancel;
+                    clicked => { root.cancelled(); }
+                }
+                Button {
+                    text: Tr.save;
+                    clicked => { root.accepted(); }
+                }
+            }
+        }
+    }
+}

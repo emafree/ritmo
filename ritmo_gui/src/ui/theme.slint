@@ -7,6 +7,9 @@ export global Theme {
     out property <length> sidebar-width: 240px;
     out property <length> sidebar-item-height: 32px;
 
+    // Dettagli
+    out property <length> border-radius: 4px;
+
     // Spaziatura
     out property <length> padding: 12px;
     out property <length> spacing: 4px;
@@ -76,6 +79,74 @@ export component SegmentedButton inherits Rectangle {
         horizontal-alignment: center;
         vertical-alignment: center;
         color: !root.left-selected ? Palette.foreground : Palette.foreground.transparentize(0.4);
+    }
+
+    // Touch area sinistra
+    TouchArea {
+        x: 0;
+        width: parent.width / 2;
+        height: parent.height;
+        clicked => {
+            root.left-selected = true;
+            root.changed(true);
+        }
+    }
+
+    // Touch area destra
+    TouchArea {
+        x: parent.width / 2;
+        width: parent.width / 2;
+        height: parent.height;
+        clicked => {
+            root.left-selected = false;
+            root.changed(false);
+        }
+    }
+}
+
+export component SegmentedIconButton inherits Rectangle {
+    in property <image> icon-left;
+    in property <image> icon-right;
+    in-out property <bool> left-selected: true;
+    callback changed(bool);
+
+    height: 28px;
+    width: 64px;
+    border-radius: 6px;
+    background: Palette.background.darker(0.08);
+
+    // Indicatore selezionato
+    Rectangle {
+        x: root.left-selected ? 2px : parent.width / 2;
+        y: 2px;
+        width: parent.width / 2 - 2px;
+        height: parent.height - 4px;
+        border-radius: 5px;
+        background: Palette.background;
+        animate x {
+            duration: 150ms;
+            easing: ease-in-out;
+        }
+    }
+
+    // Icona sinistra
+    Image {
+        x: parent.width / 4 - 8px;
+        y: (parent.height - 16px) / 2;
+        width: 16px;
+        height: 16px;
+        source: root.icon-left;
+        colorize: root.left-selected ? Palette.foreground : Palette.foreground.transparentize(0.4);
+    }
+
+    // Icona destra
+    Image {
+        x: parent.width * 3 / 4 - 8px;
+        y: (parent.height - 16px) / 2;
+        width: 16px;
+        height: 16px;
+        source: root.icon-right;
+        colorize: !root.left-selected ? Palette.foreground : Palette.foreground.transparentize(0.4);
     }
 
     // Touch area sinistra

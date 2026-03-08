@@ -1,18 +1,41 @@
 // tr.slint — stringhe UI, popolate dal Rust tramite i18n
 // I valori di default sono in inglese, usati solo da slint-viewer
-
 export global Tr {
-    // Sidebar
+    // main window sidebar
     in property <string> app-name: "App";
     in property <string> library: "Library";
     in property <string> all-books: "All books";
     in property <string> reading: "Reading";
     in property <string> completed: "Completed";
     in property <string> favorites: "Favorites";
-
-    // Header main
+    // main window header
     in property <string> books: "Books";
     in property <string> contents: "Contents";
     in property <string> grid: "Grid";
     in property <string> list: "List";
+    // Dialog
+    in property <string> cancel: "Cancel";
+    in property <string> accept: "OK";
+    in property <string> delete: "Delete";
+    in property <string> quit: "Quit";
+    in property <string> save: "Save";
+    in property <string> edit: "Edit";
+    in property <string> select: "Select";
+    in property <string> select-all: "Select All";
+    in property <string> select-none: "Select None";
+    in property <string> disable: "Disable";
+    in property <string> enable: "Enable";
+
+    // Content dialog — campi obbligatori
+    in property <string> field-title: "Title";
+    in property <string> field-author: "Author";
+    in property <string> field-language: "Language";
+    in property <string> new-content: "New Content";
+    in property <string> new-book: "New Book";
+
+    // People dialog
+    in property <string> new-person: "New Person";
+    in property <string> field-name: "Name";
+    in property <string> field-role: "Role";
+    in property <string> new-role: "Role";
 }

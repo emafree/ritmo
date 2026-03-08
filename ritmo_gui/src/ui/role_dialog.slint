@@ -1,0 +1,80 @@
+// role_dialog.slint
+import { Palette } from "std-widgets.slint";
+import { Button } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { Tr } from "tr.slint";
+import { Suggestion } from "types.slint";
+import { AutocompleteField } from "autocomplete_field.slint";
+
+export component RoleDialog inherits Window {
+    title: Tr.new-role;
+    min-width: 360px;
+    min-height: 140px;
+
+    in property <[Suggestion]> role-suggestions;
+    in-out property <string> role-text: "";
+
+    callback accepted();
+    callback cancelled();
+    callback role-text-changed(string);
+    callback role-selected(int);
+    callback role-create-requested(string);
+
+    VerticalLayout {
+        spacing: 0px;
+
+        Rectangle {
+            background: Palette.background;
+            vertical-stretch: 1;
+
+            VerticalLayout {
+                padding: Theme.padding;
+                spacing: Theme.spacing;
+
+                AutocompleteField {
+                    placeholder-text: Tr.field-role;
+                    text <=> root.role-text;
+                    suggestions: root.role-suggestions;
+                    text-changed(t) => {
+                        root.role-text-changed(t);
+                    }
+                    selected(id) => {
+                        root.role-selected(id);
+                    }
+                    create-requested(t) => {
+                        root.role-create-requested(t);
+                    }
+                }
+
+                Rectangle {
+                    vertical-stretch: 1;
+                }
+            }
+        }
+
+        Rectangle {
+            background: Theme.sidebar-bg;
+            height: 52px;
+
+            HorizontalLayout {
+                alignment: end;
+                padding: Theme.padding;
+                spacing: Theme.spacing;
+
+                Button {
+                    text: Tr.cancel;
+                    clicked => {
+                        root.cancelled();
+                    }
+                }
+
+                Button {
+                    text: Tr.save;
+                    clicked => {
+                        root.accepted();
+                    }
+                }
+            }
+        }
+    }
+}

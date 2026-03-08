@@ -1,0 +1,82 @@
+// autocomplete_field.slint
+import { Palette } from "std-widgets.slint";
+import { LineEdit } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { Suggestion } from "types.slint";
+
+export component AutocompleteField inherits Rectangle {
+    in property <string> placeholder-text: "";
+    in-out property <string> text: "";
+    in property <[Suggestion]> suggestions;
+
+    callback text-changed(string);
+    callback selected(int);
+    callback create-requested(string);
+
+    height: Theme.filter-row-height;
+
+    public function show-suggestions() {
+        popup.show();
+    }
+
+    public function hide-suggestions() {
+        popup.close();
+    }
+
+    input := LineEdit {
+        text <=> root.text;
+        placeholder-text: root.placeholder-text;
+        width: parent.width;
+        height: parent.height;
+        edited(t) => {
+            root.text-changed(t);
+            if (root.suggestions.length == 0 && t != "") {
+                root.create-requested(t);
+            }
+        }
+    }
+
+    popup := PopupWindow {
+        x: 0;
+        y: root.height;
+        width: root.width;
+        height: root.suggestions.length * Theme.filter-row-height;
+        close-policy: no-auto-close;
+
+        Rectangle {
+            background: Palette.background;
+            border-color: Palette.border;
+            border-width: 1px;
+            border-radius: Theme.border-radius;
+            width: parent.width;
+            height: parent.height;
+
+            VerticalLayout {
+                spacing: 0px;
+
+                for suggestion[i] in root.suggestions: Rectangle {
+                    height: Theme.filter-row-height;
+                    background: transparent;
+
+                    Text {
+                        x: Theme.padding;
+                        text: suggestion.display-name;
+                        color: Palette.foreground;
+                        font-size: Theme.font-size-label;
+                        vertical-alignment: center;
+                        height: parent.height;
+                    }
+
+                    TouchArea {
+                        width: 100%;
+                        height: 100%;
+                        clicked => {
+                            root.selected(suggestion.id);
+                            popup.close();
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

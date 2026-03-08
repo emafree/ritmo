@@ -1,5 +1,5 @@
 import { Palette } from "std-widgets.slint";
-import { Theme, SegmentedButton } from "theme.slint";
+import { Theme, SegmentedButton, SegmentedIconButton } from "theme.slint";
 import { Tr } from "tr.slint";
 
 export component MainWindow inherits Window {
@@ -7,16 +7,20 @@ export component MainWindow inherits Window {
     min-width: 800px;
     min-height: 600px;
 
-    in-out property <bool> sidebar-open: true;
+    //    in-out property <bool> sidebar-open: true;
     in property <string> library-name: "La mia libreria";
     in-out property <bool> show-books: true;
     in-out property <bool> show-grid: true;
+
+    callback request-add-book();
+    callback main-nav();
 
     HorizontalLayout {
         spacing: 0px;
 
         // ── Colonna sinistra: Sidebar ─────────────────────────────
-        if root.sidebar-open: Rectangle {
+//        if root.sidebar-open: Rectangle {
+        Rectangle {
             width: Theme.sidebar-width;
             background: Theme.sidebar-bg;
 
@@ -60,7 +64,8 @@ export component MainWindow inherits Window {
                             width: 100%;
                             height: 100%;
                             clicked => {
-                                root.sidebar-open = false;
+//                                root.sidebar-open = false;
+                                root.main-nav();
                             }
                         }
                     }
@@ -84,55 +89,68 @@ export component MainWindow inherits Window {
         VerticalLayout {
             spacing: 0px;
 
-            // Header main
             Rectangle {
                 height: Theme.header-height;
                 background: Palette.background;
 
-                if !root.sidebar-open: Rectangle {
-                    x: 8px;
-                    y: (parent.height - self.height) / 2;
-                    width: 32px;
-                    height: 32px;
-                    background: transparent;
+                HorizontalLayout {
+                    alignment: space-between;
+                    padding-left: Theme.padding;
+                    padding-right: Theme.padding;
 
+                    // Sinistra: hamburger se sidebar chiusa
+                    Rectangle {
+                        width: 32px;
+                    }  // placeholder per allineamento
+
+                    // Centro: nome libreria
                     Text {
-                        text: "☰";
-                        font-size: 18px;
-                        color: Palette.foreground;
+                        text: root.library-name;
+                        color: Palette.foreground.transparentize(0.2);
+                        font-size: Theme.font-size-label;
                         horizontal-alignment: center;
                         vertical-alignment: center;
-                        width: parent.width;
-                        height: parent.height;
+                        horizontal-stretch: 1;
                     }
 
-                    TouchArea {
-                        width: 100%;
-                        height: 100%;
-                        clicked => {
-                            root.sidebar-open = true;
+                    // Destra: "+" e toggle
+                    HorizontalLayout {
+                        spacing: 4px;
+                        alignment: end;
+                        width: 100px;
+
+                        Rectangle {
+                            width: 28px;
+                            height: 28px;
+                            border-radius: 6px;
+                            background: transparent;
+                            Text {
+                                text: "+";
+                                font-size: 20px;
+                                color: Palette.foreground;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                                width: parent.width;
+                                height: parent.height;
+                            }
+
+                            TouchArea {
+                                width: 100%;
+                                height: 100%;
+                                clicked => {
+                                    root.request-add-book();
+                                }
+                            }
                         }
-                    }
-                }
 
-                Text {
-                    text: root.library-name;
-                    color: Palette.foreground.transparentize(0.2);
-                    font-size: Theme.font-size-label;
-                    horizontal-alignment: center;
-                    vertical-alignment: center;
-                    width: parent.width;
-                    height: parent.height;
-                }
-
-                SegmentedButton {
-                    x: root.sidebar-open ? Theme.padding : 48px;
-                    y: (parent.height - self.height) / 2;
-                    label-left: Tr.grid;
-                    label-right: Tr.list;
-                    left-selected: root.show-grid;
-                    changed(v) => {
-                        root.show-grid = v;
+                        SegmentedIconButton {
+                            icon-left: @image-url("icons/grid.svg");
+                            icon-right: @image-url("icons/list.svg");
+                            left-selected: root.show-grid;
+                            changed(v) => {
+                                root.show-grid = v;
+                            }
+                        }
                     }
                 }
             }

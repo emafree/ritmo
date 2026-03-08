@@ -1,0 +1,68 @@
+// field_row.slint — versione completa per build Rust
+import { Palette } from "std-widgets.slint";
+import { ComboBox, LineEdit, Button } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { FieldDefinition, FieldEntry } from "types.slint";
+
+export component FieldRow inherits Rectangle {
+    in property <[string]> available-field-names;
+    in property <[FieldDefinition]> available-fields;
+    in-out property <FieldEntry> entry;
+    in property <bool> is-placeholder: false;
+    in property <bool> is-required: false;
+
+    callback delete-requested();
+    callback value-changed(FieldEntry);
+    callback field-selected(string);  // Rust aggiorna entry.field-type
+
+    height: Theme.filter-row-height;
+
+    HorizontalLayout {
+        spacing: Theme.spacing;
+
+        // Campo nome — fisso se obbligatorio
+        if root.is-required: Text {
+            text: root.entry.field-name;
+            vertical-alignment: center;
+            width: Theme.filter-combobox-width;
+        }
+
+        if !root.is-required: ComboBox {
+            model: root.available-field-names;
+            current-value <=> root.entry.field-name;
+            width: Theme.filter-combobox-width;
+            selected(name) => { root.field-selected(name); }
+        }
+
+        if root.entry.field-type == "number": LineEdit {
+            text <=> root.entry.value;
+            horizontal-stretch: 1;
+            edited => { root.value-changed(root.entry); }
+        }
+
+        if root.entry.field-type == "date": LineEdit {
+            text <=> root.entry.value;
+            placeholder-text: "YYYY-MM-DD";
+            horizontal-stretch: 1;
+            edited => { root.value-changed(root.entry); }
+        }
+
+        if root.entry.field-type == "text" || root.entry.field-type == "": LineEdit {
+            text <=> root.entry.value;
+            horizontal-stretch: 1;
+            edited => { root.value-changed(root.entry); }
+        }
+
+        // Cestino — nascosto su righe obbligatorie e placeholder
+        if !root.is-placeholder && !root.is-required: Button {
+            text: "✕";
+            width: Theme.filter-icon-size;
+            height: Theme.filter-icon-size;
+            clicked => { root.delete-requested(); }
+        }
+
+        if root.is-placeholder || root.is-required: Rectangle {
+            width: Theme.filter-icon-size;
+        }
+    }
+}

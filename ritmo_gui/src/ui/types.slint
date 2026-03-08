@@ -1,0 +1,20 @@
+// types.slint — struct condivise tra i componenti UI
+// Nessun dato hardcodato, nessuna logica — solo definizioni di forma
+
+// Definizione di un campo predefinito, popolata dal Rust
+export struct FieldDefinition {
+    name: string,       // nome visualizzato nella ComboBox
+    field-type: string, // "text" | "number" | "date"
+}
+
+// Una riga campo/valore compilata dall'utente
+export struct FieldEntry {
+    field-name: string,
+    field-type: string,
+    value: string,
+}
+
+export struct Suggestion {
+    id: int,
+    display-name: string,
+}
