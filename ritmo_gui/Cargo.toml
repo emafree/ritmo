@@ -24,6 +24,7 @@ anyhow = "1.0"
 chrono = { workspace = true }
 image = { version = "0.24", default-features = false, features = ["jpeg"] }
 slint = "1.15.1"
+rust-embed = "8.11.0"
 
 [build-dependencies]
 slint-build = "1.15.1"

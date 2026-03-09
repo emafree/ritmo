@@ -1,39 +1,77 @@
-export global Tr {
+export struct Translations {
     // main window sidebar
-    in property <string> app-name: "App";
-    in property <string> library: "Library";
-    in property <string> all-books: "All books";
-    in property <string> reading: "Reading";
-    in property <string> completed: "Completed";
-    in property <string> favorites: "Favorites";
+    app-name: string,
+    library: string,
+    all-books: string,
+    reading: string,
+    completed: string,
+    favorites: string,
     // main window header
-    in property <string> books: "Books";
-    in property <string> contents: "Contents";
-    in property <string> grid: "Grid";
-    in property <string> list: "List";
+    books: string,
+    contents: string,
+    grid: string,
+    list: string,
     // Dialog
-    in property <string> cancel: "Cancel";
-    in property <string> accept: "OK";
-    in property <string> delete: "Delete";
-    in property <string> quit: "Quit";
-    in property <string> save: "Save";
-    in property <string> edit: "Edit";
-    in property <string> select: "Select";
-    in property <string> select-all: "Select All";
-    in property <string> select-none: "Select None";
-    in property <string> disable: "Disable";
-    in property <string> enable: "Enable";
-
-    // Content dialog — campi obbligatori
-    in property <string> field-title: "Title";
-    in property <string> field-author: "Author";
-    in property <string> field-language: "Language";
-    in property <string> new-content: "New Content";
-    in property <string> new-book: "New Book";
-
+    cancel: string,
+    accept: string,
+    delete: string,
+    quit: string,
+    save: string,
+    edit: string,
+    select: string,
+    select-all: string,
+    select-none: string,
+    disable: string,
+    enable: string,
+    // Content dialog
+    field-title: string,
+    field-author: string,
+    field-language: string,
+    new-content: string,
+    new-book: string,
     // People dialog
-    in property <string> new-person: "New Person";
-    in property <string> field-name: "Name";
-    in property <string> field-role: "Role";
-    in property <string> new-role: "Role";
+    new-person: string,
+    field-name: string,
+    field-role: string,
+    new-role: string,
+}
+
+export global Tr {
+    in property <Translations> t: {
+        // main window sidebar
+        app-name: "App",
+        library: "Library",
+        all-books: "All books",
+        reading: "Reading",
+        completed: "Completed",
+        favorites: "Favorites",
+        // main window header
+        books: "Books",
+        contents: "Contents",
+        grid: "Grid",
+        list: "List",
+        // Dialog
+        cancel: "Cancel",
+        accept: "OK",
+        delete: "Delete",
+        quit: "Quit",
+        save: "Save",
+        edit: "Edit",
+        select: "Select",
+        select-all: "Select All",
+        select-none: "Select None",
+        disable: "Disable",
+        enable: "Enable",
+        // Content dialog
+        field-title: "Title",
+        field-author: "Author",
+        field-language: "Language",
+        new-content: "New Content",
+        new-book: "New Book",
+        // People dialog
+        new-person: "New Person",
+        field-name: "Name",
+        field-role: "Role",
+        new-role: "Role",
+    };
 }

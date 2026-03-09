@@ -58,7 +58,6 @@ export component FilterDialog inherits Window {
 
         FilterRow { }
 
-        // Spazio flessibile — bottoni sempre in fondo
         Rectangle {
             vertical-stretch: 1;
         }
@@ -68,21 +67,21 @@ export component FilterDialog inherits Window {
             alignment: end;
 
             Button {
-                text: Tr.cancel;
+                text: Tr.t.cancel;
                 clicked => {
                     root.cancelled();
                 }
             }
 
             Button {
-                text: Tr.save;
+                text: Tr.t.save;
                 clicked => {
                     root.accepted();
                 }
             }
 
             Button {
-                text: Tr.accept;
+                text: Tr.t.accept;
                 clicked => {
                     root.accepted();
                 }

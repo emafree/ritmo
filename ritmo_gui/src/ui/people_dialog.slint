@@ -9,7 +9,7 @@ import { Suggestion } from "types.slint";
 import { AutocompleteField } from "autocomplete_field.slint";
 
 export component PeopleDialog inherits Window {
-    title: Tr.new-person;
+    title: Tr.t.new-person;
     min-width: 440px;
     min-height: 200px;
 
@@ -57,7 +57,7 @@ export component PeopleDialog inherits Window {
 
                 // Nome — obbligatorio, autocomplete
                 AutocompleteField {
-                    placeholder-text: Tr.field-name;
+                    placeholder-text: Tr.t.field-name;
                     text <=> root.name-text;
                     suggestions: root.name-suggestions;
                     text-changed(t) => {
@@ -73,7 +73,7 @@ export component PeopleDialog inherits Window {
 
                 // Ruolo — obbligatorio, autocomplete
                 AutocompleteField {
-                    placeholder-text: Tr.field-role;
+                    placeholder-text: Tr.t.field-role;
                     text <=> root.role-text;
                     suggestions: root.role-suggestions;
                     text-changed(t) => {
@@ -122,14 +122,14 @@ export component PeopleDialog inherits Window {
                 spacing: Theme.spacing;
 
                 Button {
-                    text: Tr.cancel;
+                    text: Tr.t.cancel;
                     clicked => {
                         root.cancelled();
                     }
                 }
 
                 Button {
-                    text: Tr.save;
+                    text: Tr.t.save;
                     clicked => {
                         root.accepted();
                     }

@@ -14,12 +14,6 @@ export component ContentDialog inherits Window {
     in property <[string]> languages;
     in property <[string]> available-field-names;
     in property <[FieldDefinition]> available-fields;
-
-    // Il Rust gestisce l'intera sequenza di righe:
-    // - obbligatorie: field-name valorizzato, is-required = true
-    // - ghost row obbligatoria: field-name valorizzato, is-placeholder = true
-    // - opzionali: field-name sceglibile, is-required = false
-    // - ghost row opzionale: field-name vuoto, is-placeholder = true
     in property <[FieldEntry]> entries;
 
     callback accepted();
@@ -45,16 +39,23 @@ export component ContentDialog inherits Window {
                     entry: entry;
                     is-placeholder: entry.value == "" && i == root.entries.length - 1;
                     is-required: entry.field-name != "" && i < 3;
-                    value-changed(e) => { root.value-changed(i, e); }
-                    field-selected(name) => { root.field-selected(i, name); }
-                    delete-requested => { root.delete-requested(i); }
+                    value-changed(e) => {
+                        root.value-changed(i, e);
+                    }
+                    field-selected(name) => {
+                        root.field-selected(i, name);
+                    }
+                    delete-requested => {
+                        root.delete-requested(i);
+                    }
                 }
 
-                Rectangle { vertical-stretch: 1; }
+                Rectangle {
+                    vertical-stretch: 1;
+                }
             }
         }
 
-        // ── Bottoni ───────────────────────────────────────────────
         Rectangle {
             background: Theme.sidebar-bg;
             height: 52px;
@@ -65,12 +66,17 @@ export component ContentDialog inherits Window {
                 spacing: Theme.spacing;
 
                 Button {
-                    text: Tr.cancel;
-                    clicked => { root.cancelled(); }
+                    text: Tr.t.cancel;
+                    clicked => {
+                        root.cancelled();
+                    }
                 }
+
                 Button {
-                    text: Tr.accept;
-                    clicked => { root.accepted(); }
+                    text: Tr.t.accept;
+                    clicked => {
+                        root.accepted();
+                    }
                 }
             }
         }

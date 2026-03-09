@@ -43,9 +43,13 @@ component ContentRow inherits Rectangle {
                 width: parent.width;
                 height: parent.height;
             }
+
             TouchArea {
-                width: 100%; height: 100%;
-                clicked => { root.edit-requested(); }
+                width: 100%;
+                height: 100%;
+                clicked => {
+                    root.edit-requested();
+                }
             }
         }
 
@@ -63,9 +67,13 @@ component ContentRow inherits Rectangle {
                 width: parent.width;
                 height: parent.height;
             }
+
             TouchArea {
-                width: 100%; height: 100%;
-                clicked => { root.delete-requested(); }
+                width: 100%;
+                height: 100%;
+                clicked => {
+                    root.delete-requested();
+                }
             }
         }
     }
@@ -78,7 +86,7 @@ export struct ContentSummary {
 }
 
 export component BookDialog inherits Window {
-    title: Tr.new-book;
+    title: Tr.t.new-book;
     min-width: 440px;
     min-height: 300px;
 
@@ -117,9 +125,15 @@ export component BookDialog inherits Window {
                     entry: entry;
                     is-placeholder: entry.value == "" && i == root.entries.length - 1;
                     is-required: entry.field-name != "" && i == 0;
-                    value-changed(e) => { root.value-changed(i, e); }
-                    field-selected(name) => { root.field-selected(i, name); }
-                    delete-requested => { root.delete-requested(i); }
+                    value-changed(e) => {
+                        root.value-changed(i, e);
+                    }
+                    field-selected(name) => {
+                        root.field-selected(i, name);
+                    }
+                    delete-requested => {
+                        root.delete-requested(i);
+                    }
                 }
             }
         }
@@ -143,8 +157,12 @@ export component BookDialog inherits Window {
                 for content[i] in root.added-contents: ContentRow {
                     title: content.title;
                     author: content.author;
-                    edit-requested => { root.edit-content-requested(i); }
-                    delete-requested => { root.delete-content-requested(i); }
+                    edit-requested => {
+                        root.edit-content-requested(i);
+                    }
+                    delete-requested => {
+                        root.delete-content-requested(i);
+                    }
                 }
 
                 // Ghost row — apre ContentDialog
@@ -153,7 +171,7 @@ export component BookDialog inherits Window {
                     background: transparent;
 
                     Text {
-                        text: "+ " + Tr.new-content;
+                        text: "+ " + Tr.t.new-content;
                         color: Palette.foreground.transparentize(0.5);
                         font-size: Theme.font-size-label;
                         vertical-alignment: center;
@@ -161,12 +179,17 @@ export component BookDialog inherits Window {
                     }
 
                     TouchArea {
-                        width: 100%; height: 100%;
-                        clicked => { root.add-content-requested(); }
+                        width: 100%;
+                        height: 100%;
+                        clicked => {
+                            root.add-content-requested();
+                        }
                     }
                 }
 
-                Rectangle { vertical-stretch: 1; }
+                Rectangle {
+                    vertical-stretch: 1;
+                }
             }
         }
 
@@ -181,12 +204,17 @@ export component BookDialog inherits Window {
                 spacing: Theme.spacing;
 
                 Button {
-                    text: Tr.cancel;
-                    clicked => { root.cancelled(); }
+                    text: Tr.t.cancel;
+                    clicked => {
+                        root.cancelled();
+                    }
                 }
+
                 Button {
-                    text: Tr.save;
-                    clicked => { root.accepted(); }
+                    text: Tr.t.save;
+                    clicked => {
+                        root.accepted();
+                    }
                 }
             }
         }

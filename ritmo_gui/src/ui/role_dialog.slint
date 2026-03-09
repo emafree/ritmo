@@ -7,7 +7,7 @@ import { Suggestion } from "types.slint";
 import { AutocompleteField } from "autocomplete_field.slint";
 
 export component RoleDialog inherits Window {
-    title: Tr.new-role;
+    title: Tr.t.new-role;
     min-width: 360px;
     min-height: 140px;
 
@@ -32,7 +32,7 @@ export component RoleDialog inherits Window {
                 spacing: Theme.spacing;
 
                 AutocompleteField {
-                    placeholder-text: Tr.field-role;
+                    placeholder-text: Tr.t.field-role;
                     text <=> root.role-text;
                     suggestions: root.role-suggestions;
                     text-changed(t) => {
@@ -62,14 +62,14 @@ export component RoleDialog inherits Window {
                 spacing: Theme.spacing;
 
                 Button {
-                    text: Tr.cancel;
+                    text: Tr.t.cancel;
                     clicked => {
                         root.cancelled();
                     }
                 }
 
                 Button {
-                    text: Tr.save;
+                    text: Tr.t.save;
                     clicked => {
                         root.accepted();
                     }
