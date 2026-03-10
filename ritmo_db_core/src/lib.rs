@@ -16,7 +16,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub const DB_TEMPLATE: &[u8] =
-    include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/template.db"));
+    include_bytes!(concat!(env!("OUT_DIR"), "/template.db"));
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LibraryConfig {
