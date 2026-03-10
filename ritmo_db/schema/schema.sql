@@ -758,4 +758,26 @@ SELECT
     0 as with_paper,
     0 as dummy_field
 FROM series;
+CREATE TABLE IF NOT EXISTS "field_definitions" (
+    "id"          INTEGER PRIMARY KEY AUTOINCREMENT,
+    "entity"      TEXT NOT NULL CHECK("entity" IN ('book', 'content')),
+    "field_name"  TEXT NOT NULL,
+    "data_kind"   TEXT NOT NULL CHECK("data_kind" IN ('string', 'quantity', 'date', 'enum', 'person')),
+    "sort_order"  INTEGER NOT NULL DEFAULT 0,
+    "enum_values" TEXT,
+    "created_at"  INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    UNIQUE("entity", "field_name")
+);
+
+INSERT OR IGNORE INTO field_definitions (entity, field_name, data_kind, sort_order) VALUES
+    ('book',    'field-original-title',   'string',   10),
+    ('book',    'field-publication-date', 'date',     20),
+    ('book',    'field-isbn',             'string',   30),
+    ('book',    'field-pages',            'quantity', 40),
+    ('book',    'field-notes',            'string',   50),
+    ('book',    'field-people',           'person',   60),
+    ('content', 'field-title',            'string',   10),
+    ('content', 'field-author',           'person',   20),
+    ('content', 'field-language',         'enum',     30),
+    ('content', 'field-people',           'person',   40);
 COMMIT;

@@ -112,6 +112,7 @@ impl Database {
             ("aliases", "table"),
             ("roles", "table"),
             ("types", "table"),
+            ("field_definitions", "table"),
             // Tabelle di relazione
             ("x_books_contents", "table"),
             ("x_books_people_roles", "table"),

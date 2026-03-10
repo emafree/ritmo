@@ -66,3 +66,45 @@ pub fn apply_translations(win: &MainWindow, lang: &str) {
     let tr = win.global::<Tr>();
     tr.set_t(load_translations(lang));
 }
+
+/// Translates a single key at runtime using the embedded i18n JSON files.
+/// Falls back to the key itself if not found.
+pub fn translate_key(lang: &str, key: &str) -> slint::SharedString {
+    let json = I18nFiles::get(&format!("{}.json", lang))
+        .or_else(|| I18nFiles::get("en.json"))
+        .expect("en.json not found");
+    let content = std::str::from_utf8(json.data.as_ref()).expect("invalid utf8");
+    let map: serde_json::Map<String, serde_json::Value> =
+        serde_json::from_str(content).expect("invalid JSON");
+    map.get(key)
+        .and_then(|v| v.as_str())
+        .unwrap_or(key)
+        .into()
+}
+
+/// Converts DB rows into Slint FieldDefinition structs, resolving display names via i18n.
+pub fn rows_to_slint_fields(
+    rows: &[ritmo_db::FieldDefinitionRow],
+    lang: &str,
+) -> Vec<crate::FieldDefinition> {
+    rows.iter()
+        .map(|row| {
+            let display_name = translate_key(lang, &row.field_name);
+            let enum_values: Vec<slint::SharedString> = row
+                .enum_values
+                .as_deref()
+                .and_then(|s| serde_json::from_str::<Vec<String>>(s).ok())
+                .unwrap_or_default()
+                .into_iter()
+                .map(|v| v.into())
+                .collect();
+            crate::FieldDefinition {
+                name: display_name,
+                data_kind: row.data_kind.clone().into(),
+                enum_values: slint::ModelRc::from(std::rc::Rc::new(
+                    slint::VecModel::<slint::SharedString>::from(enum_values),
+                )),
+            }
+        })
+        .collect()
+}
