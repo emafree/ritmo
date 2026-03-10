@@ -1,43 +1,8 @@
 // src/dialogs/book_dialog.rs
-use super::content_dialog::{open_content_dialog_for_book, content_optional_fields};
-use crate::{BookDialog, ContentSummary, FieldDefinition, FieldEntry, Suggestion, Tr};
+use super::content_dialog::open_content_dialog_for_book;
+use crate::{BookDialog, ContentSummary, FieldDefinition, FieldEntry, Suggestion};
 use slint::{ComponentHandle, Model, ModelRc, VecModel};
 use std::rc::Rc;
-
-fn book_optional_fields(tr: &crate::Translations) -> Vec<FieldDefinition> {
-    vec![
-        FieldDefinition {
-            name: tr.field_original_title.clone(),
-            data_kind: "string".into(),
-            enum_values: ModelRc::default(),
-        },
-        FieldDefinition {
-            name: tr.field_publication_date.clone(),
-            data_kind: "date".into(),
-            enum_values: ModelRc::default(),
-        },
-        FieldDefinition {
-            name: tr.field_isbn.clone(),
-            data_kind: "string".into(),
-            enum_values: ModelRc::default(),
-        },
-        FieldDefinition {
-            name: tr.field_pages.clone(),
-            data_kind: "quantity".into(),
-            enum_values: ModelRc::default(),
-        },
-        FieldDefinition {
-            name: tr.field_notes.clone(),
-            data_kind: "string".into(),
-            enum_values: ModelRc::default(),
-        },
-        FieldDefinition {
-            name: tr.field_people.clone(),
-            data_kind: "person".into(),
-            enum_values: ModelRc::default(),
-        },
-    ]
-}
 
 fn first_placeholder(fields: &[FieldDefinition]) -> FieldEntry {
     match fields.first() {
@@ -86,11 +51,14 @@ fn maybe_push_ghost(model: &VecModel<FieldEntry>, idx: usize, row: &FieldEntry) 
     }
 }
 
-pub fn open_book_dialog(win: &crate::MainWindow) -> anyhow::Result<()> {
+pub fn open_book_dialog(
+    win: &crate::MainWindow,
+    book_fields: Vec<crate::FieldDefinition>,
+    content_fields: Vec<crate::FieldDefinition>,
+) -> anyhow::Result<()> {
     let dialog = BookDialog::new()?;
 
-    let tr = win.global::<Tr>().get_t();
-    let fields = book_optional_fields(&tr);
+    let fields = book_fields;
     let field_names: Vec<slint::SharedString> =
         fields.iter().map(|f| f.name.clone()).collect();
 
@@ -257,8 +225,6 @@ pub fn open_book_dialog(win: &crate::MainWindow) -> anyhow::Result<()> {
     dialog.on_role_create_requested(move |_idx, _text| {
         // Ruolo nuovo — verrà creato nel DB al salvataggio
     });
-
-    let content_fields = content_optional_fields(&tr);
 
     // ── Contents ─────────────────────────────────────────────────
     let dw = dialog.as_weak();

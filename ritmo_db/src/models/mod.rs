@@ -9,6 +9,7 @@
 /// User -> DTO data -> ML -> Models data
 pub mod aliases;
 pub mod books;
+pub mod field_definitions;
 pub mod contents;
 pub mod formats;
 pub mod genres;
@@ -29,6 +30,7 @@ pub mod x_contents_tags;
 
 pub use self::aliases::*;
 pub use self::books::*;
+pub use self::field_definitions::*;
 pub use self::contents::*;
 pub use self::formats::*;
 pub use self::genres::*;
