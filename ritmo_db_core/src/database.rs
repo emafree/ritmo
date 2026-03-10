@@ -119,6 +119,7 @@ impl Database {
             ("x_contents_languages", "table"),
             ("x_contents_people_roles", "table"),
             ("x_contents_tags", "table"),
+            ("field_definitions", "table"),
         ];
 
         for (schema_name, schema_type) in &required_schema {

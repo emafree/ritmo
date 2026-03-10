@@ -1,32 +1,7 @@
 // src/dialogs/content_dialog.rs
-use crate::{ContentDialog, FieldDefinition, FieldEntry, Suggestion, Tr};
+use crate::{ContentDialog, FieldDefinition, FieldEntry, Suggestion};
 use slint::{ComponentHandle, Model, ModelRc, VecModel};
 use std::rc::Rc;
-
-pub fn content_optional_fields(tr: &crate::Translations) -> Vec<FieldDefinition> {
-    vec![
-        FieldDefinition {
-            name: tr.field_title.clone(),
-            data_kind: "string".into(),
-            enum_values: ModelRc::default(),
-        },
-        FieldDefinition {
-            name: tr.field_author.clone(),
-            data_kind: "person".into(),
-            enum_values: ModelRc::default(),
-        },
-        FieldDefinition {
-            name: tr.field_language.clone(),
-            data_kind: "enum".into(),
-            enum_values: ModelRc::default(), // TODO: popolare con lingue reali
-        },
-        FieldDefinition {
-            name: tr.field_people.clone(),
-            data_kind: "person".into(),
-            enum_values: ModelRc::default(),
-        },
-    ]
-}
 
 fn first_placeholder(fields: &[FieldDefinition]) -> FieldEntry {
     match fields.first() {
@@ -214,10 +189,8 @@ fn wire_callbacks(dialog: &ContentDialog) {
     dialog.on_role_create_requested(move |_idx, _text| {});
 }
 
-pub fn open_content_dialog(win: &crate::MainWindow) -> anyhow::Result<()> {
+pub fn open_content_dialog(fields: Vec<crate::FieldDefinition>) -> anyhow::Result<()> {
     let dialog = ContentDialog::new()?;
-    let tr = win.global::<Tr>().get_t();
-    let fields = content_optional_fields(&tr);
 
     init_dialog(&dialog, &fields);
 
