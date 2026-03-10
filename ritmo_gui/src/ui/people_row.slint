@@ -1,0 +1,70 @@
+// people_row.slint
+// Riga inline per nome persona + ruolo, riutilizzabile in BookDialog e ContentDialog.
+// Tutta la logica (suggerimenti ML, creazione, persistenza) è nel Rust.
+import { Palette } from "std-widgets.slint";
+import { Button } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { Tr } from "tr.slint";
+import { Suggestion } from "types.slint";
+import { AutocompleteField } from "autocomplete_field.slint";
+
+export struct PersonEntry {
+    person-id: int,       // 0 = non ancora persistita
+    person-name: string,
+    role-id: int,         // 0 = non ancora persistito
+    role-name: string,
+}
+
+export component PeopleRow inherits Rectangle {
+    in property <[Suggestion]> name-suggestions;
+    in property <[Suggestion]> role-suggestions;
+    in-out property <PersonEntry> entry;
+    in property <bool> is-placeholder: false;
+
+    callback name-text-changed(string);
+    callback name-selected(int);        // utente sceglie da lista
+    callback name-create-requested(string); // lista vuota → crea persona
+
+    callback role-text-changed(string);
+    callback role-selected(int);
+    callback role-create-requested(string);
+
+    callback delete-requested();
+
+    height: Theme.filter-row-height;
+
+    HorizontalLayout {
+        spacing: Theme.spacing;
+
+        AutocompleteField {
+            placeholder-text: Tr.t.field-name;
+            text <=> root.entry.person-name;
+            suggestions: root.name-suggestions;
+            width: Theme.filter-combobox-width;
+            text-changed(t) => { root.name-text-changed(t); }
+            selected(id) => { root.name-selected(id); }
+            create-requested(t) => { root.name-create-requested(t); }
+        }
+
+        AutocompleteField {
+            placeholder-text: Tr.t.field-role;
+            text <=> root.entry.role-name;
+            suggestions: root.role-suggestions;
+            width: Theme.filter-combobox-width;
+            text-changed(t) => { root.role-text-changed(t); }
+            selected(id) => { root.role-selected(id); }
+            create-requested(t) => { root.role-create-requested(t); }
+        }
+
+        // Cestino — nascosto sulla ghost row
+        if !root.is-placeholder: Button {
+            text: "✕";
+            width: Theme.filter-icon-size;
+            height: Theme.filter-icon-size;
+            clicked => { root.delete-requested(); }
+        }
+        if root.is-placeholder: Rectangle {
+            width: Theme.filter-icon-size;
+        }
+    }
+}

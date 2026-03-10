@@ -1,7 +1,7 @@
 // src/i18n.rs
+use crate::{MainWindow, Tr, Translations};
 use rust_embed::RustEmbed;
 use slint::ComponentHandle;
-use crate::{MainWindow, Translations, Tr};
 
 #[derive(RustEmbed)]
 #[folder = "i18n/"]
@@ -12,17 +12,14 @@ pub fn load_translations(lang: &str) -> Translations {
         .or_else(|| I18nFiles::get("en.json"))
         .expect("en.json not found");
 
-    let content = std::str::from_utf8(json.data.as_ref())
-        .expect("invalid utf8 in translation file");
+    let content =
+        std::str::from_utf8(json.data.as_ref()).expect("invalid utf8 in translation file");
 
     let map: serde_json::Map<String, serde_json::Value> =
         serde_json::from_str(content).expect("invalid JSON");
 
     let get = |key: &str| -> slint::SharedString {
-        map.get(key)
-            .and_then(|v| v.as_str())
-            .unwrap_or(key)
-            .into()
+        map.get(key).and_then(|v| v.as_str()).unwrap_or(key).into()
     };
 
     Translations {
@@ -56,6 +53,12 @@ pub fn load_translations(lang: &str) -> Translations {
         select: get("select"),
         select_all: get("select-all"),
         select_none: get("select-none"),
+        field_original_title: get("field-original-title"),
+        field_publication_date: get("field-publication-date"),
+        field_isbn: get("field-isbn"),
+        field_pages: get("field-pages"),
+        field_notes: get("field-notes"),
+        field_people: get("field-people"),
     }
 }
 

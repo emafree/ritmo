@@ -28,5 +28,11 @@
   "new-person": "New Person",
   "field-name": "Name",
   "field-role": "Role",
-  "new-role": "Role"
+  "new-role": "New Role",
+  "field-original-title": "Original title",
+  "field-publication-date": "Publication date",
+  "field-isbn": "ISBN",
+  "field-pages": "Pages",
+  "field-notes": "Notes",
+  "field-people": "People"
 }

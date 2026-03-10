@@ -3,8 +3,8 @@ import { Palette } from "std-widgets.slint";
 import { Button } from "std-widgets.slint";
 import { Theme } from "theme.slint";
 import { Tr } from "tr.slint";
-import { FieldDefinition, FieldEntry } from "types.slint";
-import { FieldRow } from "field_row.slint";
+import { FieldDefinition, FieldEntry, Suggestion } from "types.slint";
+import { EntryRow } from "entry_row.slint";
 
 // Riga singola nella lista contents
 component ContentRow inherits Rectangle {
@@ -19,7 +19,6 @@ component ContentRow inherits Rectangle {
     HorizontalLayout {
         spacing: Theme.spacing;
 
-        // Titolo + autore
         Text {
             text: root.title + " — " + root.author;
             color: Palette.foreground;
@@ -29,57 +28,30 @@ component ContentRow inherits Rectangle {
             overflow: elide;
         }
 
-        // Edit
         Rectangle {
-            width: 28px;
-            height: 28px;
-            background: transparent;
+            width: 28px; height: 28px; background: transparent;
             Text {
-                text: "✎";
-                font-size: 14px;
+                text: "✎"; font-size: 14px;
                 color: Palette.foreground.transparentize(0.3);
-                horizontal-alignment: center;
-                vertical-alignment: center;
-                width: parent.width;
-                height: parent.height;
+                horizontal-alignment: center; vertical-alignment: center;
+                width: parent.width; height: parent.height;
             }
-
-            TouchArea {
-                width: 100%;
-                height: 100%;
-                clicked => {
-                    root.edit-requested();
-                }
-            }
+            TouchArea { width: 100%; height: 100%; clicked => { root.edit-requested(); } }
         }
 
-        // Delete
         Rectangle {
-            width: 28px;
-            height: 28px;
-            background: transparent;
+            width: 28px; height: 28px; background: transparent;
             Text {
-                text: "✕";
-                font-size: 14px;
+                text: "✕"; font-size: 14px;
                 color: Palette.foreground.transparentize(0.3);
-                horizontal-alignment: center;
-                vertical-alignment: center;
-                width: parent.width;
-                height: parent.height;
+                horizontal-alignment: center; vertical-alignment: center;
+                width: parent.width; height: parent.height;
             }
-
-            TouchArea {
-                width: 100%;
-                height: 100%;
-                clicked => {
-                    root.delete-requested();
-                }
-            }
+            TouchArea { width: 100%; height: 100%; clicked => { root.delete-requested(); } }
         }
     }
 }
 
-// Struct per un content nella lista
 export struct ContentSummary {
     title: string,
     author: string,
@@ -87,16 +59,14 @@ export struct ContentSummary {
 
 export component BookDialog inherits Window {
     title: Tr.t.new-book;
-    min-width: 440px;
+    min-width: 480px;
     min-height: 300px;
 
     in property <[string]> available-field-names;
     in property <[FieldDefinition]> available-fields;
-
-    // Righe book (obbligatorie + opzionali) — stesso pattern di ContentDialog
     in property <[FieldEntry]> entries;
-
-    // Lista contents già aggiunti
+    in property <[Suggestion]> name-suggestions;
+    in property <[Suggestion]> role-suggestions;
     in property <[ContentSummary]> added-contents;
 
     callback accepted();
@@ -104,6 +74,12 @@ export component BookDialog inherits Window {
     callback value-changed(int, FieldEntry);
     callback field-selected(int, string);
     callback delete-requested(int);
+    callback name-text-changed(int, string);
+    callback name-selected(int, int);
+    callback name-create-requested(int, string);
+    callback role-text-changed(int, string);
+    callback role-selected(int, int);
+    callback role-create-requested(int, string);
     callback add-content-requested();
     callback edit-content-requested(int);
     callback delete-content-requested(int);
@@ -119,21 +95,23 @@ export component BookDialog inherits Window {
                 padding: Theme.padding;
                 spacing: Theme.spacing;
 
-                for entry[i] in root.entries: FieldRow {
+                for entry[i] in root.entries: EntryRow {
                     available-field-names: root.available-field-names;
                     available-fields: root.available-fields;
+                    name-suggestions: root.name-suggestions;
+                    role-suggestions: root.role-suggestions;
                     entry: entry;
-                    is-placeholder: entry.value == "" && i == root.entries.length - 1;
-                    is-required: entry.field-name != "" && i == 0;
-                    value-changed(e) => {
-                        root.value-changed(i, e);
-                    }
-                    field-selected(name) => {
-                        root.field-selected(i, name);
-                    }
-                    delete-requested => {
-                        root.delete-requested(i);
-                    }
+                    is-placeholder: entry.value == "" && entry.person-name == "" && i == root.entries.length - 1;
+                    is-required: false;
+                    value-changed(e) => { root.value-changed(i, e); }
+                    field-selected(name) => { root.field-selected(i, name); }
+                    delete-requested => { root.delete-requested(i); }
+                    name-text-changed(t) => { root.name-text-changed(i, t); }
+                    name-selected(id) => { root.name-selected(i, id); }
+                    name-create-requested(t) => { root.name-create-requested(i, t); }
+                    role-text-changed(t) => { root.role-text-changed(i, t); }
+                    role-selected(id) => { root.role-selected(i, id); }
+                    role-create-requested(t) => { root.role-create-requested(i, t); }
                 }
             }
         }
@@ -148,28 +126,21 @@ export component BookDialog inherits Window {
                 spacing: Theme.spacing;
 
                 Text {
-                    text: "Contents";
+                    text: Tr.t.contents;
                     color: Palette.foreground.transparentize(0.4);
                     font-size: Theme.font-size-section;
                 }
 
-                // Contents aggiunti
                 for content[i] in root.added-contents: ContentRow {
                     title: content.title;
                     author: content.author;
-                    edit-requested => {
-                        root.edit-content-requested(i);
-                    }
-                    delete-requested => {
-                        root.delete-content-requested(i);
-                    }
+                    edit-requested => { root.edit-content-requested(i); }
+                    delete-requested => { root.delete-content-requested(i); }
                 }
 
-                // Ghost row — apre ContentDialog
                 Rectangle {
                     height: Theme.filter-row-height;
                     background: transparent;
-
                     Text {
                         text: "+ " + Tr.t.new-content;
                         color: Palette.foreground.transparentize(0.5);
@@ -177,19 +148,13 @@ export component BookDialog inherits Window {
                         vertical-alignment: center;
                         height: parent.height;
                     }
-
                     TouchArea {
-                        width: 100%;
-                        height: 100%;
-                        clicked => {
-                            root.add-content-requested();
-                        }
+                        width: 100%; height: 100%;
+                        clicked => { root.add-content-requested(); }
                     }
                 }
 
-                Rectangle {
-                    vertical-stretch: 1;
-                }
+                Rectangle { vertical-stretch: 1; }
             }
         }
 
@@ -205,16 +170,11 @@ export component BookDialog inherits Window {
 
                 Button {
                     text: Tr.t.cancel;
-                    clicked => {
-                        root.cancelled();
-                    }
+                    clicked => { root.cancelled(); }
                 }
-
                 Button {
                     text: Tr.t.save;
-                    clicked => {
-                        root.accepted();
-                    }
+                    clicked => { root.accepted(); }
                 }
             }
         }

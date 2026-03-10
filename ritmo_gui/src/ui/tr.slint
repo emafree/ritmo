@@ -34,23 +34,27 @@ export struct Translations {
     field-name: string,
     field-role: string,
     new-role: string,
+    // Book optional fields
+    field-original-title: string,
+    field-publication-date: string,
+    field-isbn: string,
+    field-pages: string,
+    field-notes: string,
+    field-people: string
 }
 
 export global Tr {
     in property <Translations> t: {
-        // main window sidebar
         app-name: "App",
         library: "Library",
         all-books: "All books",
         reading: "Reading",
         completed: "Completed",
         favorites: "Favorites",
-        // main window header
         books: "Books",
         contents: "Contents",
         grid: "Grid",
         list: "List",
-        // Dialog
         cancel: "Cancel",
         accept: "OK",
         delete: "Delete",
@@ -62,16 +66,20 @@ export global Tr {
         select-none: "Select None",
         disable: "Disable",
         enable: "Enable",
-        // Content dialog
         field-title: "Title",
         field-author: "Author",
         field-language: "Language",
         new-content: "New Content",
         new-book: "New Book",
-        // People dialog
         new-person: "New Person",
         field-name: "Name",
         field-role: "Role",
-        new-role: "Role",
+        new-role: "New Role",
+        field-original-title: "Original title",
+        field-publication-date: "Publication date",
+        field-isbn: "ISBN",
+        field-pages: "Pages",
+        field-notes: "Notes",
+        field-people: "People"
     };
 }

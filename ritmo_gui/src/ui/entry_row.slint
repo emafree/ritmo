@@ -1,0 +1,109 @@
+// entry_row.slint
+import { Palette } from "std-widgets.slint";
+import { LineEdit, ComboBox, Button } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { Tr } from "tr.slint";
+import { FieldDefinition, FieldEntry, Suggestion } from "types.slint";
+import { AutocompleteField } from "autocomplete_field.slint";
+
+export component EntryRow inherits Rectangle {
+    in property <[string]> available-field-names;
+    in property <[FieldDefinition]> available-fields;
+    in property <[Suggestion]> name-suggestions;
+    in property <[Suggestion]> role-suggestions;
+    // Per data-kind == "enum": il Rust passa i valori già risolti qui
+    in property <[string]> enum-values;
+    in-out property <FieldEntry> entry;
+    in property <bool> is-placeholder: false;
+    in property <bool> is-required: false;
+
+    callback value-changed(FieldEntry);
+    callback field-selected(string);
+    callback delete-requested();
+
+    callback name-text-changed(string);
+    callback name-selected(int);
+    callback name-create-requested(string);
+    callback role-text-changed(string);
+    callback role-selected(int);
+    callback role-create-requested(string);
+
+    height: Theme.filter-row-height;
+
+    HorizontalLayout {
+        spacing: Theme.spacing;
+
+        // ── Nome campo ────────────────────────────────────────────
+        if root.is-required: Text {
+            text: root.entry.field-name;
+            vertical-alignment: center;
+            width: Theme.filter-combobox-width;
+            color: Palette.foreground;
+            font-size: Theme.font-size-label;
+        }
+        if !root.is-required && root.entry.data-kind != "person": ComboBox {
+            model: root.available-field-names;
+            current-value: root.entry.field-name;
+            width: Theme.filter-combobox-width;
+            selected(name) => { root.field-selected(name); }
+        }
+
+        // ── Widget valore ─────────────────────────────────────────
+        if root.entry.data-kind == "string" || root.entry.data-kind == "": LineEdit {
+            text <=> root.entry.value;
+            horizontal-stretch: 1;
+            edited => { root.value-changed(root.entry); }
+        }
+
+        if root.entry.data-kind == "quantity": LineEdit {
+            text <=> root.entry.value;
+            horizontal-stretch: 1;
+            input-type: number;
+            edited => { root.value-changed(root.entry); }
+        }
+
+        if root.entry.data-kind == "date": LineEdit {
+            text <=> root.entry.value;
+            placeholder-text: "YYYY-MM-DD";
+            horizontal-stretch: 1;
+            edited => { root.value-changed(root.entry); }
+        }
+
+        if root.entry.data-kind == "enum": ComboBox {
+            model: root.enum-values;
+            current-value <=> root.entry.value;
+            horizontal-stretch: 1;
+        }
+
+        // Riga person — nome + ruolo affiancati
+        if root.entry.data-kind == "person": AutocompleteField {
+            placeholder-text: Tr.t.field-name;
+            text <=> root.entry.person-name;
+            suggestions: root.name-suggestions;
+            width: Theme.filter-combobox-width;
+            text-changed(t) => { root.name-text-changed(t); }
+            selected(id) => { root.name-selected(id); }
+            create-requested(t) => { root.name-create-requested(t); }
+        }
+        if root.entry.data-kind == "person": AutocompleteField {
+            placeholder-text: Tr.t.field-role;
+            text <=> root.entry.role-name;
+            suggestions: root.role-suggestions;
+            horizontal-stretch: 1;
+            text-changed(t) => { root.role-text-changed(t); }
+            selected(id) => { root.role-selected(id); }
+            create-requested(t) => { root.role-create-requested(t); }
+        }
+
+        // ── Cestino ───────────────────────────────────────────────
+        if !root.is-placeholder && !root.is-required: Button {
+            text: "✕";
+            width: Theme.filter-icon-size;
+            height: Theme.filter-icon-size;
+            clicked => { root.delete-requested(); }
+        }
+        if root.is-placeholder || root.is-required: Rectangle {
+            width: Theme.filter-icon-size;
+        }
+    }
+}

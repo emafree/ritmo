@@ -1,26 +1,33 @@
 // content_dialog.slint
 import { Palette } from "std-widgets.slint";
-import { Button, ComboBox } from "std-widgets.slint";
+import { Button } from "std-widgets.slint";
 import { Theme } from "theme.slint";
-import { FieldDefinition, FieldEntry } from "types.slint";
-import { FieldRow } from "field_row.slint";
 import { Tr } from "tr.slint";
+import { FieldDefinition, FieldEntry, Suggestion } from "types.slint";
+import { EntryRow } from "entry_row.slint";
 
 export component ContentDialog inherits Window {
-    title: "Nuovo Content";
-    min-width: 440px;
+    title: Tr.t.new-content;
+    min-width: 480px;
     min-height: 200px;
 
-    in property <[string]> languages;
     in property <[string]> available-field-names;
     in property <[FieldDefinition]> available-fields;
     in property <[FieldEntry]> entries;
+    in property <[Suggestion]> name-suggestions;
+    in property <[Suggestion]> role-suggestions;
 
     callback accepted();
     callback cancelled();
     callback value-changed(int, FieldEntry);
     callback field-selected(int, string);
     callback delete-requested(int);
+    callback name-text-changed(int, string);
+    callback name-selected(int, int);
+    callback name-create-requested(int, string);
+    callback role-text-changed(int, string);
+    callback role-selected(int, int);
+    callback role-create-requested(int, string);
 
     VerticalLayout {
         spacing: 0px;
@@ -33,26 +40,26 @@ export component ContentDialog inherits Window {
                 padding: Theme.padding;
                 spacing: Theme.spacing;
 
-                for entry[i] in root.entries: FieldRow {
+                for entry[i] in root.entries: EntryRow {
                     available-field-names: root.available-field-names;
                     available-fields: root.available-fields;
+                    name-suggestions: root.name-suggestions;
+                    role-suggestions: root.role-suggestions;
                     entry: entry;
-                    is-placeholder: entry.value == "" && i == root.entries.length - 1;
-                    is-required: entry.field-name != "" && i < 3;
-                    value-changed(e) => {
-                        root.value-changed(i, e);
-                    }
-                    field-selected(name) => {
-                        root.field-selected(i, name);
-                    }
-                    delete-requested => {
-                        root.delete-requested(i);
-                    }
+                    is-placeholder: entry.value == "" && entry.person-name == "" && i == root.entries.length - 1;
+                    is-required: false;
+                    value-changed(e) => { root.value-changed(i, e); }
+                    field-selected(name) => { root.field-selected(i, name); }
+                    delete-requested => { root.delete-requested(i); }
+                    name-text-changed(t) => { root.name-text-changed(i, t); }
+                    name-selected(id) => { root.name-selected(i, id); }
+                    name-create-requested(t) => { root.name-create-requested(i, t); }
+                    role-text-changed(t) => { root.role-text-changed(i, t); }
+                    role-selected(id) => { root.role-selected(i, id); }
+                    role-create-requested(t) => { root.role-create-requested(i, t); }
                 }
 
-                Rectangle {
-                    vertical-stretch: 1;
-                }
+                Rectangle { vertical-stretch: 1; }
             }
         }
 
@@ -67,16 +74,11 @@ export component ContentDialog inherits Window {
 
                 Button {
                     text: Tr.t.cancel;
-                    clicked => {
-                        root.cancelled();
-                    }
+                    clicked => { root.cancelled(); }
                 }
-
                 Button {
-                    text: Tr.t.accept;
-                    clicked => {
-                        root.accepted();
-                    }
+                    text: Tr.t.save;
+                    clicked => { root.accepted(); }
                 }
             }
         }
