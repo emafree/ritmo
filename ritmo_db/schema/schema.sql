@@ -752,25 +752,30 @@ SELECT
     0 as with_paper,
     0 as dummy_field
 FROM series;
-CREATE TABLE IF NOT EXISTS "field_definitions" (
-    "id"          INTEGER PRIMARY KEY AUTOINCREMENT,
-    "entity"      TEXT NOT NULL CHECK("entity" IN ('book', 'content')),
-    "field_name"  TEXT NOT NULL,
-    "data_kind"   TEXT NOT NULL CHECK("data_kind" IN ('string', 'quantity', 'date', 'enum', 'person')),
-    "sort_order"  INTEGER NOT NULL DEFAULT 0,
-    "enum_values" TEXT,
-    "created_at"  INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
-    UNIQUE("entity", "field_name")
+CREATE TABLE IF NOT EXISTS "page_fields" (
+    "id"            INTEGER PRIMARY KEY AUTOINCREMENT,
+    "page"          TEXT NOT NULL CHECK("page" IN ('book_page', 'content_page', 'people_page')),
+    "field_key"     TEXT NOT NULL,
+    "data_kind"     TEXT NOT NULL CHECK("data_kind" IN ('string', 'quantity', 'date', 'enum', 'person')),
+    "sort_order"    INTEGER NOT NULL DEFAULT 0,
+    "enum_values"   TEXT,
+    "relation_type" TEXT NOT NULL DEFAULT 'direct' CHECK("relation_type" IN ('direct', 'fk', 'junction')),
+    "target_table"  TEXT,
+    "target_field"  TEXT,
+    "created_at"    INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    UNIQUE("page", "field_key")
 );
 
-INSERT OR IGNORE INTO field_definitions (entity, field_name, data_kind, sort_order) VALUES
-    ('book',    'field-original-title',   'string',   10),
-    ('book',    'field-publication-date', 'date',     20),
-    ('book',    'field-isbn',             'string',   30),
-    ('book',    'field-notes',            'string',   50),
-    ('book',    'field-people',           'person',   60),
-    ('content', 'field-title',            'string',   10),
-    ('content', 'field-author',           'person',   20),
-    ('content', 'field-language',         'enum',     30),
-    ('content', 'field-people',           'person',   40);
+INSERT OR IGNORE INTO page_fields (page, field_key, data_kind, sort_order, relation_type, target_table, target_field) VALUES
+    ('book_page',    'field-original-title',   'string',   10,  'direct',   NULL,              NULL),
+    ('book_page',    'field-publication-date', 'date',     20,  'direct',   NULL,              NULL),
+    ('book_page',    'field-isbn',             'string',   30,  'direct',   NULL,              NULL),
+    ('book_page',    'field-publisher',        'string',   40,  'fk',       'publishers',      'publisher_id'),
+    ('book_page',    'field-notes',            'string',   50,  'direct',   NULL,              NULL),
+    ('book_page',    'field-tags',             'string',   55,  'junction', 'x_books_tags',    NULL),
+    ('book_page',    'field-people',           'person',   60,  'junction', 'x_books_people',  NULL),
+    ('content_page', 'field-title',            'string',   10,  'direct',   NULL,              NULL),
+    ('content_page', 'field-author',           'person',   20,  'junction', 'x_books_people',  NULL),
+    ('content_page', 'field-language',         'enum',     30,  'direct',   NULL,              NULL),
+    ('content_page', 'field-people',           'person',   40,  'junction', 'x_books_people',  NULL);
 COMMIT;

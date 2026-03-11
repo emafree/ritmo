@@ -73,8 +73,8 @@ async fn load_field_defs_from_db(
     let db = config.create_database(&mut reporter).await?;
     let pool = db.pool();
 
-    let book_rows = ritmo_db::FieldDefinitionRow::list_for_entity(pool, "book").await?;
-    let content_rows = ritmo_db::FieldDefinitionRow::list_for_entity(pool, "content").await?;
+    let book_rows = ritmo_db::PageFieldRow::list_for_page(pool, "book_page").await?;
+    let content_rows = ritmo_db::PageFieldRow::list_for_page(pool, "content_page").await?;
 
     let book_fields = i18n::rows_to_slint_fields(&book_rows, lang);
     let content_fields = i18n::rows_to_slint_fields(&content_rows, lang);

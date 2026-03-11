@@ -115,15 +115,18 @@ pub async fn create_test_db() -> RitmoResult<SqlitePool> {
             FOREIGN KEY("content_id") REFERENCES "contents"("id") ON DELETE CASCADE
         );
 
-        CREATE TABLE IF NOT EXISTS "field_definitions" (
-            "id" INTEGER PRIMARY KEY AUTOINCREMENT,
-            "entity" TEXT NOT NULL CHECK("entity" IN ('book', 'content')),
-            "field_name" TEXT NOT NULL,
-            "data_kind" TEXT NOT NULL CHECK("data_kind" IN ('string', 'quantity', 'date', 'enum', 'person')),
-            "sort_order" INTEGER NOT NULL DEFAULT 0,
-            "enum_values" TEXT,
-            "created_at" INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
-            UNIQUE("entity", "field_name")
+        CREATE TABLE IF NOT EXISTS "page_fields" (
+            "id"            INTEGER PRIMARY KEY AUTOINCREMENT,
+            "page"          TEXT NOT NULL CHECK("page" IN ('book_page', 'content_page', 'people_page')),
+            "field_key"     TEXT NOT NULL,
+            "data_kind"     TEXT NOT NULL CHECK("data_kind" IN ('string', 'quantity', 'date', 'enum', 'person')),
+            "sort_order"    INTEGER NOT NULL DEFAULT 0,
+            "enum_values"   TEXT,
+            "relation_type" TEXT NOT NULL DEFAULT 'direct' CHECK("relation_type" IN ('direct', 'fk', 'junction')),
+            "target_table"  TEXT,
+            "target_field"  TEXT,
+            "created_at"    INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+            UNIQUE("page", "field_key")
         );
         "#,
     )
