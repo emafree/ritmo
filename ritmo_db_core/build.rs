@@ -41,5 +41,6 @@ fn main() {
     std::fs::write(&output_path, &*db_bytes)
         .unwrap_or_else(|e| panic!("Failed to write template.db to {}: {}", output_path.display(), e));
 
+    println!("cargo:rustc-env=RITMO_TEMPLATE_DB_PATH={}", output_path.display());
     println!("cargo:warning=ritmo_db_core: generated template.db at {}", output_path.display());
 }
