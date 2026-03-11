@@ -15,7 +15,6 @@ impl FromDto<BookDto> for Book {
             publication_date: dto.publication_date,
             last_modified_date: chrono::Utc::now().timestamp(),
             isbn: dto.isbn.clone(),
-            pages: None,
             notes: dto.notes.clone(),
             has_cover: if dto.has_cover { 1 } else { 0 },
             has_paper: if dto.has_paper { 1 } else { 0 },

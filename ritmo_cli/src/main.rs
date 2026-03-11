@@ -675,10 +675,6 @@ enum BooksCommands {
         #[arg(long)]
         series_index: Option<i64>,
 
-        /// Numero di pagine
-        #[arg(long)]
-        pages: Option<i64>,
-
         /// Note
         #[arg(long, short = 'n')]
         notes: Option<String>,
@@ -1146,7 +1142,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 format,
                 series,
                 series_index,
-                pages,
                 notes,
                 tags,
             } => {
@@ -1163,7 +1158,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     format,
                     series,
                     series_index,
-                    pages,
                     notes,
                     tags,
                 )

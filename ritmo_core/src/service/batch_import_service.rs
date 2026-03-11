@@ -157,7 +157,6 @@ async fn import_single(
         format: import_obj.book.format.clone(),
         series: import_obj.book.series.clone(),
         series_index: import_obj.book.series_index,
-        pages: import_obj.book.pages,
         notes: import_obj.book.notes.clone(),
         tags: if import_obj.book.tags.is_empty() {
             None
@@ -292,16 +291,6 @@ pub fn validate_import_object(obj: &ImportObject) -> RitmoResult<()> {
             return Err(RitmoErr::Generic(format!(
                 "book.series_index must be positive, got {}",
                 idx
-            )));
-        }
-    }
-
-    // Validate book.pages if present
-    if let Some(pages) = obj.book.pages {
-        if pages < 1 {
-            return Err(RitmoErr::Generic(format!(
-                "book.pages must be positive, got {}",
-                pages
             )));
         }
     }

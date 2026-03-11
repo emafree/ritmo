@@ -31,7 +31,6 @@ use std::path::PathBuf;
 ///     format: None,
 ///     series: None,
 ///     series_index: None,
-///     pages: None,
 ///     notes: None,
 ///     tags: None,
 /// };
@@ -75,9 +74,6 @@ pub struct AddBookInput {
 
     /// Position in series
     pub series_index: Option<i64>,
-
-    /// Number of pages
-    pub pages: Option<i64>,
 
     /// Additional notes
     pub notes: Option<String>,
@@ -138,7 +134,6 @@ impl Command for AddBookCommand {
             format: input.format,
             series: input.series,
             series_index: input.series_index,
-            pages: input.pages,
             notes: input.notes,
             tags: input.tags,
         };
@@ -180,7 +175,6 @@ mod tests {
             format: None,
             series: None,
             series_index: None,
-            pages: None,
             notes: None,
             tags: None,
         };
@@ -204,7 +198,6 @@ mod tests {
             format: None,
             series: None,
             series_index: None,
-            pages: None,
             notes: None,
             tags: None,
         };

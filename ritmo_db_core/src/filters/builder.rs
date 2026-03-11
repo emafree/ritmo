@@ -58,7 +58,6 @@ pub fn build_books_query(filters: &BookFilters) -> (String, Vec<String>) {
             books.series_index,
             books.publication_date,
             books.isbn,
-            books.pages,
             books.file_link,
             books.created_at
         FROM books

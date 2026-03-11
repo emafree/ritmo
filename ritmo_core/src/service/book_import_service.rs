@@ -24,7 +24,6 @@ pub struct BookImportMetadata {
     pub format: Option<String>,
     pub series: Option<String>,
     pub series_index: Option<i64>,
-    pub pages: Option<i64>,
     pub notes: Option<String>,
     pub tags: Option<Vec<String>>,
 }
@@ -144,7 +143,6 @@ pub async fn import_book_with_contents(
         publication_date,
         last_modified_date: now,
         isbn: metadata.isbn,
-        pages: metadata.pages,
         notes: metadata.notes,
         has_cover: 0,
         has_paper: 0,

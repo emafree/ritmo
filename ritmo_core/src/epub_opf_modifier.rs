@@ -23,7 +23,6 @@ pub struct OPFMetadata {
     // Calibre meta tags
     pub series: Option<String>,
     pub series_index: Option<f64>,
-    pub pages: Option<i64>,
     pub notes: Option<String>,
 }
 
@@ -164,7 +163,6 @@ pub fn build_opf_metadata(
         languages: languages.into_iter().collect(),
         series: book_metadata.series.clone(),
         series_index,
-        pages: book_metadata.pages,
         notes: book_metadata.notes.clone(),
     }
 }
@@ -460,7 +458,6 @@ mod tests {
             format: None,
             series: None,
             series_index: None,
-            pages: None,
             notes: None,
             tags: None,
         };
@@ -488,7 +485,6 @@ mod tests {
             format: None,
             series: None,
             series_index: None,
-            pages: None,
             notes: None,
             tags: Some(vec!["fiction".to_string(), "test".to_string()]),
         };

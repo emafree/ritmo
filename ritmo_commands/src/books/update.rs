@@ -68,9 +68,6 @@ pub struct UpdateBookInput {
     /// New series index (optional)
     pub series_index: Option<i64>,
 
-    /// New page count (optional)
-    pub pages: Option<i64>,
-
     /// New notes (optional)
     pub notes: Option<String>,
 
@@ -100,7 +97,6 @@ impl Command for UpdateBookCommand {
             format: input.format,
             series: input.series,
             series_index: input.series_index,
-            pages: input.pages,
             notes: input.notes,
             tags: input.tags,
         };

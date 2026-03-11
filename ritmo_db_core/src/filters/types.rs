@@ -248,7 +248,6 @@ pub struct BookResult {
     pub series_index: Option<i64>,
     pub publication_date: Option<i64>,
     pub isbn: Option<String>,
-    pub pages: Option<i64>,
     pub file_link: Option<String>,
     pub created_at: i64,
 }
@@ -391,7 +390,6 @@ mod tests {
             series_index: Some(2),
             publication_date: Some(1262304000), // 2010-01-01
             isbn: Some("978-88-06-20000-0".to_string()),
-            pages: Some(320),
             file_link: Some("/path/to/book.epub".to_string()),
             created_at: 1609459200, // 2021-01-01
         };

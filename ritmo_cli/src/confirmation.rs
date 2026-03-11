@@ -200,7 +200,6 @@ mod tests {
             series_index: None,
             publication_date: None,
             isbn: None,
-            pages: None,
             file_link: None,
             created_at: 0,
         };
@@ -222,7 +221,6 @@ mod tests {
             series_index: None,
             publication_date: None,
             isbn: None,
-            pages: None,
             file_link: None,
             created_at: 0,
         };
