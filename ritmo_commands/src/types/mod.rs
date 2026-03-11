@@ -55,7 +55,6 @@ pub struct ContentSummary {
     pub authors: Vec<String>,
     pub content_type: Option<String>,
     pub year: Option<i32>,
-    pub pages: Option<i64>,
 }
 
 /// Result of updating a content

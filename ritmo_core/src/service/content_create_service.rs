@@ -14,7 +14,6 @@ pub struct ContentCreateMetadata {
     pub content_type: Option<String>,
     pub genre: Option<String>,
     pub year: Option<i32>,
-    pub pages: Option<i64>,
     pub notes: Option<String>,
     pub book_id: Option<i64>, // Opzionale: associa il content a un book
     pub tags: Option<Vec<String>>,
@@ -66,7 +65,6 @@ pub async fn create_content(
         type_id,
         genre_id,
         publication_date,
-        pages: metadata.pages,
         notes: metadata.notes,
         created_at: now,
         updated_at: now,

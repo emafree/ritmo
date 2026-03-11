@@ -98,7 +98,6 @@ impl Command for AddContentCommand {
             genre: input.genre,
             year: input.year,
             notes: input.notes,
-            pages: None, // Pages option removed as per requirement
             tags: input.tags,
             languages: input.languages,
             book_id: Some(input.book_id),

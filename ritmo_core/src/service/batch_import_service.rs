@@ -250,7 +250,6 @@ async fn create_content_from_input(
         type_id,
         genre_id: None,
         publication_date,
-        pages: None, // Contents don't have separate page counts
         notes: None, // Contents inherit notes from book
         created_at: now,
         updated_at: now,

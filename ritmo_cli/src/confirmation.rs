@@ -238,7 +238,6 @@ mod tests {
             original_title: None,
             type_key: Some("type.novel".to_string()),
             publication_date: None,
-            pages: None,
             created_at: 0,
         };
 
@@ -255,7 +254,6 @@ mod tests {
             original_title: None,
             type_key: None,
             publication_date: None,
-            pages: None,
             created_at: 0,
         };
 

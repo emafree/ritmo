@@ -10,7 +10,6 @@ pub struct Content {
     pub type_id: Option<i64>,
     pub genre_id: Option<i64>,
     pub publication_date: Option<i64>,
-    pub pages: Option<i64>,
     pub notes: Option<String>,
     pub created_at: i64,
     pub updated_at: i64,
@@ -76,14 +75,13 @@ impl Content {
         let now = chrono::Utc::now().timestamp();
         let result = sqlx::query!(
             "UPDATE contents SET
-                name = ?, original_title = ?, type_id = ?, genre_id = ?, publication_date = ?, pages = ?, notes = ?, updated_at = ?
+                name = ?, original_title = ?, type_id = ?, genre_id = ?, publication_date = ?, notes = ?, updated_at = ?
             WHERE id = ?",
             self.name,
             self.original_title,
             self.type_id,
             self.genre_id,
             self.publication_date,
-            self.pages,
             self.notes,
             now,
             self.id
@@ -162,7 +160,6 @@ impl Content {
             type_id: None,
             genre_id: None,
             publication_date: None,
-            pages: None,
             notes: None,
             created_at: chrono::Utc::now().timestamp(),
             updated_at: chrono::Utc::now().timestamp(),
