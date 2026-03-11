@@ -15,8 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-pub const DB_TEMPLATE: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/template.db"));
+pub const DB_TEMPLATE: &[u8] = include_bytes!(env!("RITMO_TEMPLATE_DB_PATH"));
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LibraryConfig {
