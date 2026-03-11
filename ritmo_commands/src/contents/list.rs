@@ -57,7 +57,6 @@ impl Command for ListContentsCommand {
                         .map(|dt| dt.year())
                         .unwrap_or(1970)
                 }),
-                pages: content.pages,
             })
             .collect();
 

@@ -16,7 +16,6 @@ pub struct ContentUpdateMetadata {
     pub genre: Option<String>,
     pub year: Option<i32>,
     pub notes: Option<String>,
-    pub pages: Option<i64>,
     pub tags: Option<Vec<String>>,
     pub languages: Option<Vec<(String, String, String, String)>>, // (name, iso2, iso3, role)
 }
@@ -49,10 +48,6 @@ pub async fn update_content(
 
     if let Some(notes) = metadata.notes {
         content.notes = Some(notes);
-    }
-
-    if let Some(pages) = metadata.pages {
-        content.pages = Some(pages);
     }
 
     if let Some(year) = metadata.year {

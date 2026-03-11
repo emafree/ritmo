@@ -279,7 +279,6 @@ pub async fn handle_contents_update(
             genre: selector.set_genre.clone(),
             year: selector.set_year,
             notes: selector.set_notes.clone(),
-            pages: selector.set_pages,
             tags: if selector.set_tags.is_empty() {
                 None
             } else {

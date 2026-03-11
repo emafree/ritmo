@@ -473,10 +473,6 @@ pub struct ContentUpdateArgs {
     #[arg(long)]
     pub notes: Option<String>,
 
-    /// Numero di pagine
-    #[arg(long)]
-    pub pages: Option<i64>,
-
     /// Nuovi tags (sostituiscono tutti i tags esistenti)
     #[arg(long)]
     pub tags: Vec<String>,
@@ -496,7 +492,6 @@ impl ContentUpdateArgs {
             || self.genre.is_some()
             || self.year.is_some()
             || self.notes.is_some()
-            || self.pages.is_some()
             || !self.tags.is_empty()
             || !self.languages.is_empty()
     }
@@ -560,10 +555,6 @@ pub struct ContentBulkUpdateSelector {
     #[arg(long = "set-notes")]
     pub set_notes: Option<String>,
 
-    /// Numero pagine
-    #[arg(long = "set-pages")]
-    pub set_pages: Option<i64>,
-
     /// Nuovi tags
     #[arg(long = "set-tags")]
     pub set_tags: Vec<String>,
@@ -597,7 +588,6 @@ impl ContentBulkUpdateSelector {
             || self.set_genre.is_some()
             || self.set_year.is_some()
             || self.set_notes.is_some()
-            || self.set_pages.is_some()
             || !self.set_tags.is_empty()
             || !self.set_languages.is_empty()
     }

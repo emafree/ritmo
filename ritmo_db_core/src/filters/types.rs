@@ -293,7 +293,6 @@ pub struct ContentResult {
     pub original_title: Option<String>,
     pub type_key: Option<String>,
     pub publication_date: Option<i64>,
-    pub pages: Option<i64>,
     pub created_at: i64,
 }
 
@@ -410,7 +409,6 @@ mod tests {
             original_title: None,
             type_key: Some("type.novel".to_string()),
             publication_date: Some(1262304000), // 2010-01-01
-            pages: Some(250),
             created_at: 1609459200,
         };
 

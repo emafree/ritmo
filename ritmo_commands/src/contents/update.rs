@@ -43,9 +43,6 @@ pub struct UpdateContentInput {
     /// New notes (optional)
     pub notes: Option<String>,
 
-    /// New page count (optional)
-    pub pages: Option<i64>,
-
     /// New tags (optional)
     pub tags: Option<Vec<String>>,
 
@@ -73,7 +70,6 @@ impl Command for UpdateContentCommand {
             genre: input.genre,
             year: input.year,
             notes: input.notes,
-            pages: input.pages,
             tags: input.tags,
             languages: input.languages,
         };

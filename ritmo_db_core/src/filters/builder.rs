@@ -178,7 +178,6 @@ pub fn build_contents_query(filters: &ContentFilters) -> (String, Vec<String>) {
             contents.original_title,
             types.key as type_key,
             contents.publication_date,
-            contents.pages,
             contents.created_at
         FROM contents
         LEFT JOIN types ON contents.type_id = types.id
