@@ -83,12 +83,12 @@ pub fn translate_key(lang: &str, key: &str) -> slint::SharedString {
 
 /// Converts DB rows into Slint FieldDefinition structs, resolving display names via i18n.
 pub fn rows_to_slint_fields(
-    rows: &[ritmo_db::FieldDefinitionRow],
+    rows: &[ritmo_db::PageFieldRow],
     lang: &str,
 ) -> Vec<crate::FieldDefinition> {
     rows.iter()
         .map(|row| {
-            let display_name = translate_key(lang, &row.field_name);
+            let display_name = translate_key(lang, &row.field_key);
             let enum_values: Vec<slint::SharedString> = row
                 .enum_values
                 .as_deref()
