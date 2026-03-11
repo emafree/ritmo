@@ -61,10 +61,6 @@ pub struct BookInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub series_index: Option<i64>,
 
-    /// Page count
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub pages: Option<i64>,
-
     /// Free-text notes
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub notes: Option<String>,

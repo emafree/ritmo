@@ -19,7 +19,6 @@ pub struct BookUpdateMetadata {
     pub series: Option<String>,
     pub series_index: Option<i64>,
     pub notes: Option<String>,
-    pub pages: Option<i64>,
     pub tags: Option<Vec<String>>,
 }
 
@@ -55,10 +54,6 @@ pub async fn update_book(
 
     if let Some(notes) = metadata.notes {
         book.notes = Some(notes);
-    }
-
-    if let Some(pages) = metadata.pages {
-        book.pages = Some(pages);
     }
 
     if let Some(year) = metadata.year {

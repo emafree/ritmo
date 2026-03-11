@@ -35,7 +35,6 @@ pub async fn handle_books_add(
     format: Option<String>,
     series: Option<String>,
     series_index: Option<i64>,
-    pages: Option<i64>,
     notes: Option<String>,
     tags: Vec<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -62,7 +61,6 @@ pub async fn handle_books_add(
         format,
         series,
         series_index,
-        pages,
         notes,
         tags: if tags.is_empty() { None } else { Some(tags) },
     };
@@ -267,7 +265,6 @@ pub async fn handle_books_update(
             series: selector.set_series.clone(),
             series_index: selector.set_series_index,
             notes: selector.set_notes.clone(),
-            pages: selector.set_pages,
             tags: if selector.set_tags.is_empty() {
                 None
             } else {

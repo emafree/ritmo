@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE books SET\n                name = ?, original_title = ?, publisher_id = ?, format_id = ?, series_id = ?,\n                series_index = ?, publication_date = ?, last_modified_date = ?, isbn = ?,\n                notes = ?, has_cover = ?, has_paper = ?, file_link = ?,\n                file_size = ?, file_hash = ?\n            WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 16
+    },
+    "nullable": []
+  },
+  "hash": "99c90418699c67b0b13852f9e3ad653c99158ec738b1341f5e3d3c45f59e9e30"
+}

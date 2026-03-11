@@ -56,7 +56,6 @@ pub fn load_translations(lang: &str) -> Translations {
         field_original_title: get("field-original-title"),
         field_publication_date: get("field-publication-date"),
         field_isbn: get("field-isbn"),
-        field_pages: get("field-pages"),
         field_notes: get("field-notes"),
         field_people: get("field-people"),
     }

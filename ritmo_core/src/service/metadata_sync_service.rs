@@ -212,7 +212,6 @@ async fn build_book_metadata_from_db(
         format,
         series,
         series_index: book.series_index,
-        pages: book.pages,
         notes: book.notes.clone(),
         tags,
     })

@@ -189,10 +189,6 @@ pub struct BookUpdateArgs {
     #[arg(long)]
     pub notes: Option<String>,
 
-    /// Numero di pagine
-    #[arg(long)]
-    pub pages: Option<i64>,
-
     /// Nuovi tags (sostituiscono tutti i tags esistenti)
     #[arg(long)]
     pub tags: Vec<String>,
@@ -211,7 +207,6 @@ impl BookUpdateArgs {
             || self.series.is_some()
             || self.series_index.is_some()
             || self.notes.is_some()
-            || self.pages.is_some()
             || !self.tags.is_empty()
     }
 }
@@ -294,10 +289,6 @@ pub struct BookBulkUpdateSelector {
     #[arg(long = "set-notes")]
     pub set_notes: Option<String>,
 
-    /// Numero pagine
-    #[arg(long = "set-pages")]
-    pub set_pages: Option<i64>,
-
     /// Nuovi tags
     #[arg(long = "set-tags")]
     pub set_tags: Vec<String>,
@@ -332,7 +323,6 @@ impl BookBulkUpdateSelector {
             || self.set_series.is_some()
             || self.set_series_index.is_some()
             || self.set_notes.is_some()
-            || self.set_pages.is_some()
             || !self.set_tags.is_empty()
     }
 

@@ -14,7 +14,6 @@ pub struct Book {
     pub publication_date: Option<i64>,
     pub last_modified_date: i64,
     pub isbn: Option<String>,
-    pub pages: Option<i64>,
     pub notes: Option<String>,
     pub has_cover: i64,
     pub has_paper: i64,
@@ -96,7 +95,7 @@ impl Book {
             "UPDATE books SET
                 name = ?, original_title = ?, publisher_id = ?, format_id = ?, series_id = ?,
                 series_index = ?, publication_date = ?, last_modified_date = ?, isbn = ?,
-                pages = ?, notes = ?, has_cover = ?, has_paper = ?, file_link = ?,
+                notes = ?, has_cover = ?, has_paper = ?, file_link = ?,
                 file_size = ?, file_hash = ?
             WHERE id = ?",
             self.name,
@@ -108,7 +107,6 @@ impl Book {
             self.publication_date,
             now,
             self.isbn,
-            self.pages,
             self.notes,
             self.has_cover,
             self.has_paper,
@@ -192,7 +190,6 @@ impl Book {
             publication_date: None,
             last_modified_date: chrono::Utc::now().timestamp(),
             isbn: None,
-            pages: None,
             notes: None,
             has_cover: 0,
             has_paper: 0,
