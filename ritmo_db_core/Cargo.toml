@@ -23,6 +23,9 @@ toml = { workspace = true }
 serial_test = "3"
 rand = "0.9"
 
+[build-dependencies]
+rusqlite = { version = "0.32", features = ["bundled", "serialize"] }
+
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
 tempfile = "3"

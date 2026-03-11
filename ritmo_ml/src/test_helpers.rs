@@ -114,6 +114,17 @@ pub async fn create_test_db() -> RitmoResult<SqlitePool> {
             FOREIGN KEY("book_id") REFERENCES "books"("id") ON DELETE CASCADE,
             FOREIGN KEY("content_id") REFERENCES "contents"("id") ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS "field_definitions" (
+            "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "entity" TEXT NOT NULL CHECK("entity" IN ('book', 'content')),
+            "field_name" TEXT NOT NULL,
+            "data_kind" TEXT NOT NULL CHECK("data_kind" IN ('string', 'quantity', 'date', 'enum', 'person')),
+            "sort_order" INTEGER NOT NULL DEFAULT 0,
+            "enum_values" TEXT,
+            "created_at" INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+            UNIQUE("entity", "field_name")
+        );
         "#,
     )
     .execute(&pool)
