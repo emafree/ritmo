@@ -1,5 +1,6 @@
 // sidebar.slint — FilterSidebar component
 import { Theme } from "theme.slint";
+import { Tr } from "tr.slint";
 import { FilterChip, FilterCondition, FilterItem, SavedFilter } from "types.slint";
 
 export { FilterChip, FilterCondition, FilterItem, SavedFilter } from "types.slint";
@@ -29,7 +30,7 @@ export component FilterSidebar inherits Rectangle {
 
             // Section title
             Text {
-                text: "FILTRI ATTIVI";
+                text: Tr.t.sidebar-active-filters;
                 font-size: 10px;
                 font-weight: 600;
                 letter-spacing: 1.2px;
@@ -136,7 +137,7 @@ export component FilterSidebar inherits Rectangle {
 
                                     // sublabel "CAMPO"
                                     Text {
-                                        text: "CAMPO";
+                                        text: Tr.t.sidebar-field;
                                         font-size: 10px;
                                         font-weight: 600;
                                         letter-spacing: 0.8px;
@@ -249,7 +250,6 @@ export component FilterSidebar inherits Rectangle {
                                     }
                                 }
                             }
-                            }
 
                             // ── Filter actions bar ─────────────────────────
                             Rectangle {
@@ -267,7 +267,7 @@ export component FilterSidebar inherits Rectangle {
                                     padding-top: 6px;
                                     padding-bottom: 6px;
 
-                                    // "Annulla" / reset button
+                                    // reset button
                                     Rectangle {
                                         height: 22px;
                                         border-radius: 4px;
@@ -278,7 +278,7 @@ export component FilterSidebar inherits Rectangle {
                                         background: transparent;
 
                                         Text {
-                                            text: "Annulla";
+                                            text: Tr.t.sidebar-reset;
                                             font-size: 10px;
                                             color: reset-touch.has-hover
                                                 ? Theme.colors.text-secondary
@@ -298,7 +298,7 @@ export component FilterSidebar inherits Rectangle {
                                         }
                                     }
 
-                                    // "Elimina" / delete button
+                                    // delete button
                                     Rectangle {
                                         height: 22px;
                                         border-radius: 4px;
@@ -309,7 +309,7 @@ export component FilterSidebar inherits Rectangle {
                                         background: transparent;
 
                                         Text {
-                                            text: "Elimina";
+                                            text: Tr.t.sidebar-delete-filter;
                                             font-size: 10px;
                                             color: delete-touch.has-hover
                                                 ? Theme.colors.danger
@@ -335,7 +335,7 @@ export component FilterSidebar inherits Rectangle {
                 }
             }
 
-            // ── "Aggiungi filtro" button ─────────────────────────────────────
+            // ── "Add filter" button ──────────────────────────────────────────
             Rectangle {
                 height: 48px;
                 background: transparent;
@@ -353,7 +353,7 @@ export component FilterSidebar inherits Rectangle {
                     background: transparent;
 
                     Text {
-                        text: "+ Aggiungi filtro";
+                        text: Tr.t.sidebar-add-filter;
                         font-size: 12px;
                         color: add-filter-touch.has-hover
                             ? Theme.colors.accent
@@ -389,7 +389,7 @@ export component FilterSidebar inherits Rectangle {
 
             // Section title
             Text {
-                text: "PRESET";
+                text: Tr.t.sidebar-preset;
                 font-size: 10px;
                 font-weight: 600;
                 letter-spacing: 1.2px;
