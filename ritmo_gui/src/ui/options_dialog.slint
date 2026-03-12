@@ -1,0 +1,622 @@
+// options_dialog.slint — dialog opzioni con selettore tema e palette custom
+import { Theme } from "theme.slint";
+import { LineEdit, ScrollView } from "std-widgets.slint";
+import { Tr } from "tr.slint";
+
+// ── Componente selettore tema a 3 opzioni ─────────────────────────────────
+component ThemeSelector inherits Rectangle {
+    in-out property <int> selected: 0; // 0=dark, 1=light, 2=custom
+    callback changed(int);
+
+    height: 28px;
+    width: 222px;
+    border-radius: 6px;
+    background: Theme.colors.surface2;
+
+    // Indicatore scorrevole
+    Rectangle {
+        x: root.selected == 0 ? 2px
+         : root.selected == 1 ? parent.width / 3
+         : parent.width * 2 / 3;
+        y: 2px;
+        width: parent.width / 3 - 2px;
+        height: parent.height - 4px;
+        border-radius: 5px;
+        background: Theme.colors.surface;
+        animate x {
+            duration: 150ms;
+            easing: ease-in-out;
+        }
+    }
+
+    // Etichetta Dark
+    Text {
+        x: 0;
+        y: 0;
+        width: parent.width / 3;
+        height: parent.height;
+        text: "Dark";
+        font-size: Theme.font-size-section;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: root.selected == 0 ? Theme.colors.text-primary : Theme.colors.text-muted;
+    }
+
+    // Etichetta Light
+    Text {
+        x: parent.width / 3;
+        y: 0;
+        width: parent.width / 3;
+        height: parent.height;
+        text: "Light";
+        font-size: Theme.font-size-section;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: root.selected == 1 ? Theme.colors.text-primary : Theme.colors.text-muted;
+    }
+
+    // Etichetta Custom
+    Text {
+        x: parent.width * 2 / 3;
+        y: 0;
+        width: parent.width / 3;
+        height: parent.height;
+        text: "Custom";
+        font-size: Theme.font-size-section;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: root.selected == 2 ? Theme.colors.text-primary : Theme.colors.text-muted;
+    }
+
+    // TouchArea Dark
+    TouchArea {
+        x: 0;
+        width: parent.width / 3;
+        height: parent.height;
+        clicked => {
+            root.selected = 0;
+            root.changed(0);
+        }
+    }
+
+    // TouchArea Light
+    TouchArea {
+        x: parent.width / 3;
+        width: parent.width / 3;
+        height: parent.height;
+        clicked => {
+            root.selected = 1;
+            root.changed(1);
+        }
+    }
+
+    // TouchArea Custom
+    TouchArea {
+        x: parent.width * 2 / 3;
+        width: parent.width / 3;
+        height: parent.height;
+        clicked => {
+            root.selected = 2;
+            root.changed(2);
+        }
+    }
+}
+
+// ── Dialog principale Opzioni ──────────────────────────────────────────────
+export component OptionsDialog inherits Window {
+    title: "Opzioni";
+    min-width: 580px;
+    min-height: 420px;
+    background: Theme.colors.bg;
+
+    // Palette attiva: 0=dark, 1=light, 2=custom
+    in-out property <int> active-palette <=> Theme.active-palette;
+
+    // Valori hex per la palette custom
+    in-out property <string> custom-bg: "#0f0f0f";
+    in-out property <string> custom-surface: "#171717";
+    in-out property <string> custom-surface2: "#1f1f1f";
+    in-out property <string> custom-surface3: "#282828";
+    in-out property <string> custom-border: "#2e2e2e";
+    in-out property <string> custom-border2: "#3a3a3a";
+    in-out property <string> custom-text-primary: "#e8e8e8";
+    in-out property <string> custom-text-secondary: "#999999";
+    in-out property <string> custom-text-muted: "#555555";
+    in-out property <string> custom-accent: "#c8a96e";
+    in-out property <string> custom-accent2: "#a07040";
+    in-out property <string> custom-active-bg: "#2a2218";
+    in-out property <string> custom-tag-bg: "#1e2a1e";
+    in-out property <string> custom-tag-text: "#7ab87a";
+    in-out property <string> custom-danger: "#c0392b";
+    in-out property <string> custom-success: "#27ae60";
+
+    callback accepted();
+    callback cancelled();
+
+    // Stato interno: sezione selezionata (per ora solo "Aspetto")
+    property <int> selected-section: 0;
+
+    HorizontalLayout {
+        spacing: 0px;
+
+        // ── Pannello sinistro: lista sezioni ────────────────────────
+        Rectangle {
+            width: 160px;
+            background: Theme.colors.surface;
+
+            VerticalLayout {
+                padding: 8px;
+                spacing: 2px;
+
+                // Sezione "Aspetto"
+                Rectangle {
+                    height: 32px;
+                    border-radius: Theme.border-radius;
+                    background: root.selected-section == 0
+                        ? Theme.colors.active-bg
+                        : transparent;
+
+                    Text {
+                        text: "Aspetto";
+                        color: root.selected-section == 0
+                            ? Theme.colors.text-primary
+                            : Theme.colors.text-secondary;
+                        font-size: Theme.font-size-label;
+                        vertical-alignment: center;
+                        x: 10px;
+                        width: parent.width - 10px;
+                        height: parent.height;
+                    }
+
+                    TouchArea {
+                        width: 100%;
+                        height: 100%;
+                        clicked => {
+                            root.selected-section = 0;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Separatore verticale
+        Rectangle {
+            width: 1px;
+            background: Theme.colors.border;
+        }
+
+        // ── Pannello destro: contenuto sezione ──────────────────────
+        VerticalLayout {
+            padding: Theme.padding;
+            spacing: 8px;
+            horizontal-stretch: 1;
+
+            // Titolo sezione
+            Text {
+                text: "Aspetto";
+                color: Theme.colors.text-primary;
+                font-size: Theme.font-size-label;
+                font-weight: 600;
+            }
+
+            // Separatore orizzontale
+            Rectangle {
+                height: 1px;
+                background: Theme.colors.border;
+            }
+
+            // Riga selettore tema
+            HorizontalLayout {
+                spacing: 12px;
+                alignment: start;
+
+                Text {
+                    text: "Tema:";
+                    color: Theme.colors.text-secondary;
+                    font-size: Theme.font-size-label;
+                    vertical-alignment: center;
+                    width: 60px;
+                    height: 28px;
+                }
+
+                ThemeSelector {
+                    selected <=> root.active-palette;
+                    changed(v) => {
+                        root.active-palette = v;
+                    }
+                }
+            }
+
+            // Editor palette custom (visibile solo quando active-palette == 2)
+            if root.active-palette == 2: Rectangle {
+                vertical-stretch: 1;
+                background: transparent;
+
+                // Separatore
+                Rectangle {
+                    height: 1px;
+                    y: 0;
+                    width: parent.width;
+                    background: Theme.colors.border;
+                }
+
+                ScrollView {
+                    y: 4px;
+                    height: parent.height - 4px;
+                    width: parent.width;
+
+                    VerticalLayout {
+                        spacing: 4px;
+                        padding-top: 4px;
+
+                        // bg
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "bg";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-bg;
+                                placeholder-text: "#0f0f0f";
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        // surface
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "surface";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-surface;
+                                placeholder-text: "#171717";
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        // surface2
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "surface2";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-surface2;
+                                placeholder-text: "#1f1f1f";
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        // surface3
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "surface3";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-surface3;
+                                placeholder-text: "#282828";
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        // border
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "border";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-border;
+                                placeholder-text: "#2e2e2e";
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        // border2
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "border2";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-border2;
+                                placeholder-text: "#3a3a3a";
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        // text-primary
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "text-primary";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-text-primary;
+                                placeholder-text: "#e8e8e8";
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        // text-secondary
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "text-secondary";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-text-secondary;
+                                placeholder-text: "#999999";
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        // text-muted
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "text-muted";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-text-muted;
+                                placeholder-text: "#555555";
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        // accent
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "accent";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-accent;
+                                placeholder-text: "#c8a96e";
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        // accent2
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "accent2";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-accent2;
+                                placeholder-text: "#a07040";
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        // active-bg
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "active-bg";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-active-bg;
+                                placeholder-text: "#2a2218";
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        // tag-bg
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "tag-bg";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-tag-bg;
+                                placeholder-text: "#1e2a1e";
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        // tag-text
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "tag-text";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-tag-text;
+                                placeholder-text: "#7ab87a";
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        // danger
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "danger";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-danger;
+                                placeholder-text: "#c0392b";
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        // success
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 28px;
+                            Text {
+                                text: "success";
+                                color: Theme.colors.text-secondary;
+                                font-size: Theme.font-size-label;
+                                vertical-alignment: center;
+                                width: 130px;
+                            }
+                            LineEdit {
+                                text <=> root.custom-success;
+                                placeholder-text: "#27ae60";
+                                horizontal-stretch: 1;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Spacer (quando custom non è attivo)
+            if root.active-palette != 2: Rectangle {
+                vertical-stretch: 1;
+                background: transparent;
+            }
+
+            // Separatore footer
+            Rectangle {
+                height: 1px;
+                background: Theme.colors.border;
+            }
+
+            // Footer con bottoni
+            HorizontalLayout {
+                spacing: 8px;
+                alignment: end;
+
+                // Bottone Annulla
+                Rectangle {
+                    width: 80px;
+                    height: 28px;
+                    border-radius: Theme.border-radius;
+                    border-width: 1px;
+                    border-color: Theme.colors.border2;
+                    background: cancel-touch.has-hover
+                        ? Theme.colors.surface2
+                        : Theme.colors.surface;
+                    animate background { duration: 100ms; }
+
+                    Text {
+                        text: Tr.t.cancel;
+                        color: Theme.colors.text-secondary;
+                        font-size: Theme.font-size-label;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                        width: parent.width;
+                        height: parent.height;
+                    }
+
+                    cancel-touch := TouchArea {
+                        width: 100%;
+                        height: 100%;
+                        clicked => {
+                            root.cancelled();
+                        }
+                    }
+                }
+
+                // Bottone Salva
+                Rectangle {
+                    width: 80px;
+                    height: 28px;
+                    border-radius: Theme.border-radius;
+                    background: save-touch.has-hover
+                        ? Theme.colors.accent2
+                        : Theme.colors.accent;
+                    animate background { duration: 100ms; }
+
+                    Text {
+                        text: Tr.t.save;
+                        color: Theme.colors.bg;
+                        font-size: Theme.font-size-label;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                        width: parent.width;
+                        height: parent.height;
+                    }
+
+                    save-touch := TouchArea {
+                        width: 100%;
+                        height: 100%;
+                        clicked => {
+                            root.accepted();
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
