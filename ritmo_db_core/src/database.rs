@@ -49,6 +49,10 @@ impl Database {
         // Esegui eventuali migrazioni o verifiche di schema
         Self::verify_schema(&pool).await?;
 
+        // Seed dati statici (page_fields)
+        Self::seed_page_fields(&pool).await?;
+        reporter.status("page_fields seeded");
+
         Ok(Database { pool, db_metadata })
     }
 
@@ -93,6 +97,19 @@ impl Database {
                 ))
             })?;
 
+        Ok(())
+    }
+
+    /// Esegue il seed della tabella page_fields dal file SQL dedicato.
+    /// Usa DELETE + INSERT per garantire uno stato deterministico.
+    pub async fn seed_page_fields(pool: &SqlitePool) -> RitmoResult<()> {
+        let sql = include_str!("../../ritmo_db/schema/seed_page_fields.sql");
+        sqlx::query(sql)
+            .execute(pool)
+            .await
+            .map_err(|e| {
+                RitmoErr::DatabaseConnectionFailed(format!("seed_page_fields failed: {}", e))
+            })?;
         Ok(())
     }
 
