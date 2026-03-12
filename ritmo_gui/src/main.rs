@@ -48,6 +48,11 @@ fn main() -> anyhow::Result<()> {
         let _ = dialogs::open_filter_dialog();
     });
 
+    // Placeholder for options menu (⋮)
+    win.on_request_options(|| {
+        // TODO: show options menu
+    });
+
     win.run()?;
     Ok(())
 }
