@@ -1,25 +1,25 @@
 use std::path::PathBuf;
 
 fn main() {
-    // Path to the schema SQL file (relative to this crate's root)
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
-    let schema_path = PathBuf::from(&manifest_dir)
+    let schema_dir = PathBuf::from(&manifest_dir)
         .parent()
         .expect("CARGO_MANIFEST_DIR must have a parent directory")
         .join("ritmo_db")
-        .join("schema")
-        .join("schema.sql");
+        .join("schema");
 
-    // Tell Cargo to re-run this build script when the schema changes
-    println!(
-        "cargo:rerun-if-changed={}",
-        schema_path.display()
-    );
+    let schema_path = schema_dir.join("schema.sql");
+    let seed_path = schema_dir.join("seed_page_fields.sql");
+
+    println!("cargo:rerun-if-changed={}", schema_path.display());
+    println!("cargo:rerun-if-changed={}", seed_path.display());
     println!("cargo:rerun-if-changed=build.rs");
 
-    // Read the schema SQL
     let schema_sql = std::fs::read_to_string(&schema_path)
         .unwrap_or_else(|e| panic!("Failed to read schema.sql from {}: {}", schema_path.display(), e));
+
+    let seed_sql = std::fs::read_to_string(&seed_path)
+        .unwrap_or_else(|e| panic!("Failed to read seed_page_fields.sql from {}: {}", seed_path.display(), e));
 
     // Write the regenerated database to OUT_DIR
     let out_dir = std::env::var("OUT_DIR").unwrap();
@@ -32,6 +32,11 @@ fn main() {
     mem_conn
         .execute_batch(&schema_sql)
         .unwrap_or_else(|e| panic!("Failed to execute schema.sql: {}", e));
+
+    // Seed static page_fields data at build-time
+    mem_conn
+        .execute_batch(&seed_sql)
+        .unwrap_or_else(|e| panic!("Failed to execute seed_page_fields.sql: {}", e));
 
     // Serialize the in-memory database to bytes and write to the output file
     let db_bytes = mem_conn
