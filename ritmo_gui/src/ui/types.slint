@@ -27,3 +27,29 @@ export struct PersonEntry {
     role-id: int,
     role-name: string,
 }
+
+// ── Sidebar filter types ─────────────────────────────────────────────────────
+
+// Un singolo valore attivo per una condizione di filtro
+export struct FilterChip {
+    label: string,   // testo mostrato nel chip, es. "Calvino"
+}
+
+// Una condizione all'interno di un filter-item (es. "autore = ...")
+export struct FilterCondition {
+    label: string,         // etichetta sinistra, es. "autore"
+    chips: [FilterChip],   // valori attivi
+}
+
+// Un filter-item completo (es. "Autore") con più condizioni
+export struct FilterItem {
+    name:       string,              // nome mostrato nell'header, es. "Autore"
+    is-active:  bool,                // true → header ha bg accent/active
+    expanded:   bool,                // true → corpo visibile
+    conditions: [FilterCondition],   // righe interne
+}
+
+// Un preset salvato
+export struct SavedFilter {
+    name: string,
+}
