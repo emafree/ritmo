@@ -6,6 +6,27 @@ use std::path::{Path, PathBuf};
 
 const MAX_RECENT_LIBRARIES: usize = 10;
 
+/// Palette di colori custom (usata quando ui_theme == "custom")
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct CustomPaletteConfig {
+    #[serde(default)] pub bg:             Option<String>,
+    #[serde(default)] pub surface:        Option<String>,
+    #[serde(default)] pub surface2:       Option<String>,
+    #[serde(default)] pub surface3:       Option<String>,
+    #[serde(default)] pub border:         Option<String>,
+    #[serde(default)] pub border2:        Option<String>,
+    #[serde(default)] pub text_primary:   Option<String>,
+    #[serde(default)] pub text_secondary: Option<String>,
+    #[serde(default)] pub text_muted:     Option<String>,
+    #[serde(default)] pub accent:         Option<String>,
+    #[serde(default)] pub accent2:        Option<String>,
+    #[serde(default)] pub active_bg:      Option<String>,
+    #[serde(default)] pub tag_bg:         Option<String>,
+    #[serde(default)] pub tag_text:       Option<String>,
+    #[serde(default)] pub danger:         Option<String>,
+    #[serde(default)] pub success:        Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppSettings {
     /// Ultima libreria aperta
@@ -33,6 +54,10 @@ pub struct Preferences {
     /// Tema UI (es. "light", "dark")
     #[serde(default = "default_theme")]
     pub ui_theme: String,
+
+    /// Palette custom (opzionale, attiva solo se ui_theme == "custom")
+    #[serde(default)]
+    pub custom_palette: CustomPaletteConfig,
 }
 
 fn default_language() -> String {
@@ -40,7 +65,8 @@ fn default_language() -> String {
 }
 
 fn default_theme() -> String {
-    "light".to_string()
+    // Default to dark theme to align with the application's dark color palette
+    "dark".to_string()
 }
 
 impl Default for Preferences {
@@ -48,6 +74,7 @@ impl Default for Preferences {
         Self {
             ui_language: default_language(),
             ui_theme: default_theme(),
+            custom_palette: CustomPaletteConfig::default(),
         }
     }
 }
@@ -143,6 +170,16 @@ impl AppSettings {
     /// Get the current UI language preference
     pub fn get_language(&self) -> &str {
         &self.preferences.ui_language
+    }
+
+    /// Imposta il tema UI
+    pub fn set_theme(&mut self, theme: String) {
+        self.preferences.ui_theme = theme;
+    }
+
+    /// Ottieni il tema UI corrente
+    pub fn get_theme(&self) -> &str {
+        &self.preferences.ui_theme
     }
 }
 

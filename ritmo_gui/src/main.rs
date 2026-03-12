@@ -14,6 +14,19 @@ fn main() -> anyhow::Result<()> {
 
     i18n::apply_translations(&win, &lang);
 
+    // Applica la palette dal config
+    {
+        let settings_path = ritmo_config::settings_file().unwrap_or_default();
+        if let Ok(app_settings) = ritmo_config::AppSettings::load_or_create(&settings_path) {
+            let palette_idx: i32 = match app_settings.preferences.ui_theme.as_str() {
+                "light" => 1,
+                "custom" => 2,
+                _ => 0, // "dark" è il default
+            };
+            win.global::<crate::Theme>().set_active_palette(palette_idx);
+        }
+    }
+
     // ── Load field definitions from DB ────────────────────────────────
     let (book_fields, content_fields) = {
         let rt = tokio::runtime::Runtime::new()?;

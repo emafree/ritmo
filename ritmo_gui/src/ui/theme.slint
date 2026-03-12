@@ -1,61 +1,76 @@
 // theme.slint
-import { Palette } from "std-widgets.slint";
+import { ColorPalette, DarkPalette, LightPalette } from "palette.slint";
+
+export { ColorPalette } from "palette.slint";
 
 export global Theme {
-    // Struttura
-    out property <length> header-height: 48px;
-    out property <length> sidebar-width: 240px;
+    // ── Selettore palette ────────────────────────────────────────
+    // 0 = dark (default), 1 = light, 2 = custom
+    in-out property <int> active-palette: 0;
+
+    // Palette custom: Rust la scrive interamente quando active-palette == 2
+    in-out property <ColorPalette> custom-palette: DarkPalette.colors;
+
+    // ── Token colore attivi (proxy) ──────────────────────────────
+    // Tutti i componenti usano Theme.colors.* — mai DarkPalette/LightPalette direttamente
+    out property <ColorPalette> colors: root.active-palette == 1
+        ? LightPalette.colors
+        : root.active-palette == 2
+            ? root.custom-palette
+            : DarkPalette.colors;
+
+    // ── Struttura ────────────────────────────────────────────────
+    out property <length> header-height:       48px;
+    out property <length> sidebar-width:       240px;
     out property <length> sidebar-item-height: 32px;
 
-    // Dettagli
+    // ── Dettagli ─────────────────────────────────────────────────
     out property <length> border-radius: 4px;
 
-    // Spaziatura
+    // ── Spaziatura ───────────────────────────────────────────────
     out property <length> padding: 12px;
     out property <length> spacing: 4px;
 
-    // Tipografia
+    // ── Tipografia ───────────────────────────────────────────────
     out property <length> font-size-app-title: 14px;
-    out property <length> font-size-label: 13px;
-    out property <length> font-size-section: 11px;
+    out property <length> font-size-label:     13px;
+    out property <length> font-size-section:   11px;
 
-    // Filtri
-    out property <length> filter-row-height: 32px;
-    out property <length> filter-icon-size: 28px;
-    out property <length> filter-combobox-width: 240px;
+    // ── Filtri ───────────────────────────────────────────────────
+    out property <length> filter-row-height:          32px;
+    out property <length> filter-icon-size:           28px;
+    out property <length> filter-combobox-width:      240px;
     out property <length> filter-combobox-mode-width: 120px;
-    out property <length> filter-edit-width: 280px;
+    out property <length> filter-edit-width:          280px;
 
-    // Colori
-    out property <color> sidebar-bg: Palette.background.darker(0.06);
+    // ── Compat: sidebar-bg rimappato sul nuovo sistema ───────────
+    out property <color> sidebar-bg: root.colors.surface;
 }
 
 export component SegmentedButton inherits Rectangle {
     in property <string> label-left;
     in property <string> label-right;
     in-out property <bool> left-selected: true;
-    callback changed(bool);  // true = sinistra, false = destra
+    callback changed(bool);
 
     height: 28px;
     width: 120px;
     border-radius: 6px;
-    background: Palette.background.darker(0.08);
+    background: Theme.colors.surface2;
 
-    // Indicatore selezionato
     Rectangle {
         x: root.left-selected ? 2px : parent.width / 2;
         y: 2px;
         width: parent.width / 2 - 2px;
         height: parent.height - 4px;
         border-radius: 5px;
-        background: Palette.background;
+        background: Theme.colors.surface;
         animate x {
             duration: 150ms;
             easing: ease-in-out;
         }
     }
 
-    // Label sinistra
     Text {
         x: 0;
         y: 0;
@@ -65,10 +80,9 @@ export component SegmentedButton inherits Rectangle {
         font-size: Theme.font-size-section;
         horizontal-alignment: center;
         vertical-alignment: center;
-        color: root.left-selected ? Palette.foreground : Palette.foreground.transparentize(0.4);
+        color: root.left-selected ? Theme.colors.text-primary : Theme.colors.text-muted;
     }
 
-    // Label destra
     Text {
         x: parent.width / 2;
         y: 0;
@@ -78,10 +92,9 @@ export component SegmentedButton inherits Rectangle {
         font-size: Theme.font-size-section;
         horizontal-alignment: center;
         vertical-alignment: center;
-        color: !root.left-selected ? Palette.foreground : Palette.foreground.transparentize(0.4);
+        color: !root.left-selected ? Theme.colors.text-primary : Theme.colors.text-muted;
     }
 
-    // Touch area sinistra
     TouchArea {
         x: 0;
         width: parent.width / 2;
@@ -92,7 +105,6 @@ export component SegmentedButton inherits Rectangle {
         }
     }
 
-    // Touch area destra
     TouchArea {
         x: parent.width / 2;
         width: parent.width / 2;
@@ -113,43 +125,39 @@ export component SegmentedIconButton inherits Rectangle {
     height: 28px;
     width: 64px;
     border-radius: 6px;
-    background: Palette.background.darker(0.08);
+    background: Theme.colors.surface2;
 
-    // Indicatore selezionato
     Rectangle {
         x: root.left-selected ? 2px : parent.width / 2;
         y: 2px;
         width: parent.width / 2 - 2px;
         height: parent.height - 4px;
         border-radius: 5px;
-        background: Palette.background;
+        background: Theme.colors.surface;
         animate x {
             duration: 150ms;
             easing: ease-in-out;
         }
     }
 
-    // Icona sinistra
     Image {
         x: parent.width / 4 - 8px;
         y: (parent.height - 16px) / 2;
         width: 16px;
         height: 16px;
         source: root.icon-left;
-        colorize: root.left-selected ? Palette.foreground : Palette.foreground.transparentize(0.4);
+        colorize: root.left-selected ? Theme.colors.text-primary : Theme.colors.text-muted;
     }
 
-    // Icona destra
     Image {
         x: parent.width * 3 / 4 - 8px;
         y: (parent.height - 16px) / 2;
         width: 16px;
         height: 16px;
         source: root.icon-right;
-        colorize: !root.left-selected ? Palette.foreground : Palette.foreground.transparentize(0.4);
+        colorize: !root.left-selected ? Theme.colors.text-primary : Theme.colors.text-muted;
     }
 
-    // Touch area sinistra
     TouchArea {
         x: 0;
         width: parent.width / 2;
@@ -160,7 +168,6 @@ export component SegmentedIconButton inherits Rectangle {
         }
     }
 
-    // Touch area destra
     TouchArea {
         x: parent.width / 2;
         width: parent.width / 2;

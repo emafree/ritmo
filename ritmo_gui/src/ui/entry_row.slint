@@ -1,5 +1,4 @@
 // entry_row.slint
-import { Palette } from "std-widgets.slint";
 import { LineEdit, ComboBox, Button } from "std-widgets.slint";
 import { Theme } from "theme.slint";
 import { Tr } from "tr.slint";
@@ -38,7 +37,7 @@ export component EntryRow inherits Rectangle {
             text: root.entry.field-name;
             vertical-alignment: center;
             width: Theme.filter-combobox-width;
-            color: Palette.foreground;
+            color: Theme.colors.text-primary;
             font-size: Theme.font-size-label;
         }
         if !root.is-required && root.entry.data-kind != "person": ComboBox {

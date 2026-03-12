@@ -1,9 +1,9 @@
-import { Palette } from "std-widgets.slint";
 import { Theme, SegmentedButton, SegmentedIconButton } from "theme.slint";
 import { Tr } from "tr.slint";
 
 //export { Tr }
 export { Tr } from "tr.slint";
+export { Theme } from "theme.slint";
 export { FieldDefinition, FieldEntry, Suggestion } from "types.slint";
 export { BookDialog, ContentSummary } from "book_dialog.slint";
 export { ContentDialog } from "content_dialog.slint";
@@ -41,7 +41,7 @@ export component MainWindow inherits Window {
 
                     Text {
                         text: Tr.t.app-name;
-                        color: Palette.foreground;
+                        color: Theme.colors.text-primary;
                         font-size: Theme.font-size-app-title;
                         font-weight: 600;
                         horizontal-alignment: center;
@@ -60,7 +60,7 @@ export component MainWindow inherits Window {
                         Text {
                             text: "☰";
                             font-size: 18px;
-                            color: Palette.foreground;
+                            color: Theme.colors.text-primary;
                             horizontal-alignment: center;
                             vertical-alignment: center;
                             width: parent.width;
@@ -95,7 +95,7 @@ export component MainWindow inherits Window {
 
             Rectangle {
                 height: Theme.header-height;
-                background: Palette.background;
+                background: Theme.colors.bg;
 
                 HorizontalLayout {
                     alignment: space-between;
@@ -108,7 +108,7 @@ export component MainWindow inherits Window {
 
                     Text {
                         text: root.library-name;
-                        color: Palette.foreground.transparentize(0.2);
+                        color: Theme.colors.text-secondary;
                         font-size: Theme.font-size-label;
                         horizontal-alignment: center;
                         vertical-alignment: center;
@@ -130,7 +130,7 @@ export component MainWindow inherits Window {
                             Text {
                                 text: "+";
                                 font-size: 20px;
-                                color: Palette.foreground;
+                                color: Theme.colors.text-primary;
                                 horizontal-alignment: center;
                                 vertical-alignment: center;
                                 width: parent.width;
@@ -152,7 +152,7 @@ export component MainWindow inherits Window {
                             height: 28px;
                             border-radius: 6px;
                             background: options-touch.has-hover
-                                ? Palette.foreground.transparentize(0.85)
+                                ? Theme.colors.text-primary.transparentize(0.85)
                                 : transparent;
 
                             animate background {
@@ -162,7 +162,7 @@ export component MainWindow inherits Window {
                             Text {
                                 text: "⋮";
                                 font-size: 16px;
-                                color: Palette.foreground;
+                                color: Theme.colors.text-primary;
                                 horizontal-alignment: center;
                                 vertical-alignment: center;
                                 width: parent.width;
@@ -192,13 +192,13 @@ export component MainWindow inherits Window {
             }
 
             Rectangle {
-                background: Palette.background;
+                background: Theme.colors.bg;
 
                 VerticalLayout {
                     alignment: center;
                     Text {
                         text: root.show-books ? Tr.t.books : Tr.t.contents;
-                        color: Palette.foreground.transparentize(0.5);
+                        color: Theme.colors.text-muted;
                         horizontal-alignment: center;
                     }
                 }

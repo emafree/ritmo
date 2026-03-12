@@ -1,5 +1,4 @@
 // book_dialog.slint
-import { Palette } from "std-widgets.slint";
 import { Button } from "std-widgets.slint";
 import { Theme } from "theme.slint";
 import { Tr } from "tr.slint";
@@ -21,7 +20,7 @@ component ContentRow inherits Rectangle {
 
         Text {
             text: root.title + " — " + root.author;
-            color: Palette.foreground;
+            color: Theme.colors.text-primary;
             font-size: Theme.font-size-label;
             vertical-alignment: center;
             horizontal-stretch: 1;
@@ -32,7 +31,7 @@ component ContentRow inherits Rectangle {
             width: 28px; height: 28px; background: transparent;
             Text {
                 text: "✎"; font-size: 14px;
-                color: Palette.foreground.transparentize(0.3);
+                color: Theme.colors.text-secondary;
                 horizontal-alignment: center; vertical-alignment: center;
                 width: parent.width; height: parent.height;
             }
@@ -43,7 +42,7 @@ component ContentRow inherits Rectangle {
             width: 28px; height: 28px; background: transparent;
             Text {
                 text: "✕"; font-size: 14px;
-                color: Palette.foreground.transparentize(0.3);
+                color: Theme.colors.text-secondary;
                 horizontal-alignment: center; vertical-alignment: center;
                 width: parent.width; height: parent.height;
             }
@@ -89,7 +88,7 @@ export component BookDialog inherits Window {
 
         // ── Sezione dati book ─────────────────────────────────────
         Rectangle {
-            background: Palette.background;
+            background: Theme.colors.bg;
 
             VerticalLayout {
                 padding: Theme.padding;
@@ -127,7 +126,7 @@ export component BookDialog inherits Window {
 
                 Text {
                     text: Tr.t.contents;
-                    color: Palette.foreground.transparentize(0.4);
+                    color: Theme.colors.text-muted;
                     font-size: Theme.font-size-section;
                 }
 
@@ -143,7 +142,7 @@ export component BookDialog inherits Window {
                     background: transparent;
                     Text {
                         text: "+ " + Tr.t.new-content;
-                        color: Palette.foreground.transparentize(0.5);
+                        color: Theme.colors.text-muted;
                         font-size: Theme.font-size-label;
                         vertical-alignment: center;
                         height: parent.height;
@@ -160,7 +159,7 @@ export component BookDialog inherits Window {
 
         // ── Bottoni ───────────────────────────────────────────────
         Rectangle {
-            background: Palette.background;
+            background: Theme.colors.bg;
             height: 52px;
 
             HorizontalLayout {
