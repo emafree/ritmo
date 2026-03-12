@@ -105,6 +105,15 @@ fn main() -> anyhow::Result<()> {
         }
     });
 
+    // ── Sidebar filter callback stubs ────────────────────────────────────────
+    win.on_add_filter_requested(|| { /* TODO: open add-filter dialog */ });
+    win.on_filter_item_toggle(|_i| { /* TODO: toggle item expanded state */ });
+    win.on_filter_chip_remove(|_i, _ci, _ki| { /* TODO: remove chip */ });
+    win.on_filter_condition_add(|_i, _ci| { /* TODO: add condition value */ });
+    win.on_filter_item_reset(|_i| { /* TODO: reset filter item */ });
+    win.on_filter_item_delete(|_i| { /* TODO: delete filter item */ });
+    win.on_saved_filter_apply(|_si| { /* TODO: apply saved filter */ });
+
     win.run()?;
     Ok(())
 }
