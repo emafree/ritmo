@@ -1,0 +1,70 @@
+// palette.slint — definizione dei token di colore e delle palette predefinite
+
+export struct ColorPalette {
+    // Superfici
+    bg:       color,
+    surface:  color,
+    surface2: color,
+    surface3: color,
+    // Bordi
+    border:   color,
+    border2:  color,
+    // Testo
+    text-primary:   color,
+    text-secondary: color,
+    text-muted:     color,
+    // Accento
+    accent:    color,
+    accent2:   color,
+    active-bg: color,
+    // Tag
+    tag-bg:   color,
+    tag-text: color,
+    // Stato
+    danger:  color,
+    success: color,
+}
+
+// ── Palette predefinita: Dark ────────────────────────────────────
+export global DarkPalette {
+    out property <ColorPalette> colors: {
+        bg:             #0f0f0f,
+        surface:        #171717,
+        surface2:       #1f1f1f,
+        surface3:       #282828,
+        border:         #2e2e2e,
+        border2:        #3a3a3a,
+        text-primary:   #e8e8e8,
+        text-secondary: #999999,
+        text-muted:     #555555,
+        accent:         #c8a96e,
+        accent2:        #a07040,
+        active-bg:      #2a2218,
+        tag-bg:         #1e2a1e,
+        tag-text:       #7ab87a,
+        danger:         #c0392b,
+        success:        #27ae60,
+    };
+}
+
+// ── Palette predefinita: Light ───────────────────────────────────
+export global LightPalette {
+    out property <ColorPalette> colors: {
+        bg:             #f5f5f0,
+        surface:        #ffffff,
+        surface2:       #f0ede8,
+        surface3:       #e8e4de,
+        border:         #d0ccc5,
+        border2:        #b8b3ab,
+        text-primary:   #1a1a18,
+        text-secondary: #555550,
+        text-muted:     #999990,
+        accent:         #8b6914,
+        accent2:        #6b4f10,
+        active-bg:      #f5ecd4,
+        tag-bg:         #e8f5e8,
+        tag-text:       #2d7a2d,
+        danger:         #c0392b,
+        success:        #27ae60,
+    };
+}

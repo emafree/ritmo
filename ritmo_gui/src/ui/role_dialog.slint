@@ -1,5 +1,4 @@
 // role_dialog.slint
-import { Palette } from "std-widgets.slint";
 import { Button } from "std-widgets.slint";
 import { Theme } from "theme.slint";
 import { Tr } from "tr.slint";
@@ -24,7 +23,7 @@ export component RoleDialog inherits Window {
         spacing: 0px;
 
         Rectangle {
-            background: Palette.background;
+            background: Theme.colors.bg;
             vertical-stretch: 1;
 
             VerticalLayout {

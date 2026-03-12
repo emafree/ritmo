@@ -3,7 +3,7 @@ mod portable;
 pub mod preset_resolver;
 pub mod presets;
 
-pub use app_settings::AppSettings;
+pub use app_settings::{AppSettings, CustomPaletteConfig, Preferences};
 pub use portable::{detect_portable_library, is_running_portable};
 pub use preset_resolver::{LibraryPresetsHolder, PresetResolver, PresetSource};
 pub use presets::{BookFilterPreset, ContentFilterPreset, GlobalPresets, NamedPreset, PresetType};

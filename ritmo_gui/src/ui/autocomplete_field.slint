@@ -1,5 +1,4 @@
 // autocomplete_field.slint
-import { Palette } from "std-widgets.slint";
 import { LineEdit } from "std-widgets.slint";
 import { Theme } from "theme.slint";
 import { Suggestion } from "types.slint";
@@ -44,8 +43,8 @@ export component AutocompleteField inherits Rectangle {
         close-policy: no-auto-close;
 
         Rectangle {
-            background: Palette.background;
-            border-color: Palette.border;
+            background: Theme.colors.bg;
+            border-color: Theme.colors.border;
             border-width: 1px;
             border-radius: Theme.border-radius;
             width: parent.width;
@@ -61,7 +60,7 @@ export component AutocompleteField inherits Rectangle {
                     Text {
                         x: Theme.padding;
                         text: suggestion.display-name;
-                        color: Palette.foreground;
+                        color: Theme.colors.text-primary;
                         font-size: Theme.font-size-label;
                         vertical-alignment: center;
                         height: parent.height;
