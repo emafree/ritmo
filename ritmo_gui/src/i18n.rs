@@ -58,6 +58,12 @@ pub fn load_translations(lang: &str) -> Translations {
         field_isbn: get("field-isbn"),
         field_notes: get("field-notes"),
         field_people: get("field-people"),
+        sidebar_active_filters: get("sidebar-active-filters"),
+        sidebar_field: get("sidebar-field"),
+        sidebar_reset: get("sidebar-reset"),
+        sidebar_delete_filter: get("sidebar-delete-filter"),
+        sidebar_add_filter: get("sidebar-add-filter"),
+        sidebar_preset: get("sidebar-preset"),
     }
 }
 
