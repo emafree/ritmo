@@ -1,18 +1,6 @@
-// src/dialogs/options_dialog.rs
+use crate::util::{dark_defaults as D, parse_hex_color};
 use crate::{MainWindow, OptionsDialog, Theme};
 use slint::ComponentHandle;
-
-/// Parsa un colore hex nel formato "#rrggbb" in un `slint::Color`.
-fn parse_hex_color(hex: &str) -> slint::Color {
-    let hex = hex.trim_start_matches('#');
-    if hex.len() < 6 {
-        return slint::Color::from_rgb_u8(0, 0, 0);
-    }
-    let r = u8::from_str_radix(&hex[0..2], 16).unwrap_or(0);
-    let g = u8::from_str_radix(&hex[2..4], 16).unwrap_or(0);
-    let b = u8::from_str_radix(&hex[4..6], 16).unwrap_or(0);
-    slint::Color::from_rgb_u8(r, g, b)
-}
 
 /// Costruisce una `ColorPalette` dai valori hex del dialog.
 fn build_color_palette(d: &OptionsDialog) -> crate::ColorPalette {
@@ -49,51 +37,54 @@ pub fn open_options_dialog(win: &MainWindow) -> anyhow::Result<()> {
         ritmo_config::AppSettings::load_or_create(&settings_path).unwrap_or_default();
     let cp = &app_settings.preferences.custom_palette;
 
-    dialog.set_custom_bg(cp.bg.clone().unwrap_or_else(|| "#0f0f0f".to_string()).into());
+    dialog.set_custom_bg(cp.bg.clone().unwrap_or_else(|| D::BG.to_string()).into());
     dialog.set_custom_surface(
-        cp.surface.clone().unwrap_or_else(|| "#171717".to_string()).into(),
+        cp.surface.clone().unwrap_or_else(|| D::SURFACE.to_string()).into(),
     );
     dialog.set_custom_surface2(
-        cp.surface2.clone().unwrap_or_else(|| "#1f1f1f".to_string()).into(),
+        cp.surface2.clone().unwrap_or_else(|| D::SURFACE2.to_string()).into(),
     );
     dialog.set_custom_surface3(
-        cp.surface3.clone().unwrap_or_else(|| "#282828".to_string()).into(),
+        cp.surface3.clone().unwrap_or_else(|| D::SURFACE3.to_string()).into(),
     );
     dialog.set_custom_border(
-        cp.border.clone().unwrap_or_else(|| "#2e2e2e".to_string()).into(),
+        cp.border.clone().unwrap_or_else(|| D::BORDER.to_string()).into(),
     );
     dialog.set_custom_border2(
-        cp.border2.clone().unwrap_or_else(|| "#3a3a3a".to_string()).into(),
+        cp.border2.clone().unwrap_or_else(|| D::BORDER2.to_string()).into(),
     );
     dialog.set_custom_text_primary(
-        cp.text_primary.clone().unwrap_or_else(|| "#e8e8e8".to_string()).into(),
+        cp.text_primary.clone().unwrap_or_else(|| D::TEXT_PRIMARY.to_string()).into(),
     );
     dialog.set_custom_text_secondary(
-        cp.text_secondary.clone().unwrap_or_else(|| "#999999".to_string()).into(),
+        cp.text_secondary
+            .clone()
+            .unwrap_or_else(|| D::TEXT_SECONDARY.to_string())
+            .into(),
     );
     dialog.set_custom_text_muted(
-        cp.text_muted.clone().unwrap_or_else(|| "#555555".to_string()).into(),
+        cp.text_muted.clone().unwrap_or_else(|| D::TEXT_MUTED.to_string()).into(),
     );
     dialog.set_custom_accent(
-        cp.accent.clone().unwrap_or_else(|| "#c8a96e".to_string()).into(),
+        cp.accent.clone().unwrap_or_else(|| D::ACCENT.to_string()).into(),
     );
     dialog.set_custom_accent2(
-        cp.accent2.clone().unwrap_or_else(|| "#a07040".to_string()).into(),
+        cp.accent2.clone().unwrap_or_else(|| D::ACCENT2.to_string()).into(),
     );
     dialog.set_custom_active_bg(
-        cp.active_bg.clone().unwrap_or_else(|| "#2a2218".to_string()).into(),
+        cp.active_bg.clone().unwrap_or_else(|| D::ACTIVE_BG.to_string()).into(),
     );
     dialog.set_custom_tag_bg(
-        cp.tag_bg.clone().unwrap_or_else(|| "#1e2a1e".to_string()).into(),
+        cp.tag_bg.clone().unwrap_or_else(|| D::TAG_BG.to_string()).into(),
     );
     dialog.set_custom_tag_text(
-        cp.tag_text.clone().unwrap_or_else(|| "#7ab87a".to_string()).into(),
+        cp.tag_text.clone().unwrap_or_else(|| D::TAG_TEXT.to_string()).into(),
     );
     dialog.set_custom_danger(
-        cp.danger.clone().unwrap_or_else(|| "#c0392b".to_string()).into(),
+        cp.danger.clone().unwrap_or_else(|| D::DANGER.to_string()).into(),
     );
     dialog.set_custom_success(
-        cp.success.clone().unwrap_or_else(|| "#27ae60".to_string()).into(),
+        cp.success.clone().unwrap_or_else(|| D::SUCCESS.to_string()).into(),
     );
 
     // ── on_accepted: salva e applica ─────────────────────────────────────
