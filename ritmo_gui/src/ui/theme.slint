@@ -64,7 +64,7 @@ export component SegmentedButton inherits Rectangle {
         width: parent.width / 2 - 2px;
         height: parent.height - 4px;
         border-radius: 5px;
-        background: Theme.colors.surface;
+        background: Theme.colors.accent;
         animate x {
             duration: 150ms;
             easing: ease-in-out;
@@ -80,7 +80,7 @@ export component SegmentedButton inherits Rectangle {
         font-size: Theme.font-size-section;
         horizontal-alignment: center;
         vertical-alignment: center;
-        color: root.left-selected ? Theme.colors.text-primary : Theme.colors.text-muted;
+        color: root.left-selected ? #0f0f0f : Theme.colors.text-muted;
     }
 
     Text {
@@ -92,7 +92,7 @@ export component SegmentedButton inherits Rectangle {
         font-size: Theme.font-size-section;
         horizontal-alignment: center;
         vertical-alignment: center;
-        color: !root.left-selected ? Theme.colors.text-primary : Theme.colors.text-muted;
+        color: !root.left-selected ? #0f0f0f : Theme.colors.text-muted;
     }
 
     TouchArea {
@@ -133,7 +133,7 @@ export component SegmentedIconButton inherits Rectangle {
         width: parent.width / 2 - 2px;
         height: parent.height - 4px;
         border-radius: 5px;
-        background: Theme.colors.surface;
+        background: Theme.colors.accent;
         animate x {
             duration: 150ms;
             easing: ease-in-out;
@@ -146,7 +146,7 @@ export component SegmentedIconButton inherits Rectangle {
         width: 16px;
         height: 16px;
         source: root.icon-left;
-        colorize: root.left-selected ? Theme.colors.text-primary : Theme.colors.text-muted;
+        colorize: root.left-selected ? #0f0f0f : Theme.colors.text-muted;
     }
 
     Image {
@@ -155,7 +155,7 @@ export component SegmentedIconButton inherits Rectangle {
         width: 16px;
         height: 16px;
         source: root.icon-right;
-        colorize: !root.left-selected ? Theme.colors.text-primary : Theme.colors.text-muted;
+        colorize: !root.left-selected ? #0f0f0f : Theme.colors.text-muted;
     }
 
     TouchArea {
