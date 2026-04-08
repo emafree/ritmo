@@ -27,6 +27,14 @@ fn build_color_palette(d: &OptionsDialog) -> crate::ColorPalette {
 pub fn open_options_dialog(win: &MainWindow) -> anyhow::Result<()> {
     let dialog = OptionsDialog::new()?;
 
+    // Sync theme from the main window
+    let active_palette = win.global::<Theme>().get_active_palette();
+    dialog.global::<Theme>().set_active_palette(active_palette);
+    if active_palette == 2 {
+        let custom_palette = win.global::<Theme>().get_custom_palette();
+        dialog.global::<Theme>().set_custom_palette(custom_palette);
+    }
+
     // Salva il valore corrente per eventuale ripristino al cancel
     let current_palette = win.global::<Theme>().get_active_palette();
     dialog.set_active_palette(current_palette);
