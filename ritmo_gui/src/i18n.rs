@@ -58,6 +58,7 @@ pub fn load_translations(lang: &str) -> Translations {
         field_isbn: get("field-isbn"),
         field_notes: get("field-notes"),
         field_people: get("field-people"),
+        filter_continue: get("filter-continue"),
     }
 }
 

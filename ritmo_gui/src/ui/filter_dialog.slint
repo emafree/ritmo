@@ -51,6 +51,7 @@ export component FilterDialog inherits Window {
 
     callback accepted();
     callback cancelled();
+    callback continued();
 
     VerticalLayout {
         padding: Theme.padding;
@@ -74,9 +75,9 @@ export component FilterDialog inherits Window {
             }
 
             Button {
-                text: Tr.t.save;
+                text: Tr.t.filter-continue;
                 clicked => {
-                    root.accepted();
+                    root.continued();
                 }
             }
 

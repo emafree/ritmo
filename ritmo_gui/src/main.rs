@@ -91,8 +91,13 @@ fn main() -> anyhow::Result<()> {
     });
 
     // Open FilterDialog when the filter action is triggered
-    win.on_request_filter(move || {
-        let _ = dialogs::open_filter_dialog();
+    win.on_request_filter({
+        let win_weak = win.as_weak();
+        move || {
+            if let Some(w) = win_weak.upgrade() {
+                let _ = dialogs::open_filter_dialog(&w);
+            }
+        }
     });
 
     // Placeholder for options menu (⋮)
@@ -106,7 +111,14 @@ fn main() -> anyhow::Result<()> {
     });
 
     // ── Sidebar filter callback stubs ────────────────────────────────────────
-    win.on_add_filter_requested(|| { /* TODO: open add-filter dialog */ });
+    win.on_add_filter_requested({
+        let win_weak = win.as_weak();
+        move || {
+            if let Some(w) = win_weak.upgrade() {
+                let _ = dialogs::open_filter_dialog(&w);
+            }
+        }
+    });
     win.on_filter_item_toggle(|_i| { /* TODO: toggle item expanded state */ });
     win.on_filter_chip_remove(|_i, _ci, _ki| { /* TODO: remove chip */ });
     win.on_filter_condition_add(|_i, _ci| { /* TODO: add condition value */ });

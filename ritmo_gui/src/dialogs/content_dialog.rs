@@ -192,6 +192,14 @@ fn wire_callbacks(dialog: &ContentDialog) {
 pub fn open_content_dialog(win: &crate::MainWindow, fields: Vec<crate::FieldDefinition>) -> anyhow::Result<()> {
     let dialog = ContentDialog::new()?;
 
+    // Sync theme from the main window
+    let active_palette = win.global::<crate::Theme>().get_active_palette();
+    dialog.global::<crate::Theme>().set_active_palette(active_palette);
+    if active_palette == 2 {
+        let custom_palette = win.global::<crate::Theme>().get_custom_palette();
+        dialog.global::<crate::Theme>().set_custom_palette(custom_palette);
+    }
+
     init_dialog(&dialog, &fields);
 
     let dw = dialog.as_weak();
@@ -219,9 +227,21 @@ pub fn open_content_dialog(win: &crate::MainWindow, fields: Vec<crate::FieldDefi
 /// Riceve i fields già costruiti dal chiamante per evitare dipendenza da MainWindow.
 pub fn open_content_dialog_for_book(
     book_dialog_weak: slint::Weak<crate::BookDialog>,
+    main_win_weak: slint::Weak<crate::MainWindow>,
     fields: Vec<FieldDefinition>,
 ) -> anyhow::Result<()> {
     let dialog = ContentDialog::new()?;
+
+    // Sync theme from the main window
+    if let Some(main_win) = main_win_weak.upgrade() {
+        let active_palette = main_win.global::<crate::Theme>().get_active_palette();
+        dialog.global::<crate::Theme>().set_active_palette(active_palette);
+        if active_palette == 2 {
+            let custom_palette = main_win.global::<crate::Theme>().get_custom_palette();
+            dialog.global::<crate::Theme>().set_custom_palette(custom_palette);
+        }
+    }
+
     init_dialog(&dialog, &fields);
 
     let dw = dialog.as_weak();

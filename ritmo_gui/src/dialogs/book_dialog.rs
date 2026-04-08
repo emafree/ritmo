@@ -58,6 +58,14 @@ pub fn open_book_dialog(
 ) -> anyhow::Result<()> {
     let dialog = BookDialog::new()?;
 
+    // Sync theme from the main window
+    let active_palette = win.global::<crate::Theme>().get_active_palette();
+    dialog.global::<crate::Theme>().set_active_palette(active_palette);
+    if active_palette == 2 {
+        let custom_palette = win.global::<crate::Theme>().get_custom_palette();
+        dialog.global::<crate::Theme>().set_custom_palette(custom_palette);
+    }
+
     let fields = book_fields;
     let field_names: Vec<slint::SharedString> =
         fields.iter().map(|f| f.name.clone()).collect();
@@ -228,8 +236,9 @@ pub fn open_book_dialog(
 
     // ── Contents ─────────────────────────────────────────────────
     let dw = dialog.as_weak();
+    let win_weak = win.as_weak();
     dialog.on_add_content_requested(move || {
-        let _ = open_content_dialog_for_book(dw.clone(), content_fields.clone());
+        let _ = open_content_dialog_for_book(dw.clone(), win_weak.clone(), content_fields.clone());
     });
 
     let dw = dialog.as_weak();
